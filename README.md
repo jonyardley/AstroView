@@ -1,4 +1,4 @@
-astroFAT
+aFIT
 ========
 
-Astronomy FITS Analysis Tool
+A tool for reading, analysing & processing astronomical FITS images
