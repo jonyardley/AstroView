@@ -9,7 +9,8 @@ define([
 
 	App.addRegions ({
 		header: '#header',
-		content: '#content'
+		content: '#content',
+		controls: '#controls'
 	});
 
 	window.App = App;

@@ -11,29 +11,28 @@ define([
 
 		
 		getImageData: function(imageData){
-			App.fits.imageData = imageData;
-			App.vent.trigger('fits:loaded');
+			fileReader.fitsModel.set('imageData', imageData);
 		},
 
 
 		onLoad: function(fits){
 
-			App.fits = {
-				header: this.getHeader(),
-				image: this.getDataUnit(),
-			};
+			fileReader.fitsModel.set('header', this.getHeader());
+			fileReader.fitsModel.set('image', this.getDataUnit());
 
-			App.fits.image.getFrame(0, fileReader.getImageData);
+			var image = fileReader.fitsModel.get('image');
+			image.getFrame(0, fileReader.getImageData);
 		},
 
 
-		init: function(){
-			this.fits = new astro.FITS(App.selectedFile, fileReader.onLoad);
+		init: function(fitsModel){
+			fileReader.fitsModel = fitsModel;
+			fileReader.fitsLoader = new astro.FITS(fitsModel.get('file'), fileReader.onLoad);
 		}
 
 	};
 
-	App.vent.on('file:selected', fileReader.init);
+	return fileReader.init;
 
 });
 

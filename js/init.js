@@ -5,15 +5,27 @@ define([
 	'Marionette',
 	'app',
 	'mods/header/header',
-	'mods/readFile/readFile',
-	'mods/preview/preview'
-], function($, _, Backbone, Marionette, App, HeaderView, readFile, Preview){
+	'mods/index/index',
+	'mods/fits/fitsCollection'
+], function(
+	$,
+	_,
+	Backbone,
+	Marionette,
+	App,
+	HeaderView,
+	IndexView,
+	FitsCollection
+){
 
 	$(function(){
 		
 		App.start();
 
+		App.fits = new FitsCollection();
+
 		App.header.show(new HeaderView());
+		App.content.show(new IndexView());
 
 	});
 

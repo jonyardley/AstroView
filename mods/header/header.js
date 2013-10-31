@@ -9,16 +9,7 @@ define([
 
 	return Backbone.Marionette.ItemView.extend({
 
-		template: tmpl,
-
-		events: {
-			'change .fileInput input': 'fileSelected'
-		},
-
-		fileSelected: function(e){
-			App.selectedFile = e.target.files[0];
-			App.vent.trigger('file:selected');
-		}
+		template: tmpl
 
 	});
 

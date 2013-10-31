@@ -74,14 +74,15 @@ define([
 
 
 		renderPreview: function(){
+			var fits = this.fits;
 			var i, ii;
 			for(i=0;i<this.height;i++){
-				var x = (i*4) * App.fits.image.width;
+				var x = (i*4) * fits.image.width;
 				for(ii=0;ii<this.width;ii++){
 					var y = ii * 4;
 					var pixel = x+y;
 					var index = ((i * this.width) + ii) * 4;
-					var value = this.scale(App.fits.imageData[pixel]);
+					var value = this.scale(fits.imageData[pixel]);
 
 					this.preview.data[index+0] = value;
 			    	this.preview.data[index+1] = value;
@@ -96,15 +97,17 @@ define([
 
 
 		onRender: function(){
+			var fits = this.fits = this.model.toJSON();
+
 			this.$canvas = this.$el.find('canvas');
 			this.context = this.$canvas[0].getContext('2d');	
-			this.width = Math.floor(App.fits.image.width * 0.25);
-			this.height = Math.floor(App.fits.image.height * 0.25);
+			this.width = Math.floor(fits.image.width * 0.25);
+			this.height = Math.floor(fits.image.height * 0.25);
 			this.$canvas.attr('width', this.width);
 			this.$canvas.attr('height', this.height);
 			this.preview = this.context.createImageData(this.width, this.height);
 			this.min = 0;
-			this.max = App.fits.image.bzero;
+			this.max = fits.image.bzero;
 			this.ui.min.val(this.min);
 			this.ui.max.val(this.max);
 			this.scaleType = this.ui.scale.val();
@@ -113,7 +116,7 @@ define([
 		},
 
 		serializeData: function(){
-			return App.fits.header.cards;	
+			return this.model.get('cards');	
 		},
 
 
@@ -123,8 +126,6 @@ define([
 
 	});
 
-	App.vent.on('fits:loaded', function(){
-		App.content.show(new Preview());
-	});
+	return Preview;
 
 });

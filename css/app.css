@@ -6,14 +6,40 @@ html, body {
 
 body {
   font-family: 'Noto Sans', 'Arial', 'Sans-serif';
-  background: url(../img/bg.png) no-repeat black center -50px; }
+  color: #fff;
+  background: #D3D4D5; }
+
+#main {
+  padding: 16px; }
+
+h2 {
+  margin-bottom: 16px;
+  font-size: 1.2em;
+  font-weight: 700; }
+
+.panel {
+  background: #1d2123;
+  padding: 16px;
+  border-radius: 3px; }
+
+.imageRow {
+  background: #75797B;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-radius: 4; }
 
 #header {
-  background: rgba(255, 255, 255, 0.5);
-  padding: 20px;
-  font-weight: 700; }
-  #header .fileInput {
-    float: right; }
+  background: #1d2123;
+  border-radius: 3px;
+  overflow: hidden;
+  font-weight: 700;
+  line-height: 50px;
+  margin-bottom: 16px; }
+  #header h1 {
+    float: right;
+    background: #E76049;
+    line-height: 50px;
+    padding: 0 32px; }
 
 #preview {
   margin: 20px; }
@@ -25,7 +51,7 @@ body {
     width: 62%;
     margin-right: 1.5%;
     float: left;
-    background: rgba(255, 255, 255, 0.5);
+    background: #1d2123;
     min-height: 512px; }
     #preview .image .canvasWrapper {
       padding: 10px; }
@@ -37,7 +63,7 @@ body {
     border-radius: 2px;
     float: left;
     width: 35%;
-    background: rgba(255, 255, 255, 0.5);
+    background: #1d2123;
     min-height: 512px; }
   #preview .fitsHeader table {
     font-size: 13px;

@@ -1,7 +1,7 @@
 @import 'reset.css';
 @import 'fonts.css';
 
-$background: rgba(255,255,255,0.5);
+$panel: #1D2123;
 
 html, body {
 	height: 100%;
@@ -10,17 +10,33 @@ html, body {
 
 body {
 	font-family: 'Noto Sans', 'Arial', 'Sans-serif';
-	background: url(../img/bg.png) no-repeat #000 center -50px;
+	color: #fff;
+	background: #D3D4D5;
 }
 
-#header {
-	background: $background;
-	padding: 20px;
+#main {
+	padding: 16px;
+}
+
+h2 {
+	margin-bottom: 16px;
+	font-size: 1.2em;
 	font-weight: 700;
-
-	.fileInput {
-		float: right;
-	}
 }
 
+.panel {
+	background: $panel;
+	padding: 16px;
+	border-radius: 3px;
+}
+
+.imageRow {
+	background: #75797B;
+	padding: 16px;
+	margin-bottom: 16px;
+	border-radius: 4;
+}
+
+@import '../mods/header/header';
+@import '../mods/index/index';
 @import '../mods/preview/preview';
