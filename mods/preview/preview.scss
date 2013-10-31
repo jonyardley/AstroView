@@ -1,0 +1,56 @@
+#preview {
+	margin: 20px;
+
+	h3 {
+		font-weight: 900;
+		margin: 10px 0;
+	}
+
+	.image {
+		border-radius: 2px;
+		width: 62%;
+		margin-right: 1.5%;
+		float: left;
+		background: $background;
+		min-height: 512px;
+		
+		.canvasWrapper {
+			padding: 10px;
+		}
+
+		canvas {
+			width: 100%;
+			background: #000;
+		}
+	}
+
+	.controls {
+		padding: 0.5%;
+		border-radius: 2px;
+		float: left;
+		width: 35%;
+		background: $background;
+		min-height: 512px;
+	}
+
+	.fitsHeader table {
+		font-size: 13px;
+		width: 100%;
+		line-height: 1.2;
+
+		td {
+			padding: 5px;
+			vertical-align: middle;
+		}
+
+		tr td:first-child {
+			font-weight: 700;
+		}
+
+		tr:nth-child(odd){
+			background: rgba(255,255,255,0.1);
+		}
+
+	}
+}
+

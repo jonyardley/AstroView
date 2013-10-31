@@ -1,0 +1,52 @@
+@import url(reset.css);
+@import url(fonts.css);
+html, body {
+  height: 100%;
+  min-height: 100%; }
+
+body {
+  font-family: 'Noto Sans', 'Arial', 'Sans-serif';
+  background: url(../img/bg.png) no-repeat black center -50px; }
+
+#header {
+  background: rgba(255, 255, 255, 0.5);
+  padding: 20px;
+  font-weight: 700; }
+  #header .fileInput {
+    float: right; }
+
+#preview {
+  margin: 20px; }
+  #preview h3 {
+    font-weight: 900;
+    margin: 10px 0; }
+  #preview .image {
+    border-radius: 2px;
+    width: 62%;
+    margin-right: 1.5%;
+    float: left;
+    background: rgba(255, 255, 255, 0.5);
+    min-height: 512px; }
+    #preview .image .canvasWrapper {
+      padding: 10px; }
+    #preview .image canvas {
+      width: 100%;
+      background: #000; }
+  #preview .controls {
+    padding: 0.5%;
+    border-radius: 2px;
+    float: left;
+    width: 35%;
+    background: rgba(255, 255, 255, 0.5);
+    min-height: 512px; }
+  #preview .fitsHeader table {
+    font-size: 13px;
+    width: 100%;
+    line-height: 1.2; }
+    #preview .fitsHeader table td {
+      padding: 5px;
+      vertical-align: middle; }
+    #preview .fitsHeader table tr td:first-child {
+      font-weight: 700; }
+    #preview .fitsHeader table tr:nth-child(odd) {
+      background: rgba(255, 255, 255, 0.1); }
