@@ -10,8 +10,14 @@ http://jonyardley.github.io/aFIT
 
 [Under Construction!]
 
+
 ###Production URL
 
 The app is currently is currently in early development however I will try to maintain a stable release on this URL:
 
 http://afit.eu01.aws.af.cm/
+
+
+If you don't have a FITS image to hand you can load in externally hosted FITS images by appending ?file=[URL]. Try this Chandra image of the crab nebula...
+
+http://afit.eu01.aws.af.cm/?file=http://chandra.harvard.edu/photo/2009/crab/fits/crab.fits
