@@ -1,6 +1,5 @@
 #header {
 	background: $panel;
-	border-radius: 3px;
 	overflow: hidden;
 	font-weight: 700;
 	line-height: 50px;
@@ -8,8 +7,9 @@
 
 	h1 {
 		float: right;
-		background: #E76049;
+		background: $highlight;
 		line-height: 50px;
 		padding: 0 32px;
+		text-shadow: -1px -1px 0 darken(#E76049, 20%);
 	}
 }

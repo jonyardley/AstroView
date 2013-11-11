@@ -1,7 +1,15 @@
+$panel: #1D2123;
+$highlight: #E76049;
+$greyMedium: lighten($panel, 10%);
+$greyLight: lighten($panel, 40%);
+
 @import 'reset.css';
 @import 'fonts.css';
+@import 'inputFile';
+@import 'ion.rangeSlider.css';
+@import 'ion.rangeSlider.skinFlat.css';
 
-$panel: #1D2123;
+
 
 html, body {
 	height: 100%;
@@ -14,20 +22,46 @@ body {
 	background: #D3D4D5;
 }
 
+input, textarea, button {
+	font-family: 'Noto Sans', 'Arial', 'Sans-serif';
+	font-weight: 700;
+	&:focus{
+		outline-width: 0;
+	}
+}
+
 #main {
 	padding: 16px;
+	position: relative;
 }
 
 h2 {
 	margin-bottom: 16px;
 	font-size: 1.2em;
+}
+
+h2, h3, h4 {
 	font-weight: 700;
+	color: #eee;
+	text-shadow: -1px -1px 0 #000;
+}
+
+#content h2 {
+	background: $greyMedium;
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	line-height: 32px;
+	padding: 8px 16px;
+	text-shadow: -1px -1px 0 darken($greyMedium, 20%);
 }
 
 .panel {
+	position: relative;
 	background: $panel;
-	padding: 16px;
-	border-radius: 3px;
+	padding: 64px 16px 16px;
+	overflow: hidden;
 }
 
 .imageRow {
@@ -36,6 +70,7 @@ h2 {
 	margin-bottom: 16px;
 	border-radius: 4;
 }
+
 
 @import '../mods/header/header';
 @import '../mods/index/index';

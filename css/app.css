@@ -1,5 +1,31 @@
 @import url(reset.css);
 @import url(fonts.css);
+@import url(ion.rangeSlider.css);
+@import url(ion.rangeSlider.skinFlat.css);
+input[type="file"] {
+  position: absolute;
+  width: 0;
+  height: 0;
+  visibility: hidden; }
+  input[type="file"].real-file-input-ie {
+    height: 42px;
+    width: 135px;
+    font-size: 100px;
+    visibility: visible;
+    opacity: 0;
+    cursor: pointer; }
+
+.pretty-file-input {
+  border: none;
+  background: #fff;
+  padding: 12px 32px;
+  font-size: 1em;
+  cursor: pointer;
+  font-weight: bold; }
+  .pretty-file-input:hover {
+    background: #e76049;
+    color: #fff; }
+
 html, body {
   height: 100%;
   min-height: 100%; }
@@ -9,18 +35,40 @@ body {
   color: #fff;
   background: #D3D4D5; }
 
+input, textarea, button {
+  font-family: 'Noto Sans', 'Arial', 'Sans-serif';
+  font-weight: 700; }
+  input:focus, textarea:focus, button:focus {
+    outline-width: 0; }
+
 #main {
-  padding: 16px; }
+  padding: 16px;
+  position: relative; }
 
 h2 {
   margin-bottom: 16px;
-  font-size: 1.2em;
-  font-weight: 700; }
+  font-size: 1.2em; }
+
+h2, h3, h4 {
+  font-weight: 700;
+  color: #eee;
+  text-shadow: -1px -1px 0 #000; }
+
+#content h2 {
+  background: #343b3f;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  line-height: 32px;
+  padding: 8px 16px;
+  text-shadow: -1px -1px 0 #060707; }
 
 .panel {
+  position: relative;
   background: #1d2123;
-  padding: 16px;
-  border-radius: 3px; }
+  padding: 64px 16px 16px;
+  overflow: hidden; }
 
 .imageRow {
   background: #75797B;
@@ -30,49 +78,30 @@ h2 {
 
 #header {
   background: #1d2123;
-  border-radius: 3px;
   overflow: hidden;
   font-weight: 700;
   line-height: 50px;
   margin-bottom: 16px; }
   #header h1 {
     float: right;
-    background: #E76049;
+    background: #e76049;
     line-height: 50px;
-    padding: 0 32px; }
+    padding: 0 32px;
+    text-shadow: -1px -1px 0 #b22e18; }
 
-#preview {
-  margin: 20px; }
-  #preview h3 {
-    font-weight: 900;
-    margin: 10px 0; }
-  #preview .image {
-    border-radius: 2px;
-    width: 62%;
-    margin-right: 1.5%;
-    float: left;
-    background: #1d2123;
-    min-height: 512px; }
-    #preview .image .canvasWrapper {
-      padding: 10px; }
-    #preview .image canvas {
-      width: 100%;
-      background: #000; }
-  #preview .controls {
-    padding: 0.5%;
-    border-radius: 2px;
-    float: left;
-    width: 35%;
-    background: #1d2123;
-    min-height: 512px; }
-  #preview .fitsHeader table {
-    font-size: 13px;
-    width: 100%;
-    line-height: 1.2; }
-    #preview .fitsHeader table td {
-      padding: 5px;
-      vertical-align: middle; }
-    #preview .fitsHeader table tr td:first-child {
-      font-weight: 700; }
-    #preview .fitsHeader table tr:nth-child(odd) {
-      background: rgba(255, 255, 255, 0.1); }
+.index {
+  text-align: center;
+  width: 500px;
+  margin: 0 auto; }
+
+.preview .canvasWrapper {
+  float: left;
+  width: auto;
+  width: 200px;
+  text-align: center; }
+  .preview .canvasWrapper canvas {
+    display: inline-block; }
+.preview .field.right {
+  float: right; }
+.preview .imageControls {
+  margin-left: 220px; }

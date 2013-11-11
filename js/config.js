@@ -13,7 +13,9 @@ require.config({
 		Handlebars: '../lib/handlebars',
 		text: '../lib/require.text',
 		hbars: '../lib/hbars',
-		mods: '../mods'
+		mods: '../mods',
+		fileInput: '../lib/file.input',
+		ionSlider: '../lib/ion.rangeSlider.min'
 	},
 
 	shim: {
@@ -36,6 +38,12 @@ require.config({
 		},
 		Handlebars: {
 			exports: 'Handlebars'
+		},
+		fileInput: {
+			deps: ['jquery']
+		},
+		ionSlider: {
+			deps: ['jquery']
 		}
 	},
 

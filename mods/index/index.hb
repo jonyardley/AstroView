@@ -1,7 +1,7 @@
-<h2>Start by selecting a FITS image</h2>
+<h2>Select an image to begin</h2>
 
 <ul class="images"></ul>
 
-<div class="imageRow">
-	Select an image: <input id="selectFile" type="file"/>
+<div class="imageInput">
+	<input id="selectFile" type="file"/>
 </div>

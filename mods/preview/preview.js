@@ -4,25 +4,27 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'hbars!./preview'
-], function($, _, Backbone, Marionette, App, tmpl){
+	'hbars!./preview',
+	'mods/renderImage/renderImage',
+	'ionSlider'
+], function($, _, Backbone, Marionette, App, tmpl, renderImage, ionSlider){
 
 	var Preview = Backbone.Marionette.ItemView.extend({
 
 		template: tmpl,
 		id: 'preview',
+		className: 'panel preview',
 
 		ui: {
-			max: '#max',
-			min: '#min',
-			scale: '#scale'
+			minMax: '#minMax',
+			scale: '#scale',
+			fullRange: '#fullRange'
 		},
 
 		events: {
-			'change #min': 'updateMin',
-			'change #max': 'updateMax',
 			'change #scale': 'updateScale',
-			'click #save': 'savePreview'
+			'click #save': 'savePreview',
+			'click #fullRange': 'updateFullRange'
 		},
 
 		savePreview: function(e){
@@ -31,97 +33,83 @@ define([
 			imageWindow.document.write('<img src="'+imageUrl+'"/>');
 		},
 
-		updateMin: function(e){
-			this.min = e.target.valueAsNumber;
-			this.renderPreview();
-		},
+		updateMinMax: function(e){
+			var options = this.model.get('options');
+			options.min = e.fromNumber;
+			options.max = e.toNumber;
 
-		updateMax: function(e){
-			this.max = e.target.valueAsNumber;
-			this.renderPreview();
+			this.renderImage();
 		},
 
 		updateScale: function(e){
-			this.scaleType = e.target.value;
-			this.renderPreview();
+			var options = this.model.get('options');
+			options.scaleType = e.target.value;
+			
+			this.renderImage();
 		},
 
-		scale: function(value){
-			var output;
-			switch(this.scaleType){
-				case 'linear':
-					output = ((value + this.min) / this.max) * 255;
-					break
-				case 'sqrt':
-					output = Math.sqrt((value + this.min) / this.max ) * 255;
-					break
-				case 'cuberoot':
-					output = Math.pow((value + this.min) / this.max, 0.333) * 255;
-					break
-				case 'log':
-					output = Math.log((value + this.min) / this.max ) * 255;
-					break
-				case 'loglog':
-					output = Math.log(Math.log((value + this.min) / this.max )) * 255;
-					break
-				case 'sqrtlog':
-					output = Math.sqrt(Math.log((value + this.min) / this.max )) * 255;
-					break
-			}
-
-			return output;
+		updateFullRange: function(e){
+			var checked = e.target.checked;
+			this.ui.minMax.ionRangeSlider("update", {
+				max: (checked)? 24000 : this.fits.image.bzero || 1000,
+				from: this.model.get('options').min,
+				to: this.model.get('options').max
+			});
 		},
 
 
-		renderPreview: function(){
-			var fits = this.fits;
-			var i, ii;
-			for(i=0;i<this.height;i++){
-				var x = (i*4) * fits.image.width;
-				for(ii=0;ii<this.width;ii++){
-					var y = ii * 4;
-					var pixel = x+y;
-					var index = ((i * this.width) + ii) * 4;
-					var value = this.scale(fits.imageData[pixel]);
+		renderImage: function(){
+			var context = this.context,
+				imageBuffer = this.preview,
+				fits = this.model.toJSON();
 
-					this.preview.data[index+0] = value;
-			    	this.preview.data[index+1] = value;
-			    	this.preview.data[index+2] = value;
-			    	this.preview.data[index+3] = 255;
-
-				}
-			}
-
-			this.context.putImageData(this.preview, 0, 0);	
+			renderImage(context, imageBuffer, this.imageScale, fits);
 		},
-
 
 		onRender: function(){
-			var fits = this.fits = this.model.toJSON();
+			var fits = this.model;
+			var fitsImage = this.model.get('image');
+			this.imageScale = 0.1;
 
 			this.$canvas = this.$el.find('canvas');
-			this.context = this.$canvas[0].getContext('2d');	
-			this.width = Math.floor(fits.image.width * 0.25);
-			this.height = Math.floor(fits.image.height * 0.25);
-			this.$canvas.attr('width', this.width);
-			this.$canvas.attr('height', this.height);
-			this.preview = this.context.createImageData(this.width, this.height);
-			this.min = 0;
-			this.max = fits.image.bzero;
-			this.ui.min.val(this.min);
-			this.ui.max.val(this.max);
-			this.scaleType = this.ui.scale.val();
-			this.renderPreview();
-			
-		},
+			this.context = this.$canvas[0].getContext('2d');
 
-		serializeData: function(){
-			return this.model.get('cards');	
+			
+			fits.set('options', {
+				width: Math.floor(fitsImage.width * this.imageScale),
+				height: Math.floor(fitsImage.height * this.imageScale),
+				min: 0,
+				max: fitsImage.bzero,
+				scaleType: this.ui.scale.val()
+			});
+
+			this.$canvas.attr('width', fits.get('options').width);
+			this.$canvas.attr('height', fits.get('options').height);
+			
+			this.preview = this.context.createImageData(
+				fits.get('options').width,
+				fits.get('options').height
+			);
+
+			this.renderImage();
+
+			var self = this;
+			_.defer(function(){
+				self.ui.minMax.ionRangeSlider({
+					type: 'double',
+					min: -100,
+					max: fitsImage.bzero || 1000,
+					from: fits.get('options').min || 0,
+					to: fitsImage.bzero || 1000,
+					onChange: self.updateMinMax
+				});
+			});
+			
 		},
 
 
 		initialize: function(){
-			_.bindAll(this, 'updateMin', 'updateMax', 'savePreview', 'updateScale');
+			_.bindAll(this, 'updateMinMax', 'updateScale', 'updateFullRange', 'renderImage');
 		}
 
 	});

@@ -1,18 +1,13 @@
-<div class="image">
-	<div class="canvasWrapper">
-		<canvas></canvas>
-	</div>
+<h2>Preview</h2>
+
+<div class="canvasWrapper">
+	<canvas></canvas>
 </div>
 
-<div class="controls">
-	<div class="field">
-		<label>Min: </label>
-		<input id="min" type="range" min="0" max="64000" value="0"/>
-	</div>
-
-	<div class="field">
-		<label>Max: </label>
-		<input id="max" type="range" min="0" max="64000"/>
+<div class="imageControls">
+	
+	<div class="field right">
+		<label>Full range:</label><input type="checkbox" id="fullRange" value="1"/>
 	</div>
 
 	<div class="field">
@@ -28,19 +23,7 @@
 	</div>
 
 	<div class="field">
-		<button id="save">Save Preview</button>
+		<input type="text" id="minMax" name="minMax" />
 	</div>
 
-	<div class="fitsHeader">
-		<h3>Image Info</h3>
-		<table>
-			<tr><td>Object:</td><td>{{OBJECT.value}}</td></tr>
-			<tr><td>Date:</td><td>{{DATE.value}}</td></tr>
-			<tr><td>User:</td><td>{{USERID.value}}</td></tr>
-			<tr><td>RA:</td><td>{{RA.value}}</td></tr>
-			<tr><td>DEC:</td><td>{{DEC.value}}</td></tr>
-			<tr><td>Exposure Time:</td><td>{{EXPTIME.value}}s</td></tr>
-			<tr><td>Filter:</td><td>{{FILTER1.value}}</td></tr>
-		</table>
-	<div>
 </div>

@@ -1,0 +1,29 @@
+input[type="file"] {
+	position: absolute;
+	width: 0;
+	height: 0;
+	visibility: hidden;
+
+	&.real-file-input-ie {
+		height: 42px;
+		width: 135px;
+		font-size: 100px;
+		visibility: visible;
+		opacity: 0;
+		cursor: pointer;
+	}
+}
+
+.pretty-file-input {
+	border: none;
+	background: #fff;
+	padding: 12px 32px;
+	font-size: 1em;
+	cursor: pointer;
+	font-weight: bold;
+
+	&:hover {
+		background: $highlight;
+		color: #fff;
+	}
+}

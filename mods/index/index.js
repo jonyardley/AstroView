@@ -5,8 +5,9 @@ define([
 	'Marionette',
 	'app',
 	'hbars!./index',
-	'mods/preview/preview'
-], function($, _, Backbone, Marionette, App, tmpl, Preview){
+	'mods/preview/preview',
+	'fileInput'
+], function($, _, Backbone, Marionette, App, tmpl, Preview, fileInput){
 
 	return Backbone.Marionette.CompositeView.extend({
 
@@ -19,6 +20,10 @@ define([
 
 		showPreview: function(fitsModel){
 			App.content.show( new Preview({model: fitsModel}) );
+		},
+
+		onRender: function(){
+			this.$el.find('input[type=file]').prettyFileInput();	
 		},
 
 		fileSelected: function(e){
