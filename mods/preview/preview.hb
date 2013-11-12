@@ -26,4 +26,7 @@
 		<input type="text" id="minMax" name="minMax" />
 	</div>
 
+	<div class="field">
+		<button id="done">Apply changes</button>
+	</div>
 </div>

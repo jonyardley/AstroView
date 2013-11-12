@@ -22,11 +22,42 @@ body {
 	background: #D3D4D5;
 }
 
+#loader {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0,0,0,0.9);
+	span {
+		position: absolute;
+		top: 50%;
+		line-height: 30px;
+		width: 100%;
+		text-align: center;
+		margin-top: 15px;
+	}
+}
+
 input, textarea, button {
 	font-family: 'Noto Sans', 'Arial', 'Sans-serif';
 	font-weight: 700;
 	&:focus{
 		outline-width: 0;
+	}
+}
+
+button {
+	border: none;
+	background: #fff;
+	padding: 8px 12px;
+	font-size: 0.8em;
+	cursor: pointer;
+	font-weight: bold;
+
+	&:hover {
+		background: $highlight;
+		color: #fff;
 	}
 }
 
@@ -75,3 +106,4 @@ h2, h3, h4 {
 @import '../mods/header/header';
 @import '../mods/index/index';
 @import '../mods/preview/preview';
+@import '../mods/fullImage/fullImage';

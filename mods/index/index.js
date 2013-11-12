@@ -19,10 +19,14 @@ define([
 		},
 
 		showPreview: function(fitsModel){
+			App.vent.trigger('loaderHide');
 			App.content.show( new Preview({model: fitsModel}) );
 		},
 
 		onRender: function(){
+			if(!this.fileIsRemote){
+				App.vent.trigger('loaderHide');
+			}
 			this.$el.find('input[type=file]').prettyFileInput();	
 		},
 
@@ -39,6 +43,7 @@ define([
 		},
 
 		remoteFile: function(url){
+			App.vent.trigger('loaderShow');
 			var newImage = App.fits.add({
 					file: '/remoteFits?url=' + url,
 					label: 'Image ' + (App.fits.length + 1)
@@ -50,8 +55,9 @@ define([
 
 
 		initialize: function(){
-			var file = window.location.search.split('?file=');
+			file = window.location.search.split('?file=');
 			if(file[1]){
+				this.fileIsRemote = true;
 				this.remoteFile(file[1]);
 			}
 		}

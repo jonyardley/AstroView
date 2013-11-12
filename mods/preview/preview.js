@@ -23,14 +23,14 @@ define([
 
 		events: {
 			'change #scale': 'updateScale',
-			'click #save': 'savePreview',
-			'click #fullRange': 'updateFullRange'
+			'click #done': 'done',
+			'click #fullRange': 'updateFullRange',
 		},
 
-		savePreview: function(e){
-			var imageUrl = this.$canvas[0].toDataURL();
-			var imageWindow = window.open();
-			imageWindow.document.write('<img src="'+imageUrl+'"/>');
+		done: function(e){
+			App.vent.trigger('fullImage', {
+				index: this.model.collection.indexOf(this.model)
+			});
 		},
 
 		updateMinMax: function(e){
@@ -63,53 +63,58 @@ define([
 				imageBuffer = this.preview,
 				fits = this.model.toJSON();
 
-			renderImage(context, imageBuffer, this.imageScale, fits);
+			renderImage(context, imageBuffer, this.imageScale, this.width, this.height, fits);
 		},
 
 		onRender: function(){
-			var fits = this.model;
-			var fitsImage = this.model.get('image');
-			this.imageScale = 0.1;
+			if(this.model.get('imageData')){
+				var fits = this.model;
+				var fitsImage = this.model.get('image');
+				
+				this.imageScale = 0.1;
+				this.width = Math.floor(fitsImage.width * this.imageScale),
+				this.height = Math.floor(fitsImage.height * this.imageScale),
 
-			this.$canvas = this.$el.find('canvas');
-			this.context = this.$canvas[0].getContext('2d');
+				this.$canvas = this.$el.find('canvas');
+				this.context = this.$canvas[0].getContext('2d');
 
-			
-			fits.set('options', {
-				width: Math.floor(fitsImage.width * this.imageScale),
-				height: Math.floor(fitsImage.height * this.imageScale),
-				min: 0,
-				max: fitsImage.bzero,
-				scaleType: this.ui.scale.val()
-			});
+				
+				if(!fits.get('options')){
+					fits.set('options', {
+						min: 0,
+						max: fitsImage.bzero,
+						scaleType: this.ui.scale.val()
+					});
+				}
 
-			this.$canvas.attr('width', fits.get('options').width);
-			this.$canvas.attr('height', fits.get('options').height);
-			
-			this.preview = this.context.createImageData(
-				fits.get('options').width,
-				fits.get('options').height
-			);
+				this.$canvas.attr('width', this.width);
+				this.$canvas.attr('height', this.height);
+				
+				this.preview = this.context.createImageData(
+					this.width,
+					this.height
+				);
 
-			this.renderImage();
+				this.renderImage();
 
-			var self = this;
-			_.defer(function(){
-				self.ui.minMax.ionRangeSlider({
-					type: 'double',
-					min: -100,
-					max: fitsImage.bzero || 1000,
-					from: fits.get('options').min || 0,
-					to: fitsImage.bzero || 1000,
-					onChange: self.updateMinMax
+				var self = this;
+				_.defer(function(){
+					self.ui.minMax.ionRangeSlider({
+						type: 'double',
+						min: -100,
+						max: fitsImage.bzero || 1000,
+						from: fits.get('options').min || 0,
+						to: fitsImage.bzero || 1000,
+						onChange: self.updateMinMax
+					});
 				});
-			});
+			}
 			
 		},
 
 
 		initialize: function(){
-			_.bindAll(this, 'updateMinMax', 'updateScale', 'updateFullRange', 'renderImage');
+			_.bindAll(this, 'updateMinMax', 'updateScale', 'updateFullRange', 'renderImage', 'done');
 		}
 
 	});

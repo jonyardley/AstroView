@@ -15,7 +15,7 @@ define([
 			imageData: null,
 			header: null,
 			image: null,
-			options: {}
+			options: null
 		},
 		
 

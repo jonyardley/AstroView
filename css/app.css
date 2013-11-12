@@ -35,11 +35,37 @@ body {
   color: #fff;
   background: #D3D4D5; }
 
+#loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9); }
+  #loader span {
+    position: absolute;
+    top: 50%;
+    line-height: 30px;
+    width: 100%;
+    text-align: center;
+    margin-top: 15px; }
+
 input, textarea, button {
   font-family: 'Noto Sans', 'Arial', 'Sans-serif';
   font-weight: 700; }
   input:focus, textarea:focus, button:focus {
     outline-width: 0; }
+
+button {
+  border: none;
+  background: #fff;
+  padding: 8px 12px;
+  font-size: 0.8em;
+  cursor: pointer;
+  font-weight: bold; }
+  button:hover {
+    background: #e76049;
+    color: #fff; }
 
 #main {
   padding: 16px;
@@ -101,7 +127,25 @@ h2, h3, h4 {
   text-align: center; }
   .preview .canvasWrapper canvas {
     display: inline-block; }
+.preview .field {
+  padding-bottom: 8px; }
 .preview .field.right {
   float: right; }
 .preview .imageControls {
   margin-left: 220px; }
+
+.fullImage {
+  height: 550px;
+  padding-top: 16px; }
+  .fullImage .tools {
+    padding-bottom: 8px; }
+  .fullImage .canvasWrapper {
+    width: 100%;
+    height: 504px;
+    overflow: hidden;
+    position: relative;
+    background: #000;
+    border: 1px solid #000; }
+    .fullImage .canvasWrapper canvas {
+      position: relative;
+      cursor: move; }
