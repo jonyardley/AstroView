@@ -7,7 +7,8 @@ define([
 	'mods/header/header',
 	'mods/index/index',
 	'mods/fits/fitsCollection',
-	'mods/fullImage/fullImage'
+	'mods/fullImage/fullImage',
+	'mods/fitsHeader/header'
 ], function(
 	$,
 	_,
@@ -17,7 +18,8 @@ define([
 	HeaderView,
 	IndexView,
 	FitsCollection,
-	FullImage
+	FullImage,
+	FitsHeader
 ){
 
 	$(function(){
@@ -25,11 +27,19 @@ define([
 		App.start();
 		
 		//App View Listeners
-		App.vent.on('fullImage', function(e){
+		App.vent.on('fullImage', function(model){
 			var fullImage = new FullImage({
-				model: App.fits.at(e.index)
+				model: model
 			});
 			App.content.show(fullImage);
+		});
+
+
+		App.vent.on('header', function(model){
+			var fitsHeader = new FitsHeader({
+				model: model
+			});
+			App.content.show(fitsHeader);
 		});
 
 		App.vent.on('loaderHide', function(){

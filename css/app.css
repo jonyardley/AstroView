@@ -1430,6 +1430,7 @@ h2, h3, h4 {
   margin-bottom: 16px;
   border-radius: 4; }
 
+/** Components **/
 button {
   border: none;
   margin: 0;
@@ -1443,7 +1444,16 @@ button {
     background: #e76049;
     color: #fff; }
 
-/** Components **/
+.tools {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px; }
+  .tools .fa {
+    font-size: 1.1em;
+    padding-left: 5px;
+    line-height: 1.1em; }
+
 .menu {
   display: inline-block;
   position: relative;
@@ -1532,11 +1542,6 @@ button {
   bottom: 0;
   right: 0;
   padding-top: 66px; }
-  .fullImage .tools {
-    position: absolute;
-    top: 16px;
-    left: 16px;
-    right: 16px; }
   .fullImage .canvasWrapper {
     width: 100%;
     height: 100%;
@@ -1547,3 +1552,29 @@ button {
     .fullImage .canvasWrapper canvas {
       position: relative;
       cursor: move; }
+
+.fitsHeader {
+  position: relative;
+  padding-top: 66px;
+  border-bottom: 16px solid #D3D4D5; }
+  .fitsHeader h3 {
+    display: inline-block;
+    color: #fff;
+    line-height: 1.3em;
+    font-size: 1.5em; }
+  .fitsHeader #back {
+    float: right; }
+  .fitsHeader .tools {
+    overflow: hidden; }
+  .fitsHeader table {
+    width: 100%;
+    background: #fff;
+    color: #000; }
+  .fitsHeader tr:nth-child(odd) {
+    background: #eaeaea; }
+  .fitsHeader table, .fitsHeader tr, .fitsHeader td, .fitsHeader th {
+    text-align: left; }
+  .fitsHeader th, .fitsHeader td {
+    padding: 8px; }
+  .fitsHeader th {
+    font-weight: bold; }

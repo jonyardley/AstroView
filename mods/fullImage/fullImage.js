@@ -26,7 +26,12 @@ define([
 			'click #zoom50': 'zoom50',
 			'click #zoom100': 'zoom100',
 			'click #preview': 'preview',
-			'click #save': 'save'
+			'click #save': 'save',
+			'click #showHeader': 'showHeader'
+		},
+
+		showHeader: function(){
+			App.vent.trigger('header', this.model);	
 		},
 
 		preview: function(){
@@ -134,7 +139,7 @@ define([
 
 
 		initialize: function(){
-			_.bindAll(this, 'startDrag', 'stopDrag', 'moveCanvas', 'preview', 'save', 'zoomFit', 'zoom50', 'zoom100');
+			_.bindAll(this, 'startDrag', 'stopDrag', 'moveCanvas', 'preview', 'save', 'zoomFit', 'zoom50', 'zoom100', 'showHeader');
 		}
 
 

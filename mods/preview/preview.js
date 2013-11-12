@@ -28,9 +28,7 @@ define([
 		},
 
 		done: function(e){
-			App.vent.trigger('fullImage', {
-				index: this.model.collection.indexOf(this.model)
-			});
+			App.vent.trigger('fullImage', this.model);
 		},
 
 		updateMinMax: function(e){

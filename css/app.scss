@@ -101,6 +101,8 @@ h2, h3, h4 {
 	border-radius: 4;
 }
 
+/** Components **/
+
 button {
 	border: none;
 	margin: 0;
@@ -117,7 +119,20 @@ button {
 	}
 }
 
-/** Components **/
+.tools {
+	position: absolute;
+	top: 16px;
+	left: 16px;
+	right: 16px;
+
+	.fa {
+		font-size: 1.1em;
+		padding-left: 5px;
+		line-height: 1.1em;
+	}
+}
+
+
 .menu {
 	display: inline-block;
 	position: relative;
@@ -166,3 +181,4 @@ button {
 @import '../mods/index/index';
 @import '../mods/preview/preview';
 @import '../mods/fullImage/fullImage';
+@import '../mods/fitsHeader/header';
