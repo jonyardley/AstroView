@@ -11,5 +11,11 @@
 		line-height: 50px;
 		padding: 0 32px;
 		text-shadow: -1px -1px 0 darken(#E76049, 20%);
+	
+		.small {
+			font-size: 0.7em;
+			position: relative;
+			top: -5px;
+		}
 	}
 }

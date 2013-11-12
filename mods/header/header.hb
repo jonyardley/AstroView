@@ -1,1 +1,1 @@
-<h1>aFIT</h1>
+<h1>aFIT <span class="small">(beta)</span></h1>

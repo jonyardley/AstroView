@@ -114,6 +114,10 @@ h2, h3, h4 {
     line-height: 50px;
     padding: 0 32px;
     text-shadow: -1px -1px 0 #b22e18; }
+    #header h1 .small {
+      font-size: 0.7em;
+      position: relative;
+      top: -5px; }
 
 .index {
   text-align: center;
