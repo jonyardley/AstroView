@@ -6,15 +6,18 @@ var filePrefix = '/remoteFits';
 var server = connect()
 	.use(function(req, res, next){
 		if(req.url.indexOf(filePrefix) === 0){
-			console.log(req);
-			//proxy.proxyRequest(req, res, fileProxy);
 			var fileUrl = req._parsedUrl.query.split('url=');
+			
 			if(fileUrl[1]){
+				req.pause();
 				var url = fileUrl[1];
 				var x = request(url);
-				req.pipe(x);
-				x.pipe(res);
+				//req.pipe(x);
+				x.pipe(res, {end:true});
+				//console.log(x, req);
+				req.resume();
 			}
+
 		}else{
 			next();
 		}
