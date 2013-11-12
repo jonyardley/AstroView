@@ -51,7 +51,7 @@ define([
 		updateFullRange: function(e){
 			var checked = e.target.checked;
 			this.ui.minMax.ionRangeSlider("update", {
-				max: (checked)? 24000 : this.fits.image.bzero || 1000,
+				max: (checked)? 24000 : this.model.get('image').bzero || 1000,
 				from: this.model.get('options').min,
 				to: this.model.get('options').max
 			});
@@ -81,7 +81,7 @@ define([
 				
 				if(!fits.get('options')){
 					fits.set('options', {
-						min: 0,
+						min: -100,
 						max: fitsImage.bzero,
 						scaleType: this.ui.scale.val()
 					});
@@ -99,12 +99,13 @@ define([
 
 				var self = this;
 				_.defer(function(){
+					var options = self.model.get('options');
 					self.ui.minMax.ionRangeSlider({
 						type: 'double',
-						min: -100,
+						min:  0,
 						max: fitsImage.bzero || 1000,
-						from: fits.get('options').min || 0,
-						to: fitsImage.bzero || 1000,
+						from: options.min || 0,
+						to: options.max || 1000,
 						onChange: self.updateMinMax
 					});
 				});

@@ -3,5 +3,5 @@
 <ul class="images"></ul>
 
 <div class="imageInput">
-	<input id="selectFile" type="file"/>
+	<input id="selectFile" type="file" accept=".fits,.fit"/>
 </div>

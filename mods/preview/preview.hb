@@ -27,6 +27,6 @@
 	</div>
 
 	<div class="field">
-		<button id="done">Apply changes</button>
+		<button id="done">Apply <span class="fa fa-check"></span></button>
 	</div>
 </div>

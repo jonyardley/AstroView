@@ -15,7 +15,8 @@ define([
 		className: 'panel fullImage',
 
 		ui: {
-			canvas: 'canvas'
+			canvas: 'canvas',
+			canvasWrapper: '.canvasWrapper'
 		},
 
 		events: {
@@ -43,27 +44,40 @@ define([
 
 
 		zoomFit: function(){
-			if(this.$el.height > this.$el.width){
-				this.ui.canvas.css({width: '100%', height: 'auto'});
+			var css;
+			if(this.ui.canvasWrapper.height() > this.ui.canvasWrapper.width()){
+				css = {width: '100%', height: 'auto'};
 			}else{
-				this.ui.canvas.css({height: '100%', width: 'auto'});
+				css = {height: '100%', width: 'auto'};
 			}
+			this.ui.canvas.css(css);
+			this.ui.canvas.css({
+				top: -((this.ui.canvas.height() - this.ui.canvasWrapper.height()) / 2),
+				left: -((this.ui.canvas.width() - this.ui.canvasWrapper.width()) / 2)
+			});
+			
 			return false;
 		},
 
 		zoom50: function(){
-			this.ui.canvas.css({
+			var css = {
 				width: parseInt(this.ui.canvas.attr('width'), 10) / 2,
 				height: parseInt(this.ui.canvas.attr('height'), 10) / 2
-			});
+			};
+			css.top = -((css.height - this.ui.canvasWrapper.height()) / 2);
+			css.left = -((css.width - this.ui.canvasWrapper.width()) / 2);
+			this.ui.canvas.css(css);
 			return false;
 		},
 
 		zoom100: function(){
-			this.ui.canvas.css({
+			var css = {
 				width: this.ui.canvas.attr('width'),
-				height: this.ui.canvas.attr('height')
-			});
+				height: this.ui.canvas.attr('height'),
+			};
+			css.top = -((css.height - this.ui.canvasWrapper.height()) / 2);
+			css.left = -((css.width - this.ui.canvasWrapper.width()) / 2);
+			this.ui.canvas.css(css);
 			return false;
 		},
 
@@ -110,11 +124,17 @@ define([
 			this.imageBuffer = this.context.createImageData( width, height );
 
 			renderImage(this.context, this.imageBuffer, 1, width, height, this.model.toJSON());
+
+			this.ui.canvas.css({
+				top: -((height - this.ui.canvasWrapper.height()) / 2),
+				left: -((width - this.ui.canvasWrapper.width()) / 2)
+			});
 		},
 
 
+
 		initialize: function(){
-			_.bindAll(this, 'startDrag', 'stopDrag', 'moveCanvas', 'preview', 'save');
+			_.bindAll(this, 'startDrag', 'stopDrag', 'moveCanvas', 'preview', 'save', 'zoomFit', 'zoom50', 'zoom100');
 		}
 
 

@@ -2,4 +2,17 @@
 	text-align: center;
 	width: 500px;
 	margin: 0 auto;
+
+	button {
+		position: relative;
+		padding-left: 46px;
+		padding-right: 23px;
+	}
+
+	.fa {
+		position: absolute;
+		left: 16px;
+		font-size: 1.3em;
+		margin-top: -2px;
+	}
 }
