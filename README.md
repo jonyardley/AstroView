@@ -9,8 +9,8 @@ http://jonyardley.github.io/aFIT
 
 
 ##Environments
-* (aFIT Producation: http://afit.eu01.aws.af.cm/)[http://afit.eu01.aws.af.cm/]
-* (aFIT Development: http://afit-dev.eu01.aws.af.cm/)[http://afit-dev.eu01.aws.af.cm/]
+* aFIT Producation: http://afit.eu01.aws.af.cm/
+* aFIT Development: http://afit-dev.eu01.aws.af.cm/
 
 ###Loading external files
 If you don't have a FITS image to hand you can load in externally hosted FITS images by appending:
