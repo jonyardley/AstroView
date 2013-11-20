@@ -56,7 +56,6 @@ define([
 				this.fileIsRemote = true;
 				this.remoteFile(file[1]);
 			}
-			console.log(this.collection);
 		}
 
 	});

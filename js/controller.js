@@ -20,7 +20,6 @@ define([
 		},
 
 
-
 		image: function(fitsId){
 			var model = App.fits.get(fitsId);
 			if(model){
