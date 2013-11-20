@@ -4,7 +4,7 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'hbars!./index',
+	'hbars!./images',
 	'mods/preview/preview',
 	'fileInput'
 ], function($, _, Backbone, Marionette, App, tmpl, Preview, fileInput){

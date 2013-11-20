@@ -1362,7 +1362,8 @@ html, body {
 body {
   font-family: 'Noto Sans', 'Arial', 'Sans-serif';
   color: #fff;
-  background: #D3D4D5; }
+  background: url(../img/bg.png);
+  box-shadow: rgba(0, 0, 0, 0.4) 0 0 100px INSET; }
 
 #loader {
   position: fixed;
@@ -1488,18 +1489,18 @@ button {
 
 #header {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  right: 16px;
+  top: 0px;
+  left: 0px;
+  right: 0px;
   background: #1d2123;
   overflow: hidden;
   font-weight: 700;
-  line-height: 50px;
+  line-height: 42px;
   margin-bottom: 16px; }
   #header h1 {
     float: right;
     background: #e76049;
-    line-height: 50px;
+    line-height: 42px;
     padding: 0 32px;
     text-shadow: -1px -1px 0 #b22e18; }
     #header h1 .small {

@@ -1,18 +1,18 @@
 #header {
 	position: absolute;
-	top: 16px;
-	left: 16px;
-	right: 16px;
+	top: 0px;
+	left: 0px;
+	right: 0px;
 	background: $panel;
 	overflow: hidden;
 	font-weight: 700;
-	line-height: 50px;
+	line-height: 42px;
 	margin-bottom: 16px;
 
 	h1 {
 		float: right;
 		background: $highlight;
-		line-height: 50px;
+		line-height: 42px;
 		padding: 0 32px;
 		text-shadow: -1px -1px 0 darken(#E76049, 20%);
 	

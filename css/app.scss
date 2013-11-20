@@ -21,7 +21,8 @@ html, body {
 body {
 	font-family: 'Noto Sans', 'Arial', 'Sans-serif';
 	color: #fff;
-	background: #D3D4D5;
+	background: url(../img/bg.png);
+	box-shadow: rgba(0,0,0,0.4) 0 0 100px INSET;
 }
 
 #loader {

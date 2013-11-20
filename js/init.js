@@ -4,8 +4,9 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
+	'./router',
 	'mods/header/header',
-	'mods/index/index',
+	'mods/images/images',
 	'mods/fits/fitsCollection',
 	'mods/fullImage/fullImage',
 	'mods/fitsHeader/header'
@@ -15,8 +16,9 @@ define([
 	Backbone,
 	Marionette,
 	App,
+	router,
 	HeaderView,
-	IndexView,
+	ImagesView,
 	FitsCollection,
 	FullImage,
 	FitsHeader
@@ -50,13 +52,20 @@ define([
 			$('#loader').show();
 		});
 
+
 		//Setup global collections
 		App.fits = new FitsCollection();
 
 
+		//Add router and kick off Backbone history
+		
+		App.Router = router;
+		Backbone.history.start({});
+
+
 		//render content
 		App.header.show(new HeaderView());
-		App.content.show(new IndexView());
+		App.content.show(new ImagesView());
 
 	});
 
