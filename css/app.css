@@ -1,7 +1,7 @@
-@import url(reset.css);
-@import url(fonts.css);
-@import url(ion.rangeSlider.css);
-@import url(ion.rangeSlider.skinFlat.css);
+@import url(includes/reset.css);
+@import url(includes/fonts.css);
+@import url(includes/ion.rangeSlider.css);
+@import url(includes/ion.rangeSlider.skinFlat.css);
 /*
  *  Font Awesome 4.0.3 by @davegandy - http://fontawesome.io - @fontawesome
  *  License - http://fontawesome.io/license (Font: SIL OFL 1.1, CSS: MIT License)

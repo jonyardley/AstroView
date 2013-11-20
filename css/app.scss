@@ -3,13 +3,13 @@ $highlight: #E76049;
 $greyMedium: lighten($panel, 10%);
 $greyLight: lighten($panel, 40%);
 
-@import 'reset.css';
-@import 'fonts.css';
+@import 'includes/reset.css';
+@import 'includes/fonts.css';
 @import 'icons/font-awesome';
 
-@import 'inputFile';
-@import 'ion.rangeSlider.css';
-@import 'ion.rangeSlider.skinFlat.css';
+@import 'includes/inputFile';
+@import 'includes/ion.rangeSlider.css';
+@import 'includes/ion.rangeSlider.skinFlat.css';
 
 
 
