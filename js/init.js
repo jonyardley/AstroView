@@ -29,7 +29,7 @@ define([
 		App.start();
 		
 		//App View Listeners
-		App.vent.on('fullImage', function(model){
+		/**App.vent.on('fullImage', function(model){
 			var fullImage = new FullImage({
 				model: model
 			});
@@ -42,7 +42,7 @@ define([
 				model: model
 			});
 			App.content.show(fitsHeader);
-		});
+		});**/
 
 		App.vent.on('loaderHide', function(){
 			$('#loader').fadeOut('fast');
@@ -65,7 +65,6 @@ define([
 
 		//render content
 		App.header.show(new HeaderView());
-		App.content.show(new ImagesView());
 
 	});
 

@@ -28,7 +28,7 @@ define([
 		},
 
 		done: function(e){
-			App.vent.trigger('fullImage', this.model);
+			App.Router.navigate('/',{replace: true, trigger: true});
 		},
 
 		updateMinMax: function(e){

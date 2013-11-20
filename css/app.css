@@ -1357,13 +1357,32 @@ input[type="file"] {
 
 html, body {
   height: 100%;
-  min-height: 100%; }
+  min-height: 100%;
+  min-width: 800px; }
 
 body {
   font-family: 'Noto Sans', 'Arial', 'Sans-serif';
   color: #fff;
   background: url(../img/bg.png);
   box-shadow: rgba(0, 0, 0, 0.4) 0 0 100px INSET; }
+
+#header {
+  min-width: 800px; }
+
+#main {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  bottom: 0px; }
+
+#content {
+  min-width: 768px;
+  position: absolute;
+  top: 58px;
+  left: 16px;
+  right: 16px;
+  bottom: 16px; }
 
 #loader {
   position: fixed;
@@ -1382,23 +1401,15 @@ body {
 
 input, textarea, button {
   font-family: 'Noto Sans', 'Arial', 'Sans-serif';
-  font-weight: 700; }
+  font-weight: 700;
+  border: 0;
+  margin: 0; }
   input:focus, textarea:focus, button:focus {
     outline-width: 0; }
 
-#main {
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  right: 0px;
-  bottom: 0px; }
-
-#content {
-  position: absolute;
-  top: 82px;
-  left: 16px;
-  right: 16px;
-  bottom: 16px; }
+input[type=text] {
+  padding: 10px;
+  font-size: 1em; }
 
 h2 {
   margin-bottom: 16px;
@@ -1422,14 +1433,8 @@ h2, h3, h4 {
 .panel {
   position: relative;
   background: #1d2123;
-  padding: 64px 16px 16px;
+  padding: 64px 16px 0px;
   overflow: hidden; }
-
-.imageRow {
-  background: #75797B;
-  padding: 16px;
-  margin-bottom: 16px;
-  border-radius: 4; }
 
 /** Components **/
 button {
@@ -1508,19 +1513,77 @@ button {
       position: relative;
       top: -5px; }
 
-.index {
-  text-align: center;
-  width: 500px;
-  margin: 0 auto; }
-  .index button {
-    position: relative;
-    padding-left: 46px;
-    padding-right: 23px; }
-  .index .fa {
+.images .title {
+  margin-right: 16px;
+  font-weight: 700; }
+.images .imageInput, .images .imageExternalUrl, .images .title {
+  line-height: 43px;
+  display: inline-block;
+  width: auto; }
+.images .imageInput button {
+  position: relative;
+  padding-left: 46px;
+  padding-right: 23px; }
+.images .imageExternalUrl span {
+  margin: 0 16px; }
+.images .imageExternalUrl input {
+  margin-right: 16px; }
+.images .newImage {
+  text-align: center; }
+.images .newImage {
+  padding: 16px; }
+  .images .newImage .fa {
     position: absolute;
     left: 16px;
     font-size: 1.3em;
     margin-top: -2px; }
+.images li.imageRow {
+  cursor: pointer; }
+  .images li.imageRow:hover {
+    background: #4b565b; }
+.images .imageRow {
+  background: #343b3f;
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden; }
+  .images .imageRow .label, .images .imageRow .image {
+    float: left;
+    line-height: 60px; }
+  .images .imageRow .image {
+    margin-right: 16px;
+    padding: 0 16px;
+    background: #000; }
+  .images .imageRow .label {
+    font-weight: 700; }
+  .images .imageRow .imageMenu {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: #e76049;
+    line-height: 60px;
+    cursor: pointer;
+    transition: width 0.3s;
+    width: 68px; }
+    .images .imageRow .imageMenu:before {
+      font-size: 2em;
+      padding: 16px; }
+    .images .imageRow .imageMenu:hover {
+      width: 300px; }
+      .images .imageRow .imageMenu:hover li {
+        opacity: 1; }
+    .images .imageRow .imageMenu ul {
+      position: absolute;
+      right: 0;
+      top: 0; }
+    .images .imageRow .imageMenu li {
+      float: right;
+      margin-right: 16px;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.3s; }
+      .images .imageRow .imageMenu li:hover {
+        color: #1d2123; }
 
 .preview .canvasWrapper {
   float: left;

@@ -9,13 +9,19 @@ define([
 
 	return Backbone.Model.extend({
 		
+		idAttribute: 'id',
+
 		defaults: {
 			file: null,
 			label: null,
 			imageData: null,
 			header: null,
 			image: null,
-			options: null
+			options: {
+				min: 0,
+				max: 500,
+				scaleType: 'linear'
+			}
 		},
 		
 

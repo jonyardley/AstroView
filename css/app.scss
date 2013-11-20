@@ -1,7 +1,7 @@
 $panel: #1D2123;
 $highlight: #E76049;
 $greyMedium: lighten($panel, 10%);
-$greyLight: lighten($panel, 40%);
+$greyLight: lighten($panel, 20%);
 
 @import 'includes/reset.css';
 @import 'includes/fonts.css';
@@ -16,6 +16,7 @@ $greyLight: lighten($panel, 40%);
 html, body {
 	height: 100%;
 	min-height: 100%;
+	min-width: 800px;
 }
 
 body {
@@ -24,6 +25,28 @@ body {
 	background: url(../img/bg.png);
 	box-shadow: rgba(0,0,0,0.4) 0 0 100px INSET;
 }
+
+#header {
+	min-width: 800px;
+}
+
+#main {
+	position: absolute;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+	bottom: 0px;
+}
+
+#content {
+	min-width: 768px;
+	position: absolute;
+	top: 58px;
+	left: 16px;
+	right: 16px;
+	bottom: 16px;
+}
+
 
 #loader {
 	position: fixed;
@@ -48,22 +71,13 @@ input, textarea, button {
 	&:focus{
 		outline-width: 0;
 	}
+	border: 0;
+	margin: 0;
 }
 
-#main {
-	position: absolute;
-	top: 0px;
-	left: 0px;
-	right: 0px;
-	bottom: 0px;
-}
-
-#content {
-	position: absolute;
-	top: 82px;
-	left: 16px;
-	right: 16px;
-	bottom: 16px;
+input[type=text] {
+	padding: 10px;
+	font-size: 1em;
 }
 
 h2 {
@@ -91,15 +105,8 @@ h2, h3, h4 {
 .panel {
 	position: relative;
 	background: $panel;
-	padding: 64px 16px 16px;
+	padding: 64px 16px 0px;
 	overflow: hidden;
-}
-
-.imageRow {
-	background: #75797B;
-	padding: 16px;
-	margin-bottom: 16px;
-	border-radius: 4;
 }
 
 /** Components **/
@@ -179,7 +186,7 @@ button {
 
 
 @import '../mods/header/header';
-@import '../mods/index/index';
+@import '../mods/images/images';
 @import '../mods/preview/preview';
 @import '../mods/fullImage/fullImage';
 @import '../mods/fitsHeader/header';

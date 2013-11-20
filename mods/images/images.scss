@@ -1,18 +1,114 @@
-.index {
-	text-align: center;
-	width: 500px;
-	margin: 0 auto;
+.images {
 
-	button {
+	.title {
+		margin-right: 16px;
+		font-weight: 700;
+	}
+
+	.imageInput, .imageExternalUrl, .title{
+		line-height: 43px;
+		display: inline-block;
+		width: auto;
+	}
+
+	.imageInput button {
 		position: relative;
 		padding-left: 46px;
 		padding-right: 23px;
 	}
 
-	.fa {
-		position: absolute;
-		left: 16px;
-		font-size: 1.3em;
-		margin-top: -2px;
+	.imageExternalUrl {
+		span {
+			margin: 0 16px;
+		}
+		input {
+			margin-right: 16px;
+		}
 	}
+
+	.newImage {
+		text-align: center;
+	}
+
+	.newImage {
+		padding: 16px;
+
+		.fa {
+			position: absolute;
+			left: 16px;
+			font-size: 1.3em;
+			margin-top: -2px;
+		}
+	}
+
+	li.imageRow {
+		cursor: pointer;
+		&:hover {
+			background: $greyLight;
+		}
+	}
+
+	.imageRow {
+		background: $greyMedium;
+		margin-bottom: 16px;
+		position: relative;
+		overflow: hidden;
+
+		.label, .image {
+			float: left;
+			line-height: 60px;
+		}
+
+		.image {
+			margin-right: 16px;
+			padding: 0 16px;
+			background: #000;
+		}
+
+		.label {
+			font-weight: 700;
+		}
+
+		.imageMenu {
+			position: absolute;
+			right: 0;
+			top: 0;
+			bottom: 0;
+			background: $highlight;
+			line-height: 60px;
+			cursor: pointer;
+			transition: width 0.3s;
+			width: 68px;
+
+			&:before {
+				font-size: 2em;
+				padding: 16px;
+			}
+
+			&:hover {
+				width: 300px;
+				li {
+					opacity: 1;
+				}
+			}
+
+			ul {
+				position: absolute;
+				right: 0;
+				top: 0;
+			}
+
+			li {
+				float: right;
+				margin-right: 16px;
+				display: block;
+				opacity: 0;
+				transition: opacity 0.3s;
+				&:hover {
+					color: $panel;
+				}
+			}
+		}
+	}
+
 }

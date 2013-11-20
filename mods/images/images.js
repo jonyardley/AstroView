@@ -5,22 +5,20 @@ define([
 	'Marionette',
 	'app',
 	'hbars!./images',
+	'./image',
 	'mods/preview/preview',
 	'fileInput'
-], function($, _, Backbone, Marionette, App, tmpl, Preview, fileInput){
+], function($, _, Backbone, Marionette, App, ImagesTmpl, ImageListItem, Preview, fileInput){
 
 	return Backbone.Marionette.CompositeView.extend({
 
-		template: tmpl,
-		className: 'panel index',
+		template: ImagesTmpl,
+		className: 'panel images',
+		itemViewContainer: 'ul.imageList',
+		itemView: ImageListItem,
 
 		events: {
 			'change #selectFile': 'fileSelected'
-		},
-
-		showPreview: function(fitsModel){
-			App.vent.trigger('loaderHide');
-			App.content.show( new Preview({model: fitsModel}) );
 		},
 
 		onRender: function(){
@@ -35,10 +33,9 @@ define([
 			if(files.length){
 				var newImage = App.fits.add({
 					file: files[0],
-					label: 'Image ' + (App.fits.length + 1)
+					label: 'Image ' + (App.fits.length + 1),
+					id: App.fits.length + 1
 				});
-
-				newImage.on('change:imageData', this.showPreview);
 			}
 		},
 
@@ -46,10 +43,9 @@ define([
 			App.vent.trigger('loaderShow');
 			var newImage = App.fits.add({
 					file: '/remoteFits?url=' + url,
-					label: 'Image ' + (App.fits.length + 1)
+					label: 'Image ' + (App.fits.length + 1),
+					id: App.fits.length + 1
 				});
-
-			newImage.on('change:imageData', this.showPreview);
 		},
 
 
@@ -60,6 +56,7 @@ define([
 				this.fileIsRemote = true;
 				this.remoteFile(file[1]);
 			}
+			console.log(this.collection);
 		}
 
 	});

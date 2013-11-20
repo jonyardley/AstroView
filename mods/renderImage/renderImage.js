@@ -40,7 +40,7 @@ define([
 	return function(context, imageBuffer, imageScale, width, height, fits){
 		
 		var i, ii;
-		var invImageScale = 1 / imageScale;
+		var invImageScale = Math.floor(1 / imageScale);
 		for(i=0; i < height; i++){
 			var x = ( i * invImageScale ) * fits.image.width;
 			for(ii=0; ii < width; ii++){
