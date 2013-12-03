@@ -1,12 +1,13 @@
-.preview {
+.scale {
 	.canvasWrapper {
 		float: left;
 		width: auto;
-		width: 200px;
+		width: 320px;
 		text-align: center;
 		canvas {
 			display: inline-block;
 		}
+		margin-bottom: 16px;
 
 	}
 
@@ -19,6 +20,6 @@
 	}
 
 	.imageControls {
-		margin-left: 220px;
+		margin-left: 336px;
 	}
 }

@@ -65,7 +65,7 @@ body {
 	}
 }
 
-input, textarea, button {
+.btn, input, textarea, button {
 	font-family: 'Noto Sans', 'Arial', 'Sans-serif';
 	font-weight: 700;
 	&:focus{
@@ -73,6 +73,17 @@ input, textarea, button {
 	}
 	border: 0;
 	margin: 0;
+}
+
+.btn {
+	display: inline-block;
+	background: #fff;
+	padding: 8px 16px;
+	cursor: pointer;
+	&:hover {
+		background: $highlight;
+		color: #fff;
+	}
 }
 
 input[type=text] {
@@ -187,6 +198,6 @@ button {
 
 @import '../mods/header/header';
 @import '../mods/images/images';
-@import '../mods/preview/preview';
+@import '../mods/scale/styles';
 @import '../mods/fullImage/fullImage';
 @import '../mods/fitsHeader/header';

@@ -14,21 +14,48 @@ define([
 		className: 'imageRow',
 
 		modelEvents: {
-			'change:imageData': 'render'
+			'change:imageData': 'render',
 		},
 
 		ui: {
-			canvas: 'canvas'
+			canvas: 'canvas',
+			label: '.label'
 		},
 
 		events: {
-			'click': 'goToImage'
+			'click .editLabel': 'editLabel',
+			'keypress .label': 'disableReturn',
+			'click .remove': 'deleteImage'
 		},
 
-		goToImage: function(e){
-			if(!$(e.target).is('a')){
-				App.Router.navigate('#/image/'+this.model.id, {replace: true, trigger: true});
+		deleteImage: function(e){
+			this.model.collection.remove(this.model);
+			return false;
+		},
+
+		disableReturn: function(e){
+			if(e.which === 13){
+				this.labelEdited();
 			}
+			return e.which !== 13;
+		},
+
+		labelEdited: function(e){
+			if(this.ui.label.text().length > 2){
+				this.ui.label.attr('contentEditable', false);
+				this.ui.label.off('blur', this.labelEdited);
+				this.model.set('label', this.ui.label.text());
+			}else{
+				this.ui.label.focus();
+				window.alert('Please enter a name!');
+			}	
+		},
+
+		editLabel: function(e){
+			this.ui.label.attr('contentEditable', true);
+			this.ui.label.focus();
+			this.ui.label.on('blur', this.labelEdited);
+			return false;
 		},
 
 		onRender: function(){
@@ -44,13 +71,15 @@ define([
 					width,
 					height
 				);
-
-				renderImage(context, imageBuffer, imageScale, width, height, this.model.toJSON());
+				
+				var thumb = renderImage(imageBuffer, imageScale, width, height, this.model.toJSON());
+				context.putImageData(thumb, 0, 0);
+				
 			}
 		},
 
 		initialize: function(){
-			_.bindAll(this, 'goToImage');
+			_.bindAll(this, 'editLabel', 'labelEdited', 'disableReturn', 'deleteImage');
 		}
 
 	});

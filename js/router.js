@@ -10,9 +10,9 @@ define([
 	var Router = Backbone.Marionette.AppRouter.extend({
 
 		appRoutes: {
-			'': 						'images',
+			'':							'images',
 			'image/:fitsId':			'image',
-			'image/:fitsId/preview':	'preview',
+			'image/:fitsId/scale':		'scale',
 			'image/:fitsId/header':		'header',
 			'*whatever':				'other'
 		}

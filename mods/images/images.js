@@ -6,26 +6,31 @@ define([
 	'app',
 	'hbars!./images',
 	'./image',
-	'mods/preview/preview',
-	'fileInput'
-], function($, _, Backbone, Marionette, App, ImagesTmpl, ImageListItem, Preview, fileInput){
+	'fileInput',
+	'./emptyView'
+], function($, _, Backbone, Marionette, App, ImagesTmpl, ImageListItem, fileInput, emptyView){
 
 	return Backbone.Marionette.CompositeView.extend({
 
 		template: ImagesTmpl,
 		className: 'panel images',
 		itemViewContainer: 'ul.imageList',
+		emptyView: emptyView,
 		itemView: ImageListItem,
 
 		events: {
 			'change #selectFile': 'fileSelected'
 		},
 
+		ui: {
+			selectFile: '#selectFile'
+		},
+
 		onRender: function(){
 			if(!this.fileIsRemote){
 				App.vent.trigger('loaderHide');
 			}
-			this.$el.find('input[type=file]').prettyFileInput();	
+			this.$el.find('input[type=file]').prettyFileInput();
 		},
 
 		fileSelected: function(e){
@@ -37,6 +42,7 @@ define([
 					id: App.fits.length + 1
 				});
 			}
+			this.ui.selectFile.val('');
 		},
 
 		remoteFile: function(url){
@@ -51,7 +57,7 @@ define([
 
 
 		initialize: function(){
-			file = window.location.search.split('?file=');
+			var file = window.location.search.split('?file=');
 			if(file[1]){
 				this.fileIsRemote = true;
 				this.remoteFile(file[1]);

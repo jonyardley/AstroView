@@ -3,10 +3,11 @@ define([
 	'underscore',
 	'Backbone',
 	'Marionette',
+	'app',
 	'mods/images/images',
-	'mods/preview/preview',
+	'mods/scale/view',
 	'mods/fullImage/fullImage'
-], function($, _, Backbone, Marionette, ImagesView, Preview, FullImage){
+], function($, _, Backbone, Marionette, App, ImagesView, ScaleView, FullImage){
 
 	
 	var controller = {
@@ -34,10 +35,10 @@ define([
 
 
 
-		preview: function(fitsId){
+		scale: function(fitsId){
 			var model = App.fits.get(fitsId);
 			if(model){
-				App.content.show( new Preview({
+				App.content.show( new ScaleView({
 					model: model
 				}));
 			}else{

@@ -4,10 +4,12 @@
 
 <span class="label">{{label}}</span>
 
+<a class="viewImage btn" href="#/image/{{id}}">View Image</a>
+
 <div class="imageMenu fa fa-gears">
 	<ul>
-		<li><a href="#/image/{{id}}/preview">Scale</a></li>
-		<li>Edit Label</li>
-		<li>Remove</li>
+		<li><a href="#/image/{{id}}/scale">Scale</a></li>
+		<li><a class="editLabel" href="#">Edit Label</a></li>
+		<li><a class="remove" href="#">Remove</a></li>
 	</ul>
 <div>

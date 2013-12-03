@@ -1,4 +1,4 @@
-<h2>Preview</h2>
+<h2>Scale Image</h2>
 
 <div class="canvasWrapper">
 	<canvas></canvas>

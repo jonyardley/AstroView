@@ -6,8 +6,8 @@ define([
 	'app',
 	'hbars!./tmpl',
 	'mods/renderImage/renderImage',
-	'mods/preview/preview'
-], function($, _, Backbone, Marionette, App, tmpl, renderImage, Preview){
+	'mods/scale/view'
+], function($, _, Backbone, Marionette, App, tmpl, renderImage, ScaleView){
 
 	return Backbone.Marionette.ItemView.extend({
 
@@ -25,7 +25,7 @@ define([
 			'click #zoomFit': 'zoomFit',
 			'click #zoom50': 'zoom50',
 			'click #zoom100': 'zoom100',
-			'click #preview': 'preview',
+			'click #scale': 'scale',
 			'click #save': 'save',
 			'click #showHeader': 'showHeader'
 		},
@@ -34,8 +34,8 @@ define([
 			App.vent.trigger('header', this.model);	
 		},
 
-		preview: function(){
-			App.content.show( new Preview({model: this.model}) );
+		scale: function(){
+			App.content.show( new ScaleView({model: this.model}) );
 			return false;
 		},
 
@@ -128,18 +128,16 @@ define([
 
 			this.imageBuffer = this.context.createImageData( width, height );
 
-			renderImage(this.context, this.imageBuffer, 1, width, height, this.model.toJSON());
+			var fullImage = renderImage(this.imageBuffer, 1, width, height, this.model.toJSON());
+			this.context.putImageData(fullImage, 0, 0);
 
-			this.ui.canvas.css({
-				top: -((height - this.ui.canvasWrapper.height()) / 2),
-				left: -((width - this.ui.canvasWrapper.width()) / 2)
-			});
+			_.defer(this.zoomFit);
 		},
 
 
 
 		initialize: function(){
-			_.bindAll(this, 'startDrag', 'stopDrag', 'moveCanvas', 'preview', 'save', 'zoomFit', 'zoom50', 'zoom100', 'showHeader');
+			_.bindAll(this, 'startDrag', 'stopDrag', 'moveCanvas', 'scale', 'save', 'zoomFit', 'zoom50', 'zoom100', 'showHeader');
 		}
 
 

@@ -1,5 +1,18 @@
 .images {
 
+	a {
+		color: $panel;
+		text-decoration: none;
+		&:hover {
+			color: #fff;
+		}
+	}
+
+	.empty {
+		margin-bottom: 16px;
+		text-align: center;
+	}
+
 	.title {
 		margin-right: 16px;
 		font-weight: 700;
@@ -41,13 +54,6 @@
 		}
 	}
 
-	li.imageRow {
-		cursor: pointer;
-		&:hover {
-			background: $greyLight;
-		}
-	}
-
 	.imageRow {
 		background: $greyMedium;
 		margin-bottom: 16px;
@@ -59,6 +65,12 @@
 			line-height: 60px;
 		}
 
+		.btn {
+			margin-top: 14px;
+			float: right;
+			margin-right: 82px;
+		}
+
 		.image {
 			margin-right: 16px;
 			padding: 0 16px;
@@ -67,6 +79,9 @@
 
 		.label {
 			font-weight: 700;
+			&:focus {
+				outline: none;
+			}
 		}
 
 		.imageMenu {
@@ -74,10 +89,11 @@
 			right: 0;
 			top: 0;
 			bottom: 0;
-			background: $highlight;
+			background: $greyLight;
+			color: $panel;
 			line-height: 60px;
 			cursor: pointer;
-			transition: width 0.3s;
+			transition: all 0.3s ease-in-out;
 			width: 68px;
 
 			&:before {

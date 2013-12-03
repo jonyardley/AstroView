@@ -4,16 +4,16 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'hbars!./preview',
+	'hbars!./tmpl',
 	'mods/renderImage/renderImage',
 	'ionSlider'
 ], function($, _, Backbone, Marionette, App, tmpl, renderImage, ionSlider){
 
-	var Preview = Backbone.Marionette.ItemView.extend({
+	var ScaleView = Backbone.Marionette.ItemView.extend({
 
 		template: tmpl,
-		id: 'preview',
-		className: 'panel preview',
+		id: 'scale',
+		className: 'panel scale',
 
 		ui: {
 			minMax: '#minMax',
@@ -57,19 +57,33 @@ define([
 
 
 		renderImage: function(){
-			var context = this.context,
-				imageBuffer = this.preview,
+			var imageBuffer = this.preview,
 				fits = this.model.toJSON();
 
-			renderImage(context, imageBuffer, this.imageScale, this.width, this.height, fits);
+			var preview = renderImage(imageBuffer, this.imageScale, this.width, this.height, fits);
+
+			this.context.putImageData(preview, 0, 0);
+		},
+
+		initSlider: function(){
+			var options = this.model.get('options');
+			this.ui.minMax.ionRangeSlider({
+				type: 'double',
+				min:  0,
+				max: this.model.get('image').bzero || 1000,
+				from: options.min || 0,
+				to: options.max || 1000,
+				onChange: this.updateMinMax
+			});
 		},
 
 		onRender: function(){
 			if(this.model.get('imageData')){
-				var fits = this.model;
-				var fitsImage = this.model.get('image');
+
+				var fits = this.model,
+					fitsImage = this.model.get('image');
 				
-				this.imageScale = 0.1;
+				this.imageScale = 0.2;
 				this.width = Math.floor(fitsImage.width * this.imageScale),
 				this.height = Math.floor(fitsImage.height * this.imageScale),
 
@@ -93,31 +107,21 @@ define([
 					this.height
 				);
 
+				_.defer(this.initSlider);
+
 				this.renderImage();
 
-				var self = this;
-				_.defer(function(){
-					var options = self.model.get('options');
-					self.ui.minMax.ionRangeSlider({
-						type: 'double',
-						min:  0,
-						max: fitsImage.bzero || 1000,
-						from: options.min || 0,
-						to: options.max || 1000,
-						onChange: self.updateMinMax
-					});
-				});
 			}
 			
 		},
 
 
 		initialize: function(){
-			_.bindAll(this, 'updateMinMax', 'updateScale', 'updateFullRange', 'renderImage', 'done');
+			_.bindAll(this, 'updateMinMax', 'updateScale', 'updateFullRange', 'renderImage', 'done', 'initSlider');
 		}
 
 	});
 
-	return Preview;
+	return ScaleView;
 
 });

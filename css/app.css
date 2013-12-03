@@ -1399,13 +1399,22 @@ body {
     text-align: center;
     margin-top: 15px; }
 
-input, textarea, button {
+.btn, input, textarea, button {
   font-family: 'Noto Sans', 'Arial', 'Sans-serif';
   font-weight: 700;
   border: 0;
   margin: 0; }
-  input:focus, textarea:focus, button:focus {
+  .btn:focus, input:focus, textarea:focus, button:focus {
     outline-width: 0; }
+
+.btn {
+  display: inline-block;
+  background: #fff;
+  padding: 8px 16px;
+  cursor: pointer; }
+  .btn:hover {
+    background: #e76049;
+    color: #fff; }
 
 input[type=text] {
   padding: 10px;
@@ -1513,6 +1522,14 @@ button {
       position: relative;
       top: -5px; }
 
+.images a {
+  color: #1d2123;
+  text-decoration: none; }
+  .images a:hover {
+    color: #fff; }
+.images .empty {
+  margin-bottom: 16px;
+  text-align: center; }
 .images .title {
   margin-right: 16px;
   font-weight: 700; }
@@ -1537,10 +1554,6 @@ button {
     left: 16px;
     font-size: 1.3em;
     margin-top: -2px; }
-.images li.imageRow {
-  cursor: pointer; }
-  .images li.imageRow:hover {
-    background: #4b565b; }
 .images .imageRow {
   background: #343b3f;
   margin-bottom: 16px;
@@ -1549,21 +1562,28 @@ button {
   .images .imageRow .label, .images .imageRow .image {
     float: left;
     line-height: 60px; }
+  .images .imageRow .btn {
+    margin-top: 14px;
+    float: right;
+    margin-right: 82px; }
   .images .imageRow .image {
     margin-right: 16px;
     padding: 0 16px;
     background: #000; }
   .images .imageRow .label {
     font-weight: 700; }
+    .images .imageRow .label:focus {
+      outline: none; }
   .images .imageRow .imageMenu {
     position: absolute;
     right: 0;
     top: 0;
     bottom: 0;
-    background: #e76049;
+    background: #4b565b;
+    color: #1d2123;
     line-height: 60px;
     cursor: pointer;
-    transition: width 0.3s;
+    transition: all 0.3s ease-in-out;
     width: 68px; }
     .images .imageRow .imageMenu:before {
       font-size: 2em;
@@ -1585,19 +1605,20 @@ button {
       .images .imageRow .imageMenu li:hover {
         color: #1d2123; }
 
-.preview .canvasWrapper {
+.scale .canvasWrapper {
   float: left;
   width: auto;
-  width: 200px;
-  text-align: center; }
-  .preview .canvasWrapper canvas {
+  width: 320px;
+  text-align: center;
+  margin-bottom: 16px; }
+  .scale .canvasWrapper canvas {
     display: inline-block; }
-.preview .field {
+.scale .field {
   padding-bottom: 8px; }
-.preview .field.right {
+.scale .field.right {
   float: right; }
-.preview .imageControls {
-  margin-left: 220px; }
+.scale .imageControls {
+  margin-left: 336px; }
 
 .fullImage {
   position: absolute;
@@ -1605,12 +1626,14 @@ button {
   left: 0;
   bottom: 0;
   right: 0;
-  padding-top: 66px; }
+  padding-top: 58px; }
   .fullImage .canvasWrapper {
-    width: 100%;
-    height: 100%;
+    top: 60px;
+    left: 16px;
+    bottom: 16px;
+    right: 16px;
     overflow: hidden;
-    position: relative;
+    position: absolute;
     background: #000;
     border: 1px solid #000; }
     .fullImage .canvasWrapper canvas {
