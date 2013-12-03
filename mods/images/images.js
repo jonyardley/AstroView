@@ -19,11 +19,23 @@ define([
 		itemView: ImageListItem,
 
 		events: {
-			'change #selectFile': 'fileSelected'
+			'change #selectFile': 'fileSelected',
+			'click .imageExternalUrl button': 'addExternal'
 		},
 
 		ui: {
-			selectFile: '#selectFile'
+			selectFile: '#selectFile',
+			externalUrl: '#externalUrl'
+		},
+
+		addExternal: function(e){
+			var val = this.ui.externalUrl.val();
+			if(val.length > 3){
+				this.remoteFile(val);
+				this.ui.externalUrl.val('');
+			}else{
+				window.alert('Enter a url first.');
+			}
 		},
 
 		onRender: function(){
@@ -46,7 +58,6 @@ define([
 		},
 
 		remoteFile: function(url){
-			App.vent.trigger('loaderShow');
 			var newImage = App.fits.add({
 					file: '/remoteFits?url=' + url,
 					label: 'Image ' + (App.fits.length + 1),
@@ -57,6 +68,7 @@ define([
 
 
 		initialize: function(){
+			_.bindAll(this, 'addExternal');
 			var file = window.location.search.split('?file=');
 			if(file[1]){
 				this.fileIsRemote = true;

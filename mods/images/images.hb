@@ -11,7 +11,7 @@
 	</div>
 
 	<div class="imageExternalUrl">
-		<span>or</span><input type="text" type="text" placeholder="URL to .FITS" />
+		<span>or</span><input id="externalUrl" type="text" placeholder="URL to .FITS" />
 		<button>Go</button>
 	</div>
 </div>

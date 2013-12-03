@@ -30,8 +30,18 @@ define([
 		},
 
 
+		loaderHide: function(){
+			App.vent.trigger('loaderHide');
+		},
+
+		loaderShow: function(){
+			App.vent.trigger('loaderShow');
+		},
+
 		initialize: function(){
 			this.on('add', this.readFile);
+			this.on('add', this.loaderShow);
+			this.on('change:imageData', this.loaderHide);
 		}
 
 	});

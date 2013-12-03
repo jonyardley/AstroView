@@ -28,21 +28,6 @@ define([
 		
 		App.start();
 		
-		//App View Listeners
-		/**App.vent.on('fullImage', function(model){
-			var fullImage = new FullImage({
-				model: model
-			});
-			App.content.show(fullImage);
-		});
-
-
-		App.vent.on('header', function(model){
-			var fitsHeader = new FitsHeader({
-				model: model
-			});
-			App.content.show(fitsHeader);
-		});**/
 
 		App.vent.on('loaderHide', function(){
 			$('#loader').fadeOut('fast');
