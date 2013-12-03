@@ -1,1 +1,1 @@
-<h1>aFIT <span class="small">(beta)</span></h1>
+<h1>aFIT <span class="small">(v0.1)</span></h1>
