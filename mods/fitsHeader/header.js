@@ -17,7 +17,7 @@ define([
 		},
 
 		fullImage: function(){
-			App.vent.trigger('fullImage', this.model);
+			App.Router.navigate('#/image/'+this.model.get('id'), {trigger: true, replace: true});
 		},
 
 		initialize: function(){
