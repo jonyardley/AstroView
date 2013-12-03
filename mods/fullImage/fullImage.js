@@ -6,8 +6,9 @@ define([
 	'app',
 	'hbars!./tmpl',
 	'mods/renderImage/renderImage',
-	'mods/scale/view'
-], function($, _, Backbone, Marionette, App, tmpl, renderImage, ScaleView){
+	'mods/scale/view',
+	'mods/download/download'
+], function($, _, Backbone, Marionette, App, tmpl, renderImage, ScaleView, download){
 
 	return Backbone.Marionette.ItemView.extend({
 
@@ -41,9 +42,11 @@ define([
 
 
 		save: function(){
-			var imageUrl = this.ui.canvas[0].toDataURL();
-			var imageWindow = window.open();
-			imageWindow.document.write('<img src="'+imageUrl+'"/>');
+			var data = this.ui.canvas[0].toDataURL(),
+				filename = this.model.get('label') + '.png';
+				
+			download(data, filename);
+			
 			return false;
 		},
 
