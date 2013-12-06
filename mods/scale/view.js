@@ -33,16 +33,17 @@ define([
 		},
 
 		updateMinMax: function(e){
-			var options = this.model.get('options');
+			var options = _.clone(this.model.get('options'));
 			options.min = e.fromNumber;
 			options.max = e.toNumber;
-
+			this.model.set('options', options);
 			this.renderImage();
 		},
 
 		updateScale: function(e){
-			var options = this.model.get('options');
+			var options = _.clone(this.model.get('options'));
 			options.scaleType = e.target.value;
+			this.model.set('options', options);
 			
 			this.renderImage();
 		},
