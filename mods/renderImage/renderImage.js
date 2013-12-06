@@ -7,27 +7,42 @@ define([
 	'./scale'
 ], function($, _, Backbone, Marionette, App, scale){
 
-	return function(imageBuffer, imageScale, width, height, fits){
+	//scale, width, height, fits
+	return function(opts){
+ 
+		//TEMP CANVAS
+		var canvas = document.createElement('canvas');
+		canvas.width = opts.width;
+		canvas.height = opts.height;
+
+		var ctx = canvas.getContext('2d');
+
+		var buffer = ctx.createImageData(opts.width, opts.height);
 
 		var i, ii;
-		var invImageScale = Math.floor(1 / imageScale);
-		for(i=0; i < height; i++){
-			var x = ( i * invImageScale ) * fits.image.width;
-			for(ii=0; ii < width; ii++){
-				var y = ii * invImageScale;
+		var invScale = Math.floor(1 / opts.scale);
+		for(i=0; i < opts.height; i++){
+			var x = ( i * invScale ) * opts.fits.image.width;
+			for(ii=0; ii < opts.width; ii++){
+				var y = ii * invScale;
 				var pixel = x+y;
-				var index = ((i * width) + ii) * 4;
-				var value = scale(fits.imageData[pixel], fits);
+				var index = ((i * opts.width) + ii) * 4;
+				var value = scale(opts.fits.imageData[pixel], opts.fits);
 
-				imageBuffer.data[index+0] = value;
-				imageBuffer.data[index+1] = value;
-				imageBuffer.data[index+2] = value;
-				imageBuffer.data[index+3] = 255;
+				buffer.data[index+0] = value;
+				buffer.data[index+1] = value;
+				buffer.data[index+2] = value;
+				buffer.data[index+3] = 255;
 
 			}
 		}
 
-		return imageBuffer;
+		ctx.putImageData(buffer, 0, 0);
+		var imgData = canvas.toDataURL();
+		var img = new Image();
+		img.src = imgData;
+
+		return img;
 
 	};
 

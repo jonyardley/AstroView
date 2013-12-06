@@ -129,10 +129,14 @@ define([
 			this.ui.canvas.attr('width', width);
 			this.ui.canvas.attr('height', height);
 
-			this.imageBuffer = this.context.createImageData( width, height );
+			var fullImage = renderImage({
+				fits: this.model.toJSON(),
+				scale: 1,
+				width: width,
+				height: height
+			});
 
-			var fullImage = renderImage(this.imageBuffer, 1, width, height, this.model.toJSON());
-			this.context.putImageData(fullImage, 0, 0);
+			this.context.drawImage(fullImage, 0, 0);
 
 			_.defer(this.zoomFit);
 		},

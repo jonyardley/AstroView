@@ -1521,6 +1521,16 @@ button {
       font-size: 0.7em;
       position: relative;
       top: -5px; }
+  #header ul {
+    padding-left: 16px;
+    float: left; }
+    #header ul li {
+      display: inline; }
+      #header ul li a {
+        color: #fff;
+        text-decoration: none; }
+        #header ul li a:hover {
+          color: #e76049; }
 
 .images a {
   color: #1d2123;

@@ -14,6 +14,9 @@ define([
 			'image/:fitsId':			'image',
 			'image/:fitsId/scale':		'scale',
 			'image/:fitsId/header':		'header',
+
+			'colourImaging':			'colourImaging',
+
 			'*whatever':				'other'
 		}
 

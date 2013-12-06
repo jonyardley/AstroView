@@ -22,4 +22,20 @@
 			top: -5px;
 		}
 	}
+
+	ul {
+		padding-left: 16px;
+		float: left;
+		li {
+			display: inline;
+
+			a {
+				color: #fff;
+				text-decoration: none;
+				&:hover {
+					color: $highlight;
+				}
+			}
+		}
+	}
 }

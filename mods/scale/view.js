@@ -18,7 +18,8 @@ define([
 		ui: {
 			minMax: '#minMax',
 			scale: '#scale',
-			fullRange: '#fullRange'
+			fullRange: '#fullRange',
+			canvas: 'canvas'
 		},
 
 		events: {
@@ -57,12 +58,16 @@ define([
 
 
 		renderImage: function(){
-			var imageBuffer = this.preview,
-				fits = this.model.toJSON();
+			var fits = this.model.toJSON();
 
-			var preview = renderImage(imageBuffer, this.imageScale, this.width, this.height, fits);
+			var preview = renderImage({
+					fits: fits,
+					scale: this.imageScale,
+					width: this.width,
+					height: this.height
+				});
 
-			this.context.putImageData(preview, 0, 0);
+			this.context.drawImage(preview, 0, 0);
 		},
 
 		initSlider: function(){
@@ -84,11 +89,10 @@ define([
 					fitsImage = this.model.get('image');
 				
 				this.imageScale = 0.2;
-				this.width = Math.floor(fitsImage.width * this.imageScale),
-				this.height = Math.floor(fitsImage.height * this.imageScale),
+				this.width = Math.floor(fitsImage.width * this.imageScale);
+				this.height = Math.floor(fitsImage.height * this.imageScale);
 
-				this.$canvas = this.$el.find('canvas');
-				this.context = this.$canvas[0].getContext('2d');
+				this.context = this.ui.canvas[0].getContext('2d');
 
 				
 				if(!fits.get('options')){
@@ -99,13 +103,8 @@ define([
 					});
 				}
 
-				this.$canvas.attr('width', this.width);
-				this.$canvas.attr('height', this.height);
-				
-				this.preview = this.context.createImageData(
-					this.width,
-					this.height
-				);
+				this.ui.canvas.attr('width', this.width);
+				this.ui.canvas.attr('height', this.height);
 
 				_.defer(this.initSlider);
 

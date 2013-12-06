@@ -15,7 +15,8 @@ require.config({
 		hbars: '../lib/hbars',
 		mods: '../mods',
 		fileInput: '../lib/file.input',
-		ionSlider: '../lib/ion.rangeSlider.min'
+		ionSlider: '../lib/ion.rangeSlider.min',
+		processing: '../lib/processing'
 	},
 
 	shim: {
@@ -44,6 +45,9 @@ require.config({
 		},
 		ionSlider: {
 			deps: ['jquery']
+		},
+		processing: {
+			exports: 'Processing'
 		}
 	},
 

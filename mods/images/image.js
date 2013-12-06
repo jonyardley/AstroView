@@ -61,20 +61,19 @@ define([
 		onRender: function(){
 			if(this.model.get('imageData')){
 
-				var fitsImage = this.model.get('image'),
-					imageScale = this.ui.canvas.attr('width') / fitsImage.width,
-					width = Math.floor(fitsImage.width * imageScale),
-					height = Math.floor(fitsImage.height * imageScale),
-					context = this.ui.canvas[0].getContext('2d');
-					
-				var imageBuffer = context.createImageData(
-					width,
-					height
-				);
+				var fits = this.model.toJSON(),
+					scale = this.ui.canvas.attr('width') / fits.image.width;
 				
-				var thumb = renderImage(imageBuffer, imageScale, width, height, this.model.toJSON());
-				context.putImageData(thumb, 0, 0);
-				
+				var thumb = renderImage({
+					fits: fits,
+					scale: scale,
+					width: Math.floor(fits.image.width * scale),
+					height: Math.floor(fits.image.height * scale)
+				});
+
+				var context = this.ui.canvas[0].getContext('2d');
+				context.drawImage(thumb, 0, 0);
+
 			}
 		},
 
