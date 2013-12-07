@@ -43,7 +43,6 @@ define([
 
 
 		//Add router and kick off Backbone history
-		
 		App.Router = router;
 		Backbone.history.start({});
 

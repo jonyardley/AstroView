@@ -49,9 +49,7 @@ define([
 			var files = e.target.files;
 			if(files.length){
 				var newImage = App.fits.add({
-					file: files[0],
-					label: 'Image ' + (App.fits.length + 1),
-					id: App.fits.length + 1
+					file: files[0]
 				});
 			}
 			this.ui.selectFile.val('');
@@ -59,9 +57,7 @@ define([
 
 		remoteFile: function(url){
 			var newImage = App.fits.add({
-					file: '/remoteFits?url=' + url,
-					label: 'Image ' + (App.fits.length + 1),
-					id: App.fits.length + 1
+					file: '/remoteFits?url=' + url
 				});
 		},
 

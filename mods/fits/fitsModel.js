@@ -39,6 +39,8 @@ define([
 		},
 
 		initialize: function(){
+			this.set('id', this.collection.length + 1);
+			this.set('label', 'Image ' + this.get('id'));
 			this.on('add', this.readFile);
 			this.on('add', this.loaderShow);
 			this.on('change:imageData', this.loaderHide);
