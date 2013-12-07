@@ -7,7 +7,7 @@ define([
 	'./scale'
 ], function($, _, Backbone, Marionette, App, scale){
 
-	//scale, width, height, fits
+	//scale, width, height, fits, colourMask
 	return function(opts){
  
 		//TEMP CANVAS
@@ -29,9 +29,9 @@ define([
 				var index = ((i * opts.width) + ii) * 4;
 				var value = scale(opts.fits.imageData[pixel], opts.fits);
 
-				buffer.data[index+0] = value;
-				buffer.data[index+1] = value;
-				buffer.data[index+2] = value;
+				buffer.data[index+0] = (opts.colourMask)? ((value / 255) * opts.colourMask.r) : value;
+				buffer.data[index+1] = (opts.colourMask)? ((value / 255) * opts.colourMask.g) : value;
+				buffer.data[index+2] = (opts.colourMask)? ((value / 255) * opts.colourMask.b) : value;
 				buffer.data[index+3] = 255;
 
 			}
