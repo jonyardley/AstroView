@@ -13,6 +13,8 @@ define([
 		controls: '#controls'
 	});
 
+	App.env = (Backbone.history.location.hostname === 'localhost')? 'dev' : 'prod';
+
 	window.App = App;
 	
 	return App;

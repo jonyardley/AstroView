@@ -5,6 +5,7 @@ define([
 	'Marionette',
 	'app',
 	'./router',
+	'./devTools',
 	'mods/header/header',
 	'mods/images/images',
 	'mods/fits/fitsCollection',
@@ -17,6 +18,7 @@ define([
 	Marionette,
 	App,
 	router,
+	devTools,
 	HeaderView,
 	ImagesView,
 	FitsCollection,
@@ -49,6 +51,10 @@ define([
 
 		//render content
 		App.header.show(new HeaderView());
+
+		if(App.env === 'dev'){
+			devTools();
+		}
 
 	});
 
