@@ -1522,10 +1522,11 @@ button {
       position: relative;
       top: -5px; }
   #header ul {
-    padding-left: 16px;
+    padding-left: 8px;
     float: left; }
     #header ul li {
-      display: inline; }
+      display: inline;
+      margin: 0 8px; }
       #header ul li a {
         color: #fff;
         text-decoration: none; }
@@ -1675,3 +1676,8 @@ button {
     padding: 8px; }
   .fitsHeader th {
     font-weight: bold; }
+
+#ciStage {
+  background: #000;
+  width: 250px;
+  height: 250px; }

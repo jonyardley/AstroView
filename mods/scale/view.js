@@ -29,6 +29,11 @@ define([
 		},
 
 		done: function(e){
+			
+			if(this.model.get('options') !== this.previousOptions){
+				this.model.set('_dirty', true);
+			};
+
 			App.Router.navigate('/',{replace: true, trigger: true});
 		},
 
@@ -118,6 +123,7 @@ define([
 
 		initialize: function(){
 			_.bindAll(this, 'updateMinMax', 'updateScale', 'updateFullRange', 'renderImage', 'done', 'initSlider');
+			this.previousOptions = _.clone(this.model.get('options'));
 		}
 
 	});

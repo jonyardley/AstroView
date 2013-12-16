@@ -58,19 +58,26 @@ define([
 			return false;
 		},
 
+		generateImage: function(){
+			var fits = this.model.toJSON(),
+				scale = this.thumbScale();
+				
+			return renderImage({
+				fits: fits,
+				scale: scale,
+				width: Math.floor(fits.image.width * scale),
+				height: Math.floor(fits.image.height * scale)
+			});
+		},
+
+		thumbScale: function(){
+			return this.ui.canvas.attr('width') / this.model.get('image').width;
+		},
+
 		onRender: function(){
 			if(this.model.get('imageData')){
 
-				var fits = this.model.toJSON(),
-					scale = this.ui.canvas.attr('width') / fits.image.width;
-				
-				var thumb = renderImage({
-					fits: fits,
-					scale: scale,
-					width: Math.floor(fits.image.width * scale),
-					height: Math.floor(fits.image.height * scale)
-				});
-
+				var thumb = this.generateImage();
 				var context = this.ui.canvas[0].getContext('2d');
 				context.drawImage(thumb, 0, 0);
 

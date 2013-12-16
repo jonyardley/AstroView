@@ -5,10 +5,9 @@ define([
 	'Marionette',
 	'app',
 	'hbars!./tmpl',
-	'mods/renderImage/renderImage',
 	'mods/scale/view',
 	'mods/download/download'
-], function($, _, Backbone, Marionette, App, tmpl, renderImage, ScaleView, download){
+], function($, _, Backbone, Marionette, App, tmpl, ScaleView, download){
 
 	return Backbone.Marionette.ItemView.extend({
 
@@ -121,20 +120,15 @@ define([
 
 		onRender: function(){
 
-			this.context = this.ui.canvas[0].getContext('2d');
-
 			var width = this.model.get('image').width,
 				height = this.model.get('image').height;
 
 			this.ui.canvas.attr('width', width);
 			this.ui.canvas.attr('height', height);
 
-			var fullImage = renderImage({
-				fits: this.model.toJSON(),
-				scale: 1,
-				width: width,
-				height: height
-			});
+			this.context = this.ui.canvas[0].getContext('2d');
+
+			var fullImage = this.model.getFullImage();
 
 			this.context.drawImage(fullImage, 0, 0);
 

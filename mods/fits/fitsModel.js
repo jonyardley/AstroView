@@ -4,8 +4,9 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'mods/readFile/readFile'
-], function($, _, Backbone, Marionette, App, readFile){
+	'mods/readFile/readFile',
+	'mods/renderImage/renderImage',
+], function($, _, Backbone, Marionette, App, readFile, renderImage){
 
 	return Backbone.Model.extend({
 		
@@ -21,7 +22,28 @@ define([
 				min: 0,
 				max: 500,
 				scaleType: 'linear'
+			},
+			colour: {},
+			fullImg: null,
+			colourImg: null,
+			_dirty: false
+		},
+
+
+		getFullImage: function(){
+			var img = this.get('fullImg');
+			
+			if(!img || this.get('_dirty')){
+				img = renderImage({
+					fits: this.toJSON(),
+					scale: 1
+				});	
+				this.set('fullImg', img);
+				this.set('_dirty', false);
 			}
+
+			return img;
+
 		},
 		
 
@@ -39,10 +61,13 @@ define([
 		},
 
 		initialize: function(){
+
 			this.set('id', this.collection.length + 1);
 			this.set('label', 'Image ' + this.get('id'));
+
 			this.on('add', this.readFile);
 			this.on('add', this.loaderShow);
+
 			this.on('change:imageData', this.loaderHide);
 		}
 
