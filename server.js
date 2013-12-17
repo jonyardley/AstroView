@@ -1,5 +1,6 @@
 var connect = require('connect'),
-	request = require('request');
+	request = require('request'),
+	fs = require('fs');
 
 var filePrefix = '/remoteFits';
 
@@ -12,7 +13,7 @@ var server = connect()
 				req.pause();
 				var url = fileUrl[1];
 				var x = request(url);
-				//req.pipe(x);
+				req.pipe(x);
 				x.pipe(res, {end:true});
 				//console.log(x, req);
 				req.resume();
