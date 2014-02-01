@@ -6,7 +6,7 @@ A tool for reading, analysing & processing astronomical FITS images in the brows
 
 ##What is AstroView?
 You can find out all about AstroView here:
-http://jonyardley.github.io/aFIT
+http://jonyardley.github.io/AstroView
 
 
 
