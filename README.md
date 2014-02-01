@@ -31,4 +31,12 @@ This can also be done through the UI.
 
 ##Dependencies
 AstroView is build using the following libraries & frameworks:
-* fitsjs
+* fitsjs - https://github.com/astrojs/fitsjs
+
+##Contributors
+* David Bowdley
+* Andy Newsam
+
+
+#Get in touch
+* Twitter - https://twitter.com/astroviewapp
