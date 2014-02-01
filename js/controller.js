@@ -4,12 +4,11 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'mods/images/images',
+	'mods/images/views/images',
 	'mods/scale/view',
 	'mods/fullImage/fullImage',
 	'mods/fitsHeader/header',
-	'mods/colourImaging/colourImaging'
-], function($, _, Backbone, Marionette, App, ImagesView, ScaleView, FullImage, HeaderView, ColourImagingView){
+], function($, _, Backbone, Marionette, App, ImagesView, ScaleView, FullImage, HeaderView){
 
 	
 	var controller = {
@@ -69,24 +68,6 @@ define([
 				controller.other();
 			}
 
-		},
-
-
-		colourImaging: function(){
-			//if(App.fits.length > 0)	{
-
-				//TODO: FIND A BETTER PLACE FOR THIS!
-				App.vent.trigger('loaderHide');
-
-				var colourImaging = new ColourImagingView({
-					collection: App.fits
-				});
-
-				App.content.show(colourImaging);
-
-			//}else{
-			////	controller.other();
-			//}
 		},
 
 

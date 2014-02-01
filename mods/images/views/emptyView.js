@@ -4,7 +4,7 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'hbars!./empty'
+	'hbars!../templates/empty'
 ],
 function($, _, Backbone, Marionette, App, tmpl){
 	

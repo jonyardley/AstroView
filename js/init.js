@@ -6,24 +6,11 @@ define([
 	'app',
 	'./router',
 	'./devTools',
-	'mods/header/header',
-	'mods/images/images',
-	'mods/fits/fitsCollection',
-	'mods/fullImage/fullImage',
-	'mods/fitsHeader/header'
+	'dataModel/fits/fitsCollection',
+	'mods/header/header'
 ], function(
-	$,
-	_,
-	Backbone,
-	Marionette,
-	App,
-	router,
-	devTools,
-	HeaderView,
-	ImagesView,
-	FitsCollection,
-	FullImage,
-	FitsHeader
+	$, _, Backbone, Marionette, App, router,
+	devTools, FitsCollection, HeaderView
 ){
 
 	$(function(){

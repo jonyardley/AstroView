@@ -4,7 +4,7 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'hbars!./images',
+	'hbars!../templates/images',
 	'./image',
 	'fileInput',
 	'./emptyView'

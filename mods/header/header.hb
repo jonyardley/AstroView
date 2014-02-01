@@ -1,6 +1,5 @@
 <ul>
 	<li><a href="#/">Your Images</a></li>
-	<li><a href="#/colourImaging">Colour Imaging</a></li>
 </ul>
 
-<h1>aFIT <span class="small">(v0.1)</span></h1>
+<h1>AstroView <span class="small">0.9</span></h1>

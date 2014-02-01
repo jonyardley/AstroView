@@ -14,6 +14,7 @@ require.config({
 		text: '../lib/require.text',
 		hbars: '../lib/hbars',
 		mods: '../mods',
+		dataModel: '../dataModel',
 		fileInput: '../lib/file.input',
 		ionSlider: '../lib/ion.rangeSlider.min',
 		processing: '../lib/processing'

@@ -4,8 +4,8 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'mods/readFile/readFile',
-	'mods/renderImage/renderImage',
+	'mods/utils/readFile',
+	'mods/utils/renderImage',
 ], function($, _, Backbone, Marionette, App, readFile, renderImage){
 
 	return Backbone.Model.extend({

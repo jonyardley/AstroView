@@ -4,8 +4,8 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'hbars!./image',
-	'mods/renderImage/renderImage'
+	'hbars!../templates/image',
+	'mods/utils/renderImage'
 ], function($, _, Backbone, Marionette, App, ImageTmpl, renderImage){
 
 	return Backbone.Marionette.ItemView.extend({
