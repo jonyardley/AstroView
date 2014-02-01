@@ -6,7 +6,7 @@ define([
 	'app',
 	'hbars!./tmpl',
 	'mods/scale/view',
-	'mods/download/download'
+	'mods/utils/download'
 ], function($, _, Backbone, Marionette, App, tmpl, ScaleView, download){
 
 	return Backbone.Marionette.ItemView.extend({

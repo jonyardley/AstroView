@@ -5,7 +5,7 @@ define([
 	'Marionette',
 	'app',
 	'hbars!./tmpl',
-	'mods/renderImage/renderImage',
+	'mods/utils/renderImage',
 	'ionSlider'
 ], function($, _, Backbone, Marionette, App, tmpl, renderImage, ionSlider){
 
