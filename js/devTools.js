@@ -10,8 +10,8 @@ function($, _, Backbone, Marionette, App){
 	var dev = {
 
 		files: [
-			'/assets/example_fits/502nmos.fits',
-			'/assets/example_fits/656nmos.fits',
+			//'/assets/example_fits/502nmos.fits',
+			//'/assets/example_fits/656nmos.fits',
 			'/assets/example_fits/673nmos.fits'
 		],
 
