@@ -18,7 +18,7 @@ http://jonyardley.github.io/AstroView
 
 
 ##Environments
-* Producation: http://astroview.eu01.aws.af.cm/
+* Production: http://astroview.eu01.aws.af.cm/
 
 
 
