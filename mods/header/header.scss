@@ -3,27 +3,37 @@
 	top: 0px;
 	left: 0px;
 	right: 0px;
-	background: $panel;
+	background: $brand;
 	overflow: hidden;
 	font-weight: 700;
-	line-height: 42px;
+	line-height: 50px;
 	margin-bottom: 16px;
 
+	.version {
+		float:right;
+		font-size: 0.7em;
+		position: relative;
+		top: -5px;
+		padding-right: 10px;
+	}
+
 	h1 {
-		float: right;
-		background: $highlight;
-		line-height: 42px;
-		padding: 0 32px;
-		text-shadow: -1px -1px 0 darken(#E76049, 20%);
-	
-		.small {
-			font-size: 0.7em;
-			position: relative;
-			top: -5px;
+		width: 50px;
+		height: 50px;
+		background: url(../img/logo-white-transparent-40.png) no-repeat transparent 8px 5px;
+	}
+
+	nav {
+		float: left;
+		overflow: hidden;
+		padding-right: 10px;
+		&:hover {
+			background: #000;
 		}
 	}
 
 	ul {
+		display: none;
 		padding-left: 8px;
 		float: left;
 		li {

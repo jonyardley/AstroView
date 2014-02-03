@@ -1,0 +1,93 @@
+.panel {
+	position: relative;
+	background: $panel;
+	padding: 64px 16px 0px;
+	overflow: hidden;
+}
+
+/** Components **/
+
+.btn, input, textarea, button, .pretty-file-input {
+	font-family: 'Noto Sans', 'Arial', 'Sans-serif';
+	font-weight: 700;
+	&:focus{
+		outline-width: 0;
+	}
+	font-size: 16px;
+	border: 0;
+	margin: 0;
+	border: none;
+}
+
+.btn, button, .pretty-file-input {
+	display: inline-block;
+	background: #fff;
+	color: #000;
+	padding: 8px 16px;
+	cursor: pointer;
+	&:hover {
+		background: $highlight;
+		color: #fff;
+	}
+}
+
+input[type=text] {
+	padding: 8px 16px;
+}
+
+.tools {
+	position: absolute;
+	top: 16px;
+	left: 16px;
+	right: 16px;
+
+	.fa {
+		font-size: 1.1em;
+		padding-left: 5px;
+		line-height: 1.1em;
+	}
+}
+
+
+.menu {
+	display: inline-block;
+	position: relative;
+	background: #fff;
+	padding: 8px 24px 8px 12px;
+	font-size: 0.8em;
+	cursor: pointer;
+	font-weight: bold;
+	color: #000;
+	line-height: 1.2;
+
+	.fa {
+		position: absolute;
+		right: 8px;
+	}
+
+	ul {
+		display: none;
+		position: absolute;
+		z-index: 1;
+		left: 0;
+		width: 100%;
+		top:100%;
+
+		li {
+			background: #fff;
+			padding: 8px 12px;
+			cursor: pointer;
+			font-weight: bold;
+			color: #000;
+		}
+	}
+
+	&:hover  ul{
+		display: block;
+	}
+
+	&:hover, li:hover {
+		color: #fff;
+		background: $highlight;
+	}
+}

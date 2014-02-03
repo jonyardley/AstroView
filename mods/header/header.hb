@@ -1,5 +1,7 @@
-<ul>
-	<li><a href="#/">Your Images</a></li>
-</ul>
-
-<h1>AstroView <span class="small">0.9</span></h1>
+<span class="version ">v0.9</span>
+<nav>
+	<h1> </h1>
+	<ul>
+		<li><a href="#/">Your Images</a></li>
+	</ul>
+</nav>

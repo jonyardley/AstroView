@@ -4,14 +4,19 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
+	'mods/index/view',
 	'mods/images/views/images',
 	'mods/scale/view',
 	'mods/fullImage/fullImage',
 	'mods/fitsHeader/header',
-], function($, _, Backbone, Marionette, App, ImagesView, ScaleView, FullImage, HeaderView){
+], function($, _, Backbone, Marionette, App, IndexView, ImagesView, ScaleView, FullImage, HeaderView){
 
 	
 	var controller = {
+
+		index: function(){
+			App.content.show(new IndexView());
+		},
 
 
 		images: function(){
