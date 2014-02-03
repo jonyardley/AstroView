@@ -1551,7 +1551,10 @@ input[type=text] {
   #index .selectImage {
     position: relative;
     top: 240px;
-    text-align: center; }
+    text-align: center;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    height: 106px; }
   #index h3 {
     font-size: 1.8em;
     margin-bottom: 20px; }
