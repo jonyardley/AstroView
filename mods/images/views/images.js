@@ -20,7 +20,6 @@ define([
 
 
 		initialize: function(){
-			_.bindAll(this, 'addExternal');
 			/**var file = window.location.search.split('?file=');
 			if(file[1]){
 				this.fileIsRemote = true;

@@ -39,8 +39,10 @@ define([
 				var newImage = App.fits.add({
 					file: files[0]
 				});
+				if(this.ui.selectFile.val){
+					this.ui.selectFile.val('');
+				}
 			}
-			this.ui.selectFile.val('');
 		},
 
 		remoteFile: function(url){
@@ -51,6 +53,10 @@ define([
 
 		onRender: function(){
 			this.$el.find('input[type=file]').prettyFileInput();
+		},
+
+		initialize: function(){
+			_.bindAll(this, 'addExternal', 'fileSelected', 'remoteFile');
 		}
 
 

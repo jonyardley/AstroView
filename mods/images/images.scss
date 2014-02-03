@@ -1,7 +1,13 @@
 .images {
 
+	.imageList{
+		margin-top: 20px;
+		padding: 0 20px;
+	}
+
+
 	a {
-		color: $panel;
+		//color: $panel;
 		text-decoration: none;
 		&:hover {
 			color: #fff;
@@ -18,111 +24,39 @@
 		font-weight: 700;
 	}
 
-	.imageInput, .imageExternalUrl, .title{
-		line-height: 43px;
-		display: inline-block;
-		width: auto;
-	}
-
-	.imageInput button {
-		position: relative;
-		padding-left: 46px;
-		padding-right: 23px;
-	}
-
-	.imageExternalUrl {
-		span {
-			margin: 0 16px;
-		}
-		input {
-			margin-right: 16px;
-		}
-	}
-
-	.newImage {
-		text-align: center;
-	}
-
-	.newImage {
-		padding: 16px;
-
-		.fa {
-			position: absolute;
-			left: 16px;
-			font-size: 1.3em;
-			margin-top: -2px;
-		}
-	}
-
 	.imageRow {
-		background: $greyMedium;
+		background: $greyLightest;
 		margin-bottom: 16px;
 		position: relative;
 		overflow: hidden;
 
-		.label, .image {
+		.image, .imageMenu {
 			float: left;
-			line-height: 60px;
-		}
-
-		.btn {
-			margin-top: 14px;
-			float: right;
-			margin-right: 82px;
+			display: inline-block;
 		}
 
 		.image {
 			margin-right: 16px;
 			padding: 0 16px;
 			background: #000;
+			border-right: 1px solid #222;
 		}
 
-		.label {
+		h3 {
 			font-weight: 700;
+			margin: 16px 0 20px 0;
 			&:focus {
 				outline: none;
+				background: rgba(255,255,255,0.5);
+				margin: 10px 0;
+				padding: 8px;
 			}
 		}
 
 		.imageMenu {
-			position: absolute;
-			right: 0;
-			top: 0;
-			bottom: 0;
-			background: $greyLight;
-			color: $panel;
-			line-height: 60px;
-			cursor: pointer;
-			transition: all 0.3s ease-in-out;
-			width: 68px;
-
-			&:before {
-				font-size: 2em;
-				padding: 16px;
-			}
-
-			&:hover {
-				width: 300px;
-				li {
-					opacity: 1;
-				}
-			}
-
-			ul {
-				position: absolute;
-				right: 0;
-				top: 0;
-			}
-
 			li {
-				float: right;
-				margin-right: 16px;
-				display: block;
-				opacity: 0;
-				transition: opacity 0.3s;
-				&:hover {
-					color: $panel;
-				}
+				margin-right: 4px;
+				display: inline;
 			}
 		}
 	}

@@ -19,6 +19,15 @@ define([
 
 		onShow: function(){
 			this.selectImage.show(new SelectImage());
+			App.fits.on('add', this.goToImages);
+		},
+
+		onHide: function(){
+			App.fits.off('add', this.goToImages);
+		},
+
+		goToImages: function(){
+			App.Router.navigate('#/images', {trigger: true, replace: true});
 		}
 
 

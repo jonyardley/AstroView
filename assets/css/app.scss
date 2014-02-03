@@ -2,9 +2,11 @@
 $brand: #1F5DC2;
 $highlight: #E76049;
 $background: #E6EBEF;
-$panel: #1D2123;
-$greyMedium: lighten($panel, 10%);
-$greyLight: lighten($panel, 20%);
+
+$greyMedium: #888;
+$greyDark: darken($greyMedium, 20%);
+$greyLight: lighten($greyMedium, 20%);
+$greyLightest: lighten($greyMedium, 30%);
 
 
 
@@ -46,10 +48,10 @@ body {
 #content {
 	min-width: 768px;
 	position: absolute;
-	top: 60px;
-	left: 16px;
-	right: 16px;
-	bottom: 16px;
+	top: 70px;
+	left: 20px;
+	right: 20px;
+	bottom: 20px;
 }
 
 
@@ -70,15 +72,26 @@ body {
 	}
 }
 
-
-h2 {
-	margin-bottom: 16px;
-	font-size: 1.2em;
-}
-
 h2, h3, h4 {
 	font-weight: 700;
 	color: #eee;
+
+	#content & {
+		color: #000;
+	}
+}
+
+h2 {
+	font-size: 1.6em;
+	line-height: 1.6em;
+}
+
+h3 {
+	font-size: 1.1em;
+}
+
+.hidden {
+	display: none;
 }
 
 

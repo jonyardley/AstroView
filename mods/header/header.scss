@@ -10,11 +10,11 @@
 	margin-bottom: 16px;
 
 	.version {
-		float:right;
+		position: absolute;
 		font-size: 0.7em;
-		position: relative;
-		top: -5px;
-		padding-right: 10px;
+		top: 10px;
+		right: 10px;
+		line-height: 1;
 	}
 
 	h1 {
