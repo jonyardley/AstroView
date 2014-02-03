@@ -31,7 +31,7 @@ define([
 		image: function(fitsId){
 			
 			var model = App.fits.get(fitsId);
-			
+
 			if(model){
 				var fullImage = new FullImage({
 					model: model
@@ -78,7 +78,7 @@ define([
 
 
 		other: function(){
-			App.Router.navigate('/', {replace: true, trigger: true});
+			App.Router.navigate('#/', {replace: true, trigger: true});
 		}
 
 	};

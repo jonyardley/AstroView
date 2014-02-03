@@ -31,7 +31,7 @@ define([
 		},
 
 		showHeader: function(){
-			App.Router.navigate('#/image/'+this.model.get('id')+'/header', {trigger: true, replace: true});
+			App.Router.navigate('#/images/'+this.model.get('id')+'/header', {trigger: true, replace: true});
 		},
 
 		scale: function(){

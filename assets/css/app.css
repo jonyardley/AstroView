@@ -1589,10 +1589,12 @@ input[type=text] {
   background: #d5d5d5;
   margin-bottom: 16px;
   position: relative;
-  overflow: hidden; }
+  overflow: hidden;
+  height: 100px; }
   .images .imageRow .image, .images .imageRow .imageMenu {
     float: left;
-    display: inline-block; }
+    display: inline-block;
+    overflow: hidden; }
   .images .imageRow .image {
     margin-right: 16px;
     padding: 0 16px;
@@ -1600,6 +1602,7 @@ input[type=text] {
     border-right: 1px solid #222; }
   .images .imageRow h3 {
     font-weight: 700;
+    font-size: 1.4em;
     margin: 16px 0 20px 0; }
     .images .imageRow h3:focus {
       outline: none;

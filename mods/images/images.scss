@@ -29,10 +29,12 @@
 		margin-bottom: 16px;
 		position: relative;
 		overflow: hidden;
+		height: 100px;
 
 		.image, .imageMenu {
 			float: left;
 			display: inline-block;
+			overflow: hidden;
 		}
 
 		.image {
@@ -44,7 +46,9 @@
 
 		h3 {
 			font-weight: 700;
+			font-size: 1.4em;
 			margin: 16px 0 20px 0;
+
 			&:focus {
 				outline: none;
 				background: rgba(255,255,255,0.5);
@@ -59,6 +63,7 @@
 				display: inline;
 			}
 		}
+
 	}
 
 }
