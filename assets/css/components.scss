@@ -1,6 +1,6 @@
 /** Components **/
 
-.btn, input, textarea, button, .pretty-file-input {
+.btn, input, textarea, button, .pretty-file-input, .menu {
 	font-family: 'Noto Sans', 'Arial', 'Sans-serif';
 	font-weight: 700;
 	&:focus{
@@ -15,7 +15,7 @@
 	}
 }
 
-.btn, button, .pretty-file-input {
+.btn, button, .pretty-file-input, .menu {
 	display: inline-block;
 	background: #fff;
 	color: #000;
@@ -33,9 +33,11 @@ input[type=text] {
 
 .tools {
 	position: absolute;
-	top: 16px;
-	left: 16px;
-	right: 16px;
+	top: 0px;
+	left: 0px;
+	right: 0px;
+  	background: $greyMedium;
+  	padding: 8px;
 
 	.fa {
 		font-size: 1.1em;
@@ -48,13 +50,7 @@ input[type=text] {
 .menu {
 	display: inline-block;
 	position: relative;
-	background: #fff;
-	padding: 8px 24px 8px 12px;
-	font-size: 0.8em;
-	cursor: pointer;
-	font-weight: bold;
-	color: #000;
-	line-height: 1.2;
+  	padding: 11px 30px 11px 16px;
 
 	.fa {
 		position: absolute;

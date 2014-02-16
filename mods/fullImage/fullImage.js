@@ -12,7 +12,7 @@ define([
 	return Backbone.Marionette.ItemView.extend({
 
 		template: tmpl,
-		className: 'panel fullImage',
+		className: 'fullImage',
 
 		ui: {
 			canvas: 'canvas',

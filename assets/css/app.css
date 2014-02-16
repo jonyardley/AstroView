@@ -1419,25 +1419,25 @@ h3 {
 
 /** Module Includes **/
 /** Components **/
-.btn, input, textarea, button, .pretty-file-input {
+.btn, input, textarea, button, .pretty-file-input, .menu {
   font-family: 'Noto Sans', 'Arial', 'Sans-serif';
   font-weight: 700;
   font-size: 16px;
   border: 0;
   margin: 0;
   border: none; }
-  .btn:focus, input:focus, textarea:focus, button:focus, .pretty-file-input:focus {
+  .btn:focus, input:focus, textarea:focus, button:focus, .pretty-file-input:focus, .menu:focus {
     outline-width: 0; }
-  .btn.btn-small, input.btn-small, textarea.btn-small, button.btn-small, .pretty-file-input.btn-small {
+  .btn.btn-small, input.btn-small, textarea.btn-small, button.btn-small, .pretty-file-input.btn-small, .menu.btn-small {
     font-size: 13px; }
 
-.btn, button, .pretty-file-input {
+.btn, button, .pretty-file-input, .menu {
   display: inline-block;
   background: #fff;
   color: #000;
   padding: 8px 16px;
   cursor: pointer; }
-  .btn:hover, button:hover, .pretty-file-input:hover {
+  .btn:hover, button:hover, .pretty-file-input:hover, .menu:hover {
     background: #e76049;
     color: #fff; }
 
@@ -1446,9 +1446,11 @@ input[type=text] {
 
 .tools {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  right: 16px; }
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  background: #888888;
+  padding: 8px; }
   .tools .fa {
     font-size: 1.1em;
     padding-left: 5px;
@@ -1457,13 +1459,7 @@ input[type=text] {
 .menu {
   display: inline-block;
   position: relative;
-  background: #fff;
-  padding: 8px 24px 8px 12px;
-  font-size: 0.8em;
-  cursor: pointer;
-  font-weight: bold;
-  color: #000;
-  line-height: 1.2; }
+  padding: 11px 30px 11px 16px; }
   .menu .fa {
     position: absolute;
     right: 8px; }
@@ -1573,8 +1569,7 @@ input[type=text] {
   margin-left: 10px; }
 
 .images .imageList {
-  margin-top: 20px;
-  padding: 0 20px; }
+  margin-top: 20px; }
 .images a {
   text-decoration: none; }
   .images a:hover {
@@ -1636,10 +1631,10 @@ input[type=text] {
   right: 0;
   padding-top: 58px; }
   .fullImage .canvasWrapper {
-    top: 60px;
-    left: 16px;
-    bottom: 16px;
-    right: 16px;
+    top: 55px;
+    left: 0px;
+    bottom: 0px;
+    right: 0px;
     overflow: hidden;
     position: absolute;
     background: #000;
