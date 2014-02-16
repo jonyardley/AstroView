@@ -11,7 +11,7 @@ function($, _, Backbone, Marionette, App){
 
 		files: [
 			//'/assets/example_fits/502nmos.fits'
-			'/assets/example_fits/656nmos.fits'
+			'/assets/example_fits/m1-green.fits'
 			//'/assets/example_fits/673nmos.fits'
 		],
 

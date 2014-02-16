@@ -41,9 +41,23 @@ define([
 		}
 
 		ctx.putImageData(buffer, 0, 0);
+
 		var imgData = canvas.toDataURL();
 		var img = new Image();
 		img.src = imgData;
+		//clear
+		canvas.width = canvas.width;
+
+		//flip
+		ctx.translate(0, height);
+		ctx.scale(1,-1);
+		ctx.drawImage(img, 0, 0);
+
+
+		imgData = canvas.toDataURL();
+		img = new Image();
+		img.src = imgData;
+
 
 		return img;
 
