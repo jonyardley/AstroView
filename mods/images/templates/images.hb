@@ -1,3 +1,5 @@
 <h2>Your Images</h2>
 
-<ul class="imageList"></ul>
+<div class="imageList"></div>
+
+<div class="selectImage"></div>

@@ -29,7 +29,7 @@ define([
 			for(ii=0; ii < width; ii++){
 				var y = ii * invScale;
 				var pixel = x+y;
-				var index = ((i * width) + ii) * 4;
+				var index = (((height - i) * width) + ii) * 4;
 				var value = scale(opts.fits.imageData[pixel], opts.fits);
 
 				buffer.data[index+0] = value;
@@ -45,19 +45,6 @@ define([
 		var imgData = canvas.toDataURL();
 		var img = new Image();
 		img.src = imgData;
-		//clear
-		canvas.width = canvas.width;
-
-		//flip
-		ctx.translate(0, height);
-		ctx.scale(1,-1);
-		ctx.drawImage(img, 0, 0);
-
-
-		imgData = canvas.toDataURL();
-		img = new Image();
-		img.src = imgData;
-
 
 		return img;
 

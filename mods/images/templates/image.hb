@@ -1,5 +1,5 @@
 <div class="image">
-	<canvas width="100" height="100"></canvas>
+	<canvas width="120" height="120"></canvas>
 </div>
 
 <div class="imageMenu">

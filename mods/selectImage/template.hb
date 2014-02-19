@@ -1,4 +1,4 @@
-<h3>Get started</h3>
+<h3>{{title}}</h3>
 
 	<div class="imageInput">
 		<input id="selectFile" type="file" accept=".fits,.fit"/>

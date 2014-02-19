@@ -23,27 +23,49 @@ define([
 				max: 500,
 				scaleType: 'linear'
 			},
-			colour: {},
 			fullImg: null,
-			colourImg: null,
+			thumbImg: null,
 			_dirty: false
 		},
 
-
-		getFullImage: function(){
-			var img = this.get('fullImg');
-			
-			if(!img || this.get('_dirty')){
-				img = renderImage({
-					fits: this.toJSON(),
+		imgConfig: function(){
+			var thumbScale = 120 / this.get('image').width;
+			return {
+				fullImg: {
 					scale: 1
-				});	
-				this.set('fullImg', img);
+				},
+				thumbImg: {
+					scale: thumbScale,
+					width: Math.floor(this.get('image').width * thumbScale),
+					height: Math.floor(this.get('image').height * thumbScale)
+				}
+			}
+		},
+
+
+		updateImages: function(){
+			if(this.get('_dirty')){
+				var images = ['thumbImg','fullImg'],
+					fits = this.toJSON(),
+					imgConfig = this.imgConfig();
+
+				_.each(images, _.bind(function(image){
+					_.defer(_.bind(function(){
+						this.set(image, renderImage({
+							fits: fits,
+							scale: imgConfig[image].scale,
+							width: imgConfig[image].width,
+							height: imgConfig[image].height
+						}));
+					}, this));
+				}, this));
+
 				this.set('_dirty', false);
 			}
+		},
 
-			return img;
-
+		flagAsDirty: function(){
+			this.set('_dirty', true);
 		},
 		
 
@@ -54,6 +76,7 @@ define([
 
 		loaderHide: function(){
 			App.vent.trigger('loaderHide');
+			this.set('_dirty', true);
 		},
 
 		loaderShow: function(){
@@ -62,6 +85,8 @@ define([
 
 		initialize: function(){
 
+			_.bindAll(this, 'loaderHide', 'updateImages', 'flagAsDirty');
+
 			this.set('id', this.collection.length + 1);
 			this.set('label', 'Image ' + this.get('id'));
 
@@ -69,6 +94,7 @@ define([
 			this.on('add', this.loaderShow);
 
 			this.on('change:imageData', this.loaderHide);
+			this.on('change:_dirty', this.updateImages);
 		}
 
 	});

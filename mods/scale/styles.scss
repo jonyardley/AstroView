@@ -1,12 +1,15 @@
 .scale {
 	.canvasWrapper {
-		float: left;
-		width: auto;
+		margin: 0 auto;
 		width: 320px;
+		padding: 16px 0;
 		text-align: center;
+		background: #000;
+
 		canvas {
 			display: inline-block;
 		}
+
 		margin-bottom: 16px;
 
 	}
@@ -20,6 +23,16 @@
 	}
 
 	.imageControls {
-		margin-left: 336px;
+		background: $greyLightest;
+		padding: 16px;
+
+		.irs-line {
+			background: $greyDark;
+			.irs-line-mid, .irs-line-right, .irs-line-left {
+				background: none;
+				border-radius: 2px;
+				overflow: hidden;
+			}
+		}
 	}
 }

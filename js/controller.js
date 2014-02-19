@@ -5,7 +5,7 @@ define([
 	'Marionette',
 	'app',
 	'mods/index/view',
-	'mods/images/views/images',
+	'mods/images/views/imagesLayout',
 	'mods/scale/view',
 	'mods/fullImage/fullImage',
 	'mods/fitsHeader/header',
@@ -23,9 +23,7 @@ define([
 
 			if(App.fits.length > 0){
 
-				App.content.show(new ImagesView({
-					collection: App.fits
-				}));
+				App.content.show(new ImagesView());
 
 			}else{
 				controller.other();
@@ -84,7 +82,7 @@ define([
 
 
 		other: function(){
-			App.Router.navigate('#/', {replace: true, trigger: true});
+			App.Router.navigate('#/', {trigger: true});
 		}
 
 	};

@@ -1568,51 +1568,68 @@ input[type=text] {
 .selectImage #addImage {
   margin-left: 10px; }
 
-.images .imageList {
+#images .selectImage {
+  border: 1px solid #d5d5d5;
+  border-width: 1px 0;
+  padding: 16px;
+  text-align: center;
+  color: #333; }
+  #images .selectImage h3 {
+    margin-bottom: 16px; }
+
+.imageList {
   margin-top: 20px; }
-.images a {
-  text-decoration: none; }
-  .images a:hover {
-    color: #fff; }
-.images .empty {
-  margin-bottom: 16px;
-  text-align: center; }
-.images .title {
-  margin-right: 16px;
-  font-weight: 700; }
-.images .imageRow {
-  background: #d5d5d5;
-  margin-bottom: 16px;
-  position: relative;
-  overflow: hidden;
-  height: 100px; }
-  .images .imageRow .image, .images .imageRow .imageMenu {
-    float: left;
-    display: inline-block;
-    overflow: hidden; }
-  .images .imageRow .image {
+  .imageList a {
+    text-decoration: none; }
+    .imageList a:hover {
+      color: #fff; }
+  .imageList .empty {
+    padding: 16px 0;
+    margin-top: 16px;
+    text-align: center;
+    color: #555555;
+    border: 1px solid #d5d5d5;
+    border-width: 1px 0 1px 0; }
+  .imageList .title {
     margin-right: 16px;
-    padding: 0 16px;
-    background: #000;
-    border-right: 1px solid #222; }
-  .images .imageRow h3 {
-    font-weight: 700;
-    font-size: 1.4em;
-    margin: 16px 0 20px 0; }
-    .images .imageRow h3:focus {
-      outline: none;
-      background: rgba(255, 255, 255, 0.5);
-      margin: 10px 0;
-      padding: 8px; }
-  .images .imageRow .imageMenu li {
-    margin-right: 4px;
-    display: inline; }
+    font-weight: 700; }
+  .imageList .imageRow {
+    background: #d5d5d5;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden; }
+    .imageList .imageRow .image, .imageList .imageRow .imageMenu {
+      float: left;
+      display: inline-block;
+      overflow: hidden; }
+    .imageList .imageRow .image {
+      margin-right: 16px;
+      padding: 5px;
+      background: #000;
+      border-right: 1px solid #222; }
+      .imageList .imageRow .image.loading {
+        background: url(../img/loading.gif) black no-repeat center center; }
+        .imageList .imageRow .image.loading canvas {
+          opacity: 0; }
+    .imageList .imageRow h3 {
+      font-weight: 700;
+      font-size: 1.4em;
+      margin: 16px 0 20px 0; }
+      .imageList .imageRow h3:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.5);
+        margin: 10px 0;
+        padding: 8px; }
+    .imageList .imageRow .imageMenu li {
+      margin-right: 4px;
+      display: inline; }
 
 .scale .canvasWrapper {
-  float: left;
-  width: auto;
+  margin: 0 auto;
   width: 320px;
+  padding: 16px 0;
   text-align: center;
+  background: #000;
   margin-bottom: 16px; }
   .scale .canvasWrapper canvas {
     display: inline-block; }
@@ -1621,7 +1638,14 @@ input[type=text] {
 .scale .field.right {
   float: right; }
 .scale .imageControls {
-  margin-left: 336px; }
+  background: #d5d5d5;
+  padding: 16px; }
+  .scale .imageControls .irs-line {
+    background: #555555; }
+    .scale .imageControls .irs-line .irs-line-mid, .scale .imageControls .irs-line .irs-line-right, .scale .imageControls .irs-line .irs-line-left {
+      background: none;
+      border-radius: 2px;
+      overflow: hidden; }
 
 .fullImage {
   position: absolute;
@@ -1631,7 +1655,7 @@ input[type=text] {
   right: 0;
   padding-top: 58px; }
   .fullImage .canvasWrapper {
-    top: 55px;
+    top: 54px;
     left: 0px;
     bottom: 0px;
     right: 0px;
@@ -1639,6 +1663,10 @@ input[type=text] {
     position: absolute;
     background: #000;
     border: 1px solid #000; }
+    .fullImage .canvasWrapper.loading {
+      background: url(../img/loading.gif) no-repeat black center center; }
+      .fullImage .canvasWrapper.loading canvas {
+        opacity: 0; }
     .fullImage .canvasWrapper canvas {
       position: relative;
       cursor: move; }

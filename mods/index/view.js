@@ -27,10 +27,8 @@ define([
 		},
 
 		goToImages: function(){
-			App.Router.navigate('#/images', {trigger: true, replace: true});
+			App.Router.navigate('#/images', {trigger: true});
 		}
-
-
 
 	});
 

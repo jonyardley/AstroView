@@ -55,6 +55,12 @@ define([
 			this.$el.find('input[type=file]').prettyFileInput();
 		},
 
+		serializeData: function(){
+			return {
+				title: this.options.title || 'Get started'
+			}
+		},
+
 		initialize: function(){
 			_.bindAll(this, 'addExternal', 'fileSelected', 'remoteFile');
 		}

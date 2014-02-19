@@ -4,17 +4,15 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'hbars!../templates/images',
 	'./image',
 	'fileInput',
 	'./emptyView'
-], function($, _, Backbone, Marionette, App, ImagesTmpl, ImageListItem, fileInput, emptyView){
+], function($, _, Backbone, Marionette, App, ImageListItem, fileInput, emptyView){
 
-	return Backbone.Marionette.CompositeView.extend({
+	return Backbone.Marionette.CollectionView.extend({
 
-		template: ImagesTmpl,
-		className: 'panel images',
-		itemViewContainer: 'ul.imageList',
+		tagName: 'ul',
+		className: 'images',
 		emptyView: emptyView,
 		itemView: ImageListItem,
 

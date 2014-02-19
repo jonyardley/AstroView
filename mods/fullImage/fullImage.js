@@ -30,12 +30,16 @@ define([
 			'click #showHeader': 'showHeader'
 		},
 
+		modelEvents: {
+			'change:fullImg': 'render'
+		},
+
 		showHeader: function(){
-			App.Router.navigate('#/images/'+this.model.get('id')+'/header', {trigger: true, replace: true});
+			App.Router.navigate('#/images/'+this.model.get('id')+'/header');
 		},
 
 		scale: function(){
-			App.content.show( new ScaleView({model: this.model}) );
+			App.Router.navigate('#/images/'+this.model.get('id')+'/scale', {trigger: true});
 			return false;
 		},
 
@@ -120,19 +124,21 @@ define([
 
 		onRender: function(){
 
-			var width = this.model.get('image').width,
-				height = this.model.get('image').height;
+			this.ui.canvasWrapper.addClass('loading');
 
-			this.ui.canvas.attr('width', width);
-			this.ui.canvas.attr('height', height);
+			if(this.model.get('fullImg')){
 
-			this.context = this.ui.canvas[0].getContext('2d');
 
-			var fullImage = this.model.getFullImage();
+				_.defer(_.bind(function(){
 
-			this.context.drawImage(fullImage, 0, 0);
+					var context = this.ui.canvas[0].getContext('2d');
+					context.drawImage(this.model.get('fullImg'), 0, 0);
+					_.defer(this.zoomFit);
+					this.ui.canvasWrapper.removeClass('loading');
 
-			_.defer(this.zoomFit);
+				}, this));
+
+			}
 		},
 
 

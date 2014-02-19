@@ -11,5 +11,5 @@
 	<button id="save">Save <span class="fa fa-cloud-download"></span></button>
 </div>
 <div class="canvasWrapper">
-	<canvas></canvas>
+	<canvas width="{{image.width}}" height="{{image.height}}"></canvas>
 </div>

@@ -5,10 +5,6 @@
 </div>
 
 <div class="imageControls">
-	
-	<div class="field right">
-		<label>Full range:</label><input type="checkbox" id="fullRange" value="1"/>
-	</div>
 
 	<div class="field">
 		<label>Scale function: </label>
