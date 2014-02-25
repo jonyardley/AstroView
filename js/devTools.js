@@ -10,9 +10,9 @@ function($, _, Backbone, Marionette, App){
 	var dev = {
 
 		files: [
-			//'/assets/example_fits/502nmos.fits',
+			'/assets/example_fits/502nmos.fits'
 			//'/assets/example_fits/m1-green.fits',
-			'/assets/example_fits/m1-red.fits'
+			//'/assets/example_fits/m1-red.fits'
 		],
 
 		count: 0,

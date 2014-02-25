@@ -41,7 +41,6 @@ define([
 			options.max = e.toNumber;
 			this.model.set('options', options);
 			this.renderImage();
-
 		},
 
 		updateScale: function(e){
@@ -68,15 +67,36 @@ define([
 
 		initSlider: function(){
 			var options = this.model.get('options');
+			var throttledUpdate = _.throttle(this.updateMinMax, 100);
 			this.ui.minMax.ionRangeSlider({
 				type: 'double',
 				min:  0,
 				max: 65535,
 				from: options.min,
 				to: options.max,
-				onChange: this.updateMinMax
+				onChange: throttledUpdate,
+				scale: function(e){
+
+					var s = function(value){
+						var c = 1,
+							t = value,
+							b = 0,
+							d = e.max,
+
+						output = c*(t/=d)*t + b;
+						output *= d;
+						return output;
+					};
+
+					//e.fromNumber = s(e.fromNumber);
+					e.toNumber = Math.round(s(e.toNumber) * 10) / 10;
+					e.fromNumber = Math.round(s(e.fromNumber) * 10) / 10;
+
+					return e;
+				}
 			});
 		},
+
 
 		onRender: function(){
 			if(this.model.get('imageData')){
@@ -103,9 +123,9 @@ define([
 				this.ui.canvas.attr('height', this.height);
 
 				_.defer(this.initSlider);
-				_.defer(_.bind(function(){
-					this.ui.minMax.trigger('change');
-				}, this));
+				/**_.defer(_.bind(function(){
+					//this.ui.minMax.trigger('change');
+				}, this));**/
 
 				this.renderImage();
 
