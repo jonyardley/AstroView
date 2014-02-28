@@ -1,7 +1,10 @@
 <span class="version ">v0.9</span>
+
 <nav>
-	<h1> </h1>
+	<a href="#/"><h1>AstroView</h1></a>
 	<ul>
-		<li><a href="#/">Your Images</a></li>
+		<li><a href="#/images">Your Images</a></li>
+		<li><a href="#/images">About AstroView</a></li>
+		<li><a href="#/images">Help</a></li>
 	</ul>
 </nav>

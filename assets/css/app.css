@@ -1488,7 +1488,6 @@ input[type=text] {
   left: 0px;
   right: 0px;
   background: #1f5dc2;
-  overflow: hidden;
   font-weight: 700;
   line-height: 50px;
   margin-bottom: 16px; }
@@ -1501,25 +1500,41 @@ input[type=text] {
   #header h1 {
     width: 50px;
     height: 50px;
-    background: url(../img/logo-white-transparent-40.png) no-repeat transparent 8px 5px; }
+    background: url(../img/logo-white-transparent-40.png) no-repeat transparent 8px 5px;
+    text-indent: -9999px; }
   #header nav {
+    cursor: pointer;
     float: left;
-    overflow: hidden;
-    padding-right: 10px; }
+    padding-right: 10px;
+    position: relative; }
     #header nav:hover {
       background: #000; }
+      #header nav:hover ul {
+        display: block; }
   #header ul {
     display: none;
-    padding-left: 8px;
-    float: left; }
+    position: absolute;
+    z-index: 1000;
+    min-width: 300px;
+    box-shadow: rgba(0, 0, 0, 0.3) 0 0 6px; }
     #header ul li {
-      display: inline;
-      margin: 0 8px; }
+      width: 100%;
+      background: #000;
+      padding: 0 16px;
+      font-size: 0.8em;
+      line-height: 3;
+      border-bottom: 1px solid #555555; }
+      #header ul li:last-child {
+        border-bottom: none; }
+      #header ul li:hover {
+        background: #fff; }
+        #header ul li:hover a {
+          color: #1f5dc2; }
       #header ul li a {
+        display: block;
+        width: 100%;
         color: #fff;
         text-decoration: none; }
-        #header ul li a:hover {
-          color: #e76049; }
 
 #index {
   position: absolute;
