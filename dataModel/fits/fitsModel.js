@@ -21,6 +21,8 @@ define([
 			options: {
 				min: 0,
 				max: 500,
+				minRaw: 0,
+				maxRaw: 19369, //this is a little hack to init the non-linear slider in the right place on init.
 				scaleType: 'linear'
 			},
 			fullImg: null,

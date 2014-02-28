@@ -39,6 +39,8 @@ define([
 			var options = _.clone(this.model.get('options'));
 			options.min = e.fromNumber;
 			options.max = e.toNumber;
+			options.maxRaw = e.toRaw;
+			options.minRaw = e.fromRaw;
 			this.model.set('options', options);
 			this.renderImage();
 		},
@@ -65,6 +67,29 @@ define([
 			this.context.drawImage(preview, 0, 0);
 		},
 
+		nonLinearScale: function(e, invert){
+
+			var s = function(value){
+				var c = 1,
+					t = value,
+					b = 0,
+					d = e.max,
+
+					output = c*(t/=d)*(t*t*t) + b;
+					output *= d;
+
+				return output;
+			};
+
+			//e.fromNumber = s(e.fromNumber);
+			e.toRaw = e.toNumber;
+			e.fromRaw = e.fromNumber;
+			e.toNumber = Math.round(s(e.toNumber) * 10) / 10;
+			e.fromNumber = Math.round(s(e.fromNumber) * 10) / 10;
+
+			return e;
+		},
+
 		initSlider: function(){
 			var options = this.model.get('options');
 			var throttledUpdate = _.throttle(this.updateMinMax, 100);
@@ -72,28 +97,10 @@ define([
 				type: 'double',
 				min:  0,
 				max: 65535,
-				from: options.min,
-				to: options.max,
+				from: options.minRaw || 0,
+				to: options.maxRaw || 65535,
 				onChange: throttledUpdate,
-				scale: function(e){
-
-					var s = function(value){
-						var c = 1,
-							t = value,
-							b = 0,
-							d = e.max,
-
-						output = c*(t/=d)*t + b;
-						output *= d;
-						return output;
-					};
-
-					//e.fromNumber = s(e.fromNumber);
-					e.toNumber = Math.round(s(e.toNumber) * 10) / 10;
-					e.fromNumber = Math.round(s(e.fromNumber) * 10) / 10;
-
-					return e;
-				}
+				scale: this.nonLinearScale
 			});
 		},
 
@@ -123,9 +130,6 @@ define([
 				this.ui.canvas.attr('height', this.height);
 
 				_.defer(this.initSlider);
-				/**_.defer(_.bind(function(){
-					//this.ui.minMax.trigger('change');
-				}, this));**/
 
 				this.renderImage();
 
