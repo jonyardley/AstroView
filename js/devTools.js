@@ -36,7 +36,7 @@ function($, _, Backbone, Marionette, App){
 
 		init: function(){
 
-			dev.addImages();
+			//dev.addImages();
 
 		}
 

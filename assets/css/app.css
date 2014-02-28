@@ -1403,7 +1403,7 @@ body {
 
 h2, h3, h4 {
   font-weight: 700;
-  color: #eee; }
+  color: #fff; }
   #content h2, #content h3, #content h4 {
     color: #000; }
 
@@ -1451,6 +1451,10 @@ input[type=text] {
   right: 0px;
   background: #888888;
   padding: 8px; }
+  #content .tools h2, #content .tools h3 {
+    color: #fff; }
+  .tools .menu, .tools .btn, .tools button {
+    font-size: 0.8em; }
   .tools .fa {
     font-size: 1.1em;
     padding-left: 5px;
@@ -1459,10 +1463,11 @@ input[type=text] {
 .menu {
   display: inline-block;
   position: relative;
-  padding: 11px 30px 11px 16px; }
+  padding: 9px 34px 9px 16px; }
   .menu .fa {
     position: absolute;
-    right: 8px; }
+    right: 12px;
+    top: 8px; }
   .menu ul {
     display: none;
     position: absolute;
@@ -1639,9 +1644,12 @@ input[type=text] {
       margin-right: 4px;
       display: inline; }
 
+.scale h2 {
+  font-size: 1em; }
+.scale .tools {
+  position: relative; }
 .scale .canvasWrapper {
-  margin: 0 auto;
-  width: 320px;
+  width: 100%;
   padding: 16px 0;
   text-align: center;
   background: #000;

@@ -1,4 +1,4 @@
-<h2>Scale Image</h2>
+<div class="tools"><h2>Scale Image</h2></div>
 
 <div class="canvasWrapper">
 	<canvas></canvas>
@@ -7,7 +7,7 @@
 <div class="imageControls">
 
 	<div class="field">
-		<label>Scale function: </label>
+		<label>Stretch function: </label>
 		<select id="scale">
 			<option value="linear">Linear</option>
 			<option value="sqrt">sqrt</option>

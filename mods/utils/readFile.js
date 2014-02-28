@@ -14,14 +14,27 @@ define([
 			fileReader.fitsModel.set('imageData', imageData);
 		},
 
+		error: function(){
+			var model = fileReader.fitsModel;
+			model.trigger('destroy', model, model.collection, {});
+			App.vent.trigger('loaderHide');
+			window.alert('For some reason that file couldn\'t be loaded');
+		},
 
-		onLoad: function(fits){
 
-			fileReader.fitsModel.set('header', this.getHeader());
-			fileReader.fitsModel.set('image', this.getDataUnit());
+		onLoad: function(fits, opts){
 
-			var image = fileReader.fitsModel.get('image');
-			image.getFrame(0, fileReader.getImageData);
+			if(fits.hdus.length > 1){
+
+				fileReader.fitsModel.set('header', this.getHeader());
+				fileReader.fitsModel.set('image', this.getDataUnit());
+
+				var image = fileReader.fitsModel.get('image');
+				image.getFrame(0, fileReader.getImageData);
+			}else{
+				fileReader.error();
+			}
+
 		},
 
 

@@ -81,11 +81,10 @@ define([
 				return output;
 			};
 
-			//e.fromNumber = s(e.fromNumber);
 			e.toRaw = e.toNumber;
 			e.fromRaw = e.fromNumber;
-			e.toNumber = Math.round(s(e.toNumber) * 10) / 10;
-			e.fromNumber = Math.round(s(e.fromNumber) * 10) / 10;
+			e.toNumber = Math.round(s(e.toNumber));
+			e.fromNumber = Math.round(s(e.fromNumber));
 
 			return e;
 		},

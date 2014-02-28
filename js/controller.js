@@ -21,13 +21,7 @@ define([
 
 		images: function(){
 
-			if(App.fits.length > 0){
-
-				App.content.show(new ImagesView());
-
-			}else{
-				controller.other();
-			}
+			App.content.show(new ImagesView());
 
 		},
 

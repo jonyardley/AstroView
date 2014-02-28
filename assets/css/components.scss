@@ -39,6 +39,16 @@ input[type=text] {
   	background: $greyMedium;
   	padding: 8px;
 
+	#content &{
+		h2, h3 {
+			color: #fff;
+		}
+	}
+
+	.menu, .btn, button {
+		font-size: 0.8em;
+	}
+
 	.fa {
 		font-size: 1.1em;
 		padding-left: 5px;
@@ -50,11 +60,12 @@ input[type=text] {
 .menu {
 	display: inline-block;
 	position: relative;
-  	padding: 11px 30px 11px 16px;
+  	padding: 9px 34px 9px 16px;
 
 	.fa {
 		position: absolute;
-		right: 8px;
+		right: 12px;
+		top: 8px;
 	}
 
 	ul {

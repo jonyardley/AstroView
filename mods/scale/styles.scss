@@ -1,7 +1,14 @@
 .scale {
+
+	h2 {
+		font-size: 1em;
+	}
+	.tools {
+		position: relative;
+	}
+
 	.canvasWrapper {
-		margin: 0 auto;
-		width: 320px;
+		width: 100%;
 		padding: 16px 0;
 		text-align: center;
 		background: #000;
