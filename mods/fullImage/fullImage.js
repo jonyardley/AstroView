@@ -45,9 +45,9 @@ define([
 
 
 		save: function(){
-			var data = this.ui.canvas[0].toDataURL(),
+			var data = this.model.get('fullImg').src,
 				filename = this.model.get('label') + '.png';
-				
+
 			download(data, filename);
 			
 			return false;
@@ -84,7 +84,7 @@ define([
 		zoom100: function(){
 			var css = {
 				width: this.ui.canvas.attr('width'),
-				height: this.ui.canvas.attr('height'),
+				height: this.ui.canvas.attr('height')
 			};
 			css.top = -((css.height - this.ui.canvasWrapper.height()) / 2);
 			css.left = -((css.width - this.ui.canvasWrapper.width()) / 2);
