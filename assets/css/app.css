@@ -1425,7 +1425,8 @@ h3 {
   font-size: 16px;
   border: 0;
   margin: 0;
-  border: none; }
+  border: none;
+  text-decoration: none; }
   .btn:focus, input:focus, textarea:focus, button:focus, .pretty-file-input:focus, .menu:focus {
     outline-width: 0; }
   .btn.btn-small, input.btn-small, textarea.btn-small, button.btn-small, .pretty-file-input.btn-small, .menu.btn-small {
@@ -1454,7 +1455,8 @@ input[type=text] {
   #content .tools h2, #content .tools h3 {
     color: #fff; }
   .tools .menu, .tools .btn, .tools button {
-    font-size: 0.8em; }
+    font-size: 0.8em;
+    line-height: 15px; }
   .tools .fa {
     font-size: 1.1em;
     padding-left: 5px;
@@ -1463,7 +1465,8 @@ input[type=text] {
 .menu {
   display: inline-block;
   position: relative;
-  padding: 9px 34px 9px 16px; }
+  padding-left: 16px;
+  padding-right: 34px; }
   .menu .fa {
     position: absolute;
     right: 12px;
@@ -1580,6 +1583,21 @@ input[type=text] {
     background: rgba(0, 0, 0, 0.6);
     padding: 20px;
     height: 122px; }
+  #index .about {
+    text-align: center; }
+    #index .about h3 a {
+      color: #555555;
+      font-size: 0.8em; }
+      #index .about h3 a:hover {
+        color: #e76049; }
+  #index .footer {
+    padding-top: 20px;
+    color: #555555;
+    font-size: 0.8em;
+    text-align: center; }
+    #index .footer h4 {
+      font-size: 1.2em;
+      margin-bottom: 10px; }
 
 .selectImage .imageInput, .selectImage .imageExternalUrl {
   display: inline-block; }

@@ -50,6 +50,29 @@
 		padding: 20px;
 		height: 122px;
 	}
+
+	.about {
+		text-align: center;
+		h3 a{
+			color: $greyDark;
+			font-size: 0.8em;
+			&:hover {
+				color: $highlight;
+			}
+		}
+	}
+
+	.footer {
+		padding-top: 20px;
+		color: $greyDark;
+		font-size: 0.8em;
+		text-align: center;
+
+		h4 {
+			font-size: 1.2em;
+			margin-bottom: 10px;
+		}
+	}
 	
 
 }

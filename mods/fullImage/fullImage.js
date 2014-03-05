@@ -4,10 +4,8 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'hbars!./tmpl',
-	'mods/scale/view',
-	'mods/utils/download'
-], function($, _, Backbone, Marionette, App, tmpl, ScaleView, download){
+	'hbars!./tmpl'
+], function($, _, Backbone, Marionette, App, tmpl){
 
 	return Backbone.Marionette.ItemView.extend({
 
@@ -16,7 +14,8 @@ define([
 
 		ui: {
 			canvas: 'canvas',
-			canvasWrapper: '.canvasWrapper'
+			canvasWrapper: '.canvasWrapper',
+			saveBtn: '#save'
 		},
 
 		events: {
@@ -45,12 +44,14 @@ define([
 
 
 		save: function(){
-			var data = this.model.get('fullImg').src,
-				filename = this.model.get('label') + '.png';
+			if(this.ui.saveBtn.attr('href') === '#'){
+				return false;
+			}
+		},
 
-			download(data, filename);
-			
-			return false;
+		updateSaveUrl: function(){
+			this.ui.saveBtn.attr('download', this.model.get('label') + '.png')
+				.attr('href', this.model.get('fullImg').src);
 		},
 
 
@@ -135,6 +136,7 @@ define([
 					context.drawImage(this.model.get('fullImg'), 0, 0);
 					_.defer(this.zoomFit);
 					this.ui.canvasWrapper.removeClass('loading');
+					this.updateSaveUrl();
 
 				}, this));
 
@@ -144,7 +146,8 @@ define([
 
 
 		initialize: function(){
-			_.bindAll(this, 'startDrag', 'stopDrag', 'moveCanvas', 'scale', 'save', 'zoomFit', 'zoom50', 'zoom100', 'showHeader');
+			_.bindAll(this, 'startDrag', 'stopDrag', 'moveCanvas', 'scale', 'save', 'zoomFit', 'zoom50', 'zoom100', 'showHeader',
+				'updateSaveUrl');
 		}
 
 

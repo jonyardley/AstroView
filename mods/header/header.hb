@@ -4,7 +4,6 @@
 	<a href="#/"><h1>AstroView</h1></a>
 	<ul>
 		<li><a href="#/images">Your Images</a></li>
-		<li><a href="#/images">About AstroView</a></li>
-		<li><a href="#/images">Help</a></li>
+		<li><a href="http://docs.astroviewapp.com" target="_blank">About AstroView</a></li>
 	</ul>
 </nav>

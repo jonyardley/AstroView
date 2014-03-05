@@ -13,6 +13,7 @@
 	&.btn-small {
 		font-size: 13px;
 	}
+	text-decoration: none;
 }
 
 .btn, button, .pretty-file-input, .menu {
@@ -47,6 +48,7 @@ input[type=text] {
 
 	.menu, .btn, button {
 		font-size: 0.8em;
+		line-height: 15px;
 	}
 
 	.fa {
@@ -60,7 +62,8 @@ input[type=text] {
 .menu {
 	display: inline-block;
 	position: relative;
-  	padding: 9px 34px 9px 16px;
+  	padding-left: 16px;
+	padding-right: 34px;
 
 	.fa {
 		position: absolute;

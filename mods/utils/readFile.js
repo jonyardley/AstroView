@@ -24,7 +24,7 @@ define([
 
 		onLoad: function(fits, opts){
 
-			if(fits.hdus.length > 1){
+			if(fits.hdus.length > 0){
 
 				fileReader.fitsModel.set('header', this.getHeader());
 				fileReader.fitsModel.set('image', this.getDataUnit());
