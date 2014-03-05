@@ -28,20 +28,6 @@ define([
 
 		goToImages: function(){
 			App.Router.navigate('#/images', {trigger: true});
-		},
-
-		remoteFile: function(url){
-			var newImage = App.fits.add({
-				file: '/remoteFits?url=' + url
-			});
-		},
-
-		initialize: function(){
-			var file = window.location.search.split('?file=');
-			if(file && file.length > 1 && file[1]){
-				this.fileIsRemote = true;
-				this.remoteFile(file[1]);
-			}
 		}
 
 	});

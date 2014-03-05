@@ -27,7 +27,9 @@ define([
 			var val = this.ui.externalUrl.val();
 			if(val.length > 3){
 				this.remoteFile(val);
-				this.ui.externalUrl.val('');
+				if(this.ui && this.ui.externalUrl.val){
+					this.ui.externalUrl.val('');
+				}
 			}else{
 				window.alert('Enter a url first.');
 			}
@@ -39,10 +41,13 @@ define([
 				var newImage = App.fits.add({
 					file: files[0]
 				});
-				if(this.ui.selectFile.val){
-					this.ui.selectFile.val('');
-				}
 			}
+		},
+
+		remoteFile: function(url){
+			var newImage = App.fits.add({
+				file: '/remoteFits?url=' + url
+			});
 		},
 
 		onRender: function(){

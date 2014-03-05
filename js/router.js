@@ -16,6 +16,8 @@ define([
 			'images/:fitsId/scale':			'scale',
 			'images/:fitsId/header':		'header',
 
+			'file/*url':                    'externalFile',
+
 			'*whatever':					'other'
 		}
 

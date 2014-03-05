@@ -73,6 +73,13 @@ define([
 
 		},
 
+		externalFile: function(url){
+			var newImage = App.fits.add({
+				file: '/remoteFits?url=' + url
+			});
+			App.Router.navigate('#/images', {trigger: true, replace: true});
+		},
+
 
 
 		other: function(){
