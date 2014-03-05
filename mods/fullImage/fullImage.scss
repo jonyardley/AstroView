@@ -7,14 +7,23 @@
 	padding-top: 58px;
 
 	.canvasWrapper {
-		top: 60px;
-		left: 16px;
-		bottom: 16px;
-		right: 16px;
+		top: 54px;
+		left: 0px;
+		bottom: 0px;
+		right: 0px;
 		overflow: hidden;
 		position: absolute;
 		background: #000;
 		border: 1px solid #000;
+
+	  	&.loading {
+			background: url(../img/loading.gif) no-repeat #000 center center;
+
+		  	canvas {
+			  opacity: 0;
+			}
+	  	}
+
 
 		canvas {
 			position: relative;

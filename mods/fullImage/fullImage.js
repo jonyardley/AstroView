@@ -4,19 +4,18 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'hbars!./tmpl',
-	'mods/scale/view',
-	'mods/utils/download'
-], function($, _, Backbone, Marionette, App, tmpl, ScaleView, download){
+	'hbars!./tmpl'
+], function($, _, Backbone, Marionette, App, tmpl){
 
 	return Backbone.Marionette.ItemView.extend({
 
 		template: tmpl,
-		className: 'panel fullImage',
+		className: 'fullImage',
 
 		ui: {
 			canvas: 'canvas',
-			canvasWrapper: '.canvasWrapper'
+			canvasWrapper: '.canvasWrapper',
+			saveBtn: '#save'
 		},
 
 		events: {
@@ -30,23 +29,29 @@ define([
 			'click #showHeader': 'showHeader'
 		},
 
+		modelEvents: {
+			'change:fullImg': 'render'
+		},
+
 		showHeader: function(){
-			App.Router.navigate('#/image/'+this.model.get('id')+'/header', {trigger: true, replace: true});
+			App.Router.navigate('#/images/'+this.model.get('id')+'/header');
 		},
 
 		scale: function(){
-			App.content.show( new ScaleView({model: this.model}) );
+			App.Router.navigate('#/images/'+this.model.get('id')+'/scale', {trigger: true});
 			return false;
 		},
 
 
 		save: function(){
-			var data = this.ui.canvas[0].toDataURL(),
-				filename = this.model.get('label') + '.png';
-				
-			download(data, filename);
-			
-			return false;
+			if(this.ui.saveBtn.attr('href') === '#'){
+				return false;
+			}
+		},
+
+		updateSaveUrl: function(){
+			this.ui.saveBtn.attr('download', this.model.get('label') + '.png')
+				.attr('href', this.model.get('fullImg').src);
 		},
 
 
@@ -80,7 +85,7 @@ define([
 		zoom100: function(){
 			var css = {
 				width: this.ui.canvas.attr('width'),
-				height: this.ui.canvas.attr('height'),
+				height: this.ui.canvas.attr('height')
 			};
 			css.top = -((css.height - this.ui.canvasWrapper.height()) / 2);
 			css.left = -((css.width - this.ui.canvasWrapper.width()) / 2);
@@ -120,25 +125,29 @@ define([
 
 		onRender: function(){
 
-			var width = this.model.get('image').width,
-				height = this.model.get('image').height;
+			this.ui.canvasWrapper.addClass('loading');
 
-			this.ui.canvas.attr('width', width);
-			this.ui.canvas.attr('height', height);
+			if(this.model.get('fullImg')){
 
-			this.context = this.ui.canvas[0].getContext('2d');
 
-			var fullImage = this.model.getFullImage();
+				_.defer(_.bind(function(){
 
-			this.context.drawImage(fullImage, 0, 0);
+					var context = this.ui.canvas[0].getContext('2d');
+					context.drawImage(this.model.get('fullImg'), 0, 0);
+					_.defer(this.zoomFit);
+					this.ui.canvasWrapper.removeClass('loading');
+					this.updateSaveUrl();
 
-			_.defer(this.zoomFit);
+				}, this));
+
+			}
 		},
 
 
 
 		initialize: function(){
-			_.bindAll(this, 'startDrag', 'stopDrag', 'moveCanvas', 'scale', 'save', 'zoomFit', 'zoom50', 'zoom100', 'showHeader');
+			_.bindAll(this, 'startDrag', 'stopDrag', 'moveCanvas', 'scale', 'save', 'zoomFit', 'zoom50', 'zoom100', 'showHeader',
+				'updateSaveUrl');
 		}
 
 

@@ -1,17 +1,13 @@
-<h2>Scale Image</h2>
+<div class="tools"><h2>Scale Image</h2></div>
 
 <div class="canvasWrapper">
 	<canvas></canvas>
 </div>
 
 <div class="imageControls">
-	
-	<div class="field right">
-		<label>Full range:</label><input type="checkbox" id="fullRange" value="1"/>
-	</div>
 
 	<div class="field">
-		<label>Scale function: </label>
+		<label>Stretch function: </label>
 		<select id="scale">
 			<option value="linear">Linear</option>
 			<option value="sqrt">sqrt</option>

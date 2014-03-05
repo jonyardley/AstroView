@@ -1,3 +1,15 @@
 /node_modules/
 
 npm-debug.log
+
+/.idea/
+
+/.DS_Store
+
+.DS_Store
+
+**/.DS_Store
+
+/assets/example_fits/m1-blue.fits
+/assets/example_fits/m1-green.fits
+/assets/example_fits/m1-red.fits

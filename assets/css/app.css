@@ -2,6 +2,8 @@
 @import url(includes/fonts.css);
 @import url(includes/ion.rangeSlider.css);
 @import url(includes/ion.rangeSlider.skinFlat.css);
+/** Variables **/
+/** Library Includes **/
 /*
  *  Font Awesome 4.0.3 by @davegandy - http://fontawesome.io - @fontawesome
  *  License - http://fontawesome.io/license (Font: SIL OFL 1.1, CSS: MIT License)
@@ -1355,6 +1357,7 @@ input[type="file"] {
     background: #e76049;
     color: #fff; }
 
+/** Base Styles **/
 html, body {
   height: 100%;
   min-height: 100%;
@@ -1363,8 +1366,7 @@ html, body {
 body {
   font-family: 'Noto Sans', 'Arial', 'Sans-serif';
   color: #fff;
-  background: url(../img/bg.png);
-  box-shadow: rgba(0, 0, 0, 0.4) 0 0 100px INSET; }
+  background: #e6ebef; }
 
 #header {
   min-width: 800px; }
@@ -1379,10 +1381,10 @@ body {
 #content {
   min-width: 768px;
   position: absolute;
-  top: 58px;
-  left: 16px;
-  right: 16px;
-  bottom: 16px; }
+  top: 70px;
+  left: 20px;
+  right: 20px;
+  bottom: 20px; }
 
 #loader {
   position: fixed;
@@ -1399,71 +1401,62 @@ body {
     text-align: center;
     margin-top: 15px; }
 
-.btn, input, textarea, button {
+h2, h3, h4 {
+  font-weight: 700;
+  color: #fff; }
+  #content h2, #content h3, #content h4 {
+    color: #000; }
+
+h2 {
+  font-size: 1.6em;
+  line-height: 1.6em; }
+
+h3 {
+  font-size: 1.1em; }
+
+.hidden {
+  display: none; }
+
+/** Module Includes **/
+/** Components **/
+.btn, input, textarea, button, .pretty-file-input, .menu {
   font-family: 'Noto Sans', 'Arial', 'Sans-serif';
   font-weight: 700;
+  font-size: 16px;
   border: 0;
-  margin: 0; }
-  .btn:focus, input:focus, textarea:focus, button:focus {
+  margin: 0;
+  border: none;
+  text-decoration: none; }
+  .btn:focus, input:focus, textarea:focus, button:focus, .pretty-file-input:focus, .menu:focus {
     outline-width: 0; }
+  .btn.btn-small, input.btn-small, textarea.btn-small, button.btn-small, .pretty-file-input.btn-small, .menu.btn-small {
+    font-size: 13px; }
 
-.btn {
+.btn, button, .pretty-file-input, .menu {
   display: inline-block;
   background: #fff;
+  color: #000;
   padding: 8px 16px;
   cursor: pointer; }
-  .btn:hover {
+  .btn:hover, button:hover, .pretty-file-input:hover, .menu:hover {
     background: #e76049;
     color: #fff; }
 
 input[type=text] {
-  padding: 10px;
-  font-size: 1em; }
-
-h2 {
-  margin-bottom: 16px;
-  font-size: 1.2em; }
-
-h2, h3, h4 {
-  font-weight: 700;
-  color: #eee;
-  text-shadow: -1px -1px 0 #000; }
-
-#content h2 {
-  background: #343b3f;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  line-height: 32px;
-  padding: 8px 16px;
-  text-shadow: -1px -1px 0 #060707; }
-
-.panel {
-  position: relative;
-  background: #1d2123;
-  padding: 64px 16px 0px;
-  overflow: hidden; }
-
-/** Components **/
-button {
-  border: none;
-  margin: 0;
-  background: #fff;
-  padding: 8px 12px;
-  font-size: 0.8em;
-  cursor: pointer;
-  font-weight: bold;
-  line-height: 1.2; }
-  button:hover {
-    background: #e76049;
-    color: #fff; }
+  padding: 8px 16px; }
 
 .tools {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  right: 16px; }
+  top: 0px;
+  left: 0px;
+  right: 0px;
+  background: #888888;
+  padding: 8px; }
+  #content .tools h2, #content .tools h3 {
+    color: #fff; }
+  .tools .menu, .tools .btn, .tools button {
+    font-size: 0.8em;
+    line-height: 15px; }
   .tools .fa {
     font-size: 1.1em;
     padding-left: 5px;
@@ -1472,16 +1465,12 @@ button {
 .menu {
   display: inline-block;
   position: relative;
-  background: #fff;
-  padding: 8px 24px 8px 12px;
-  font-size: 0.8em;
-  cursor: pointer;
-  font-weight: bold;
-  color: #000;
-  line-height: 1.2; }
+  padding-left: 16px;
+  padding-right: 34px; }
   .menu .fa {
     position: absolute;
-    right: 8px; }
+    right: 12px;
+    top: 8px; }
   .menu ul {
     display: none;
     position: absolute;
@@ -1506,121 +1495,182 @@ button {
   top: 0px;
   left: 0px;
   right: 0px;
-  background: #1d2123;
-  overflow: hidden;
+  background: #1f5dc2;
   font-weight: 700;
-  line-height: 42px;
+  line-height: 50px;
   margin-bottom: 16px; }
+  #header .version {
+    position: absolute;
+    font-size: 0.7em;
+    top: 10px;
+    right: 10px;
+    line-height: 1; }
   #header h1 {
-    float: right;
-    background: #e76049;
-    line-height: 42px;
-    padding: 0 32px;
-    text-shadow: -1px -1px 0 #b22e18; }
-    #header h1 .small {
-      font-size: 0.7em;
-      position: relative;
-      top: -5px; }
+    width: 50px;
+    height: 50px;
+    background: url(../img/logo-white-transparent-40.png) no-repeat transparent 8px 5px;
+    text-indent: -9999px; }
+  #header nav {
+    cursor: pointer;
+    float: left;
+    padding-right: 10px;
+    position: relative; }
+    #header nav:hover {
+      background: #000; }
+      #header nav:hover ul {
+        display: block; }
   #header ul {
-    padding-left: 8px;
-    float: left; }
+    display: none;
+    position: absolute;
+    z-index: 1000;
+    min-width: 300px;
+    box-shadow: rgba(0, 0, 0, 0.3) 0 0 6px; }
     #header ul li {
-      display: inline;
-      margin: 0 8px; }
+      width: 100%;
+      background: #000;
+      padding: 0 16px;
+      font-size: 0.8em;
+      line-height: 3;
+      border-bottom: 1px solid #555555; }
+      #header ul li:last-child {
+        border-bottom: none; }
+      #header ul li:hover {
+        background: #fff; }
+        #header ul li:hover a {
+          color: #1f5dc2; }
       #header ul li a {
+        display: block;
+        width: 100%;
         color: #fff;
         text-decoration: none; }
-        #header ul li a:hover {
-          color: #e76049; }
 
-.images a {
-  color: #1d2123;
-  text-decoration: none; }
-  .images a:hover {
+#index {
+  position: absolute;
+  top: -20px;
+  left: -20px;
+  right: -20px; }
+  #index .largeImage {
+    background: #000;
+    width: 100%;
+    height: 450px;
+    background: url(../img/Helix_Nebula.png) no-repeat black center center;
+    background-size: cover; }
+  #index h2 {
+    top: 200px;
+    line-height: 1;
+    text-align: center;
+    font-size: 3em;
+    position: relative;
     color: #fff; }
-.images .empty {
-  margin-bottom: 16px;
-  text-align: center; }
-.images .title {
-  margin-right: 16px;
-  font-weight: 700; }
-.images .imageInput, .images .imageExternalUrl, .images .title {
-  line-height: 43px;
-  display: inline-block;
-  width: auto; }
-.images .imageInput button {
-  position: relative;
-  padding-left: 46px;
-  padding-right: 23px; }
-.images .imageExternalUrl span {
-  margin: 0 16px; }
-.images .imageExternalUrl input {
-  margin-right: 16px; }
-.images .newImage {
-  text-align: center; }
-.images .newImage {
-  padding: 16px; }
-  .images .newImage .fa {
-    position: absolute;
-    left: 16px;
-    font-size: 1.3em;
-    margin-top: -2px; }
-.images .imageRow {
-  background: #343b3f;
-  margin-bottom: 16px;
-  position: relative;
-  overflow: hidden; }
-  .images .imageRow .label, .images .imageRow .image {
-    float: left;
-    line-height: 60px; }
-  .images .imageRow .btn {
-    margin-top: 14px;
-    float: right;
-    margin-right: 82px; }
-  .images .imageRow .image {
-    margin-right: 16px;
-    padding: 0 16px;
-    background: #000; }
-  .images .imageRow .label {
-    font-weight: 700; }
-    .images .imageRow .label:focus {
-      outline: none; }
-  .images .imageRow .imageMenu {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    background: #4b565b;
-    color: #1d2123;
-    line-height: 60px;
-    cursor: pointer;
-    transition: all 0.3s ease-in-out;
-    width: 68px; }
-    .images .imageRow .imageMenu:before {
-      font-size: 2em;
-      padding: 16px; }
-    .images .imageRow .imageMenu:hover {
-      width: 300px; }
-      .images .imageRow .imageMenu:hover li {
-        opacity: 1; }
-    .images .imageRow .imageMenu ul {
+    #index h2:after {
+      content: '';
+      width: 120px;
+      height: 120px;
+      background: url(../img/logo-black-transparent-120.png) no-repeat transparent center center;
+      opacity: 0.45;
       position: absolute;
-      right: 0;
-      top: 0; }
-    .images .imageRow .imageMenu li {
-      float: right;
-      margin-right: 16px;
-      display: block;
-      opacity: 0;
-      transition: opacity 0.3s; }
-      .images .imageRow .imageMenu li:hover {
-        color: #1d2123; }
+      top: -130px;
+      left: 50%;
+      margin-left: -60px; }
+  #index h3 {
+    font-size: 1.8em;
+    margin: 16px 0;
+    color: #fff; }
+  #index .selectImage {
+    position: relative;
+    top: 240px;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    height: 122px; }
+  #index .about {
+    text-align: center; }
+    #index .about h3 a {
+      color: #555555;
+      font-size: 0.8em; }
+      #index .about h3 a:hover {
+        color: #e76049; }
+  #index .footer {
+    padding-top: 20px;
+    color: #555555;
+    font-size: 0.8em;
+    text-align: center; }
+    #index .footer h4 {
+      font-size: 1.2em;
+      margin-bottom: 10px; }
 
-.scale .canvasWrapper {
-  float: left;
-  width: auto;
-  width: 320px;
+.selectImage .imageInput, .selectImage .imageExternalUrl {
+  display: inline-block; }
+.selectImage .or {
+  padding: 0 8px; }
+.selectImage #addImage {
+  margin-left: 10px; }
+
+#images .selectImage {
+  border: 1px solid #d5d5d5;
+  border-width: 1px 0;
+  padding: 16px;
   text-align: center;
+  color: #333; }
+  #images .selectImage h3 {
+    margin-bottom: 16px; }
+
+.imageList {
+  margin-top: 20px; }
+  .imageList a {
+    text-decoration: none; }
+    .imageList a:hover {
+      color: #fff; }
+  .imageList .empty {
+    padding: 16px 0;
+    margin-top: 16px;
+    text-align: center;
+    color: #555555;
+    border: 1px solid #d5d5d5;
+    border-width: 1px 0 1px 0; }
+  .imageList .title {
+    margin-right: 16px;
+    font-weight: 700; }
+  .imageList .imageRow {
+    background: #d5d5d5;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden; }
+    .imageList .imageRow .image, .imageList .imageRow .imageMenu {
+      float: left;
+      display: inline-block;
+      overflow: hidden; }
+    .imageList .imageRow .image {
+      margin-right: 16px;
+      padding: 5px;
+      background: #000;
+      border-right: 1px solid #222; }
+      .imageList .imageRow .image.loading {
+        background: url(../img/loading.gif) black no-repeat center center; }
+        .imageList .imageRow .image.loading canvas {
+          opacity: 0; }
+    .imageList .imageRow h3 {
+      font-weight: 700;
+      font-size: 1.4em;
+      margin: 16px 0 20px 0; }
+      .imageList .imageRow h3:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.5);
+        margin: 10px 0;
+        padding: 8px; }
+    .imageList .imageRow .imageMenu li {
+      margin-right: 4px;
+      display: inline; }
+
+.scale h2 {
+  font-size: 1em; }
+.scale .tools {
+  position: relative; }
+.scale .canvasWrapper {
+  width: 100%;
+  padding: 16px 0;
+  text-align: center;
+  background: #000;
   margin-bottom: 16px; }
   .scale .canvasWrapper canvas {
     display: inline-block; }
@@ -1629,7 +1679,14 @@ button {
 .scale .field.right {
   float: right; }
 .scale .imageControls {
-  margin-left: 336px; }
+  background: #d5d5d5;
+  padding: 16px; }
+  .scale .imageControls .irs-line {
+    background: #555555; }
+    .scale .imageControls .irs-line .irs-line-mid, .scale .imageControls .irs-line .irs-line-right, .scale .imageControls .irs-line .irs-line-left {
+      background: none;
+      border-radius: 2px;
+      overflow: hidden; }
 
 .fullImage {
   position: absolute;
@@ -1639,14 +1696,18 @@ button {
   right: 0;
   padding-top: 58px; }
   .fullImage .canvasWrapper {
-    top: 60px;
-    left: 16px;
-    bottom: 16px;
-    right: 16px;
+    top: 54px;
+    left: 0px;
+    bottom: 0px;
+    right: 0px;
     overflow: hidden;
     position: absolute;
     background: #000;
     border: 1px solid #000; }
+    .fullImage .canvasWrapper.loading {
+      background: url(../img/loading.gif) no-repeat black center center; }
+      .fullImage .canvasWrapper.loading canvas {
+        opacity: 0; }
     .fullImage .canvasWrapper canvas {
       position: relative;
       cursor: move; }

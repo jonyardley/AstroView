@@ -8,8 +8,8 @@
 	</div>
 	<button id="scale">Scale <span class="fa fa-barcode"></span></button>
 	<button id="showHeader">Header <span class="fa fa-columns"></span></button>
-	<button id="save">Save <span class="fa fa-cloud-download"></span></button>
+	<a id="save" class="btn" href="#">Save <span class="fa fa-cloud-download"></span></a>
 </div>
 <div class="canvasWrapper">
-	<canvas></canvas>
+	<canvas width="{{image.width}}" height="{{image.height}}"></canvas>
 </div>

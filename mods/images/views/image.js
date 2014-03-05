@@ -14,10 +14,11 @@ define([
 		className: 'imageRow',
 
 		modelEvents: {
-			'change:imageData': 'render',
+			'change:thumbImg': 'render'
 		},
 
 		ui: {
+			image: '.image',
 			canvas: 'canvas',
 			label: '.label'
 		},
@@ -58,34 +59,26 @@ define([
 			return false;
 		},
 
-		generateImage: function(){
-			var fits = this.model.toJSON(),
-				scale = this.thumbScale();
-				
-			return renderImage({
-				fits: fits,
-				scale: scale,
-				width: Math.floor(fits.image.width * scale),
-				height: Math.floor(fits.image.height * scale)
-			});
-		},
-
-		thumbScale: function(){
-			return this.ui.canvas.attr('width') / this.model.get('image').width;
-		},
-
 		onRender: function(){
-			if(this.model.get('imageData')){
 
-				var thumb = this.generateImage();
+			this.ui.image.addClass('loading');
+
+			if(this.model.get('thumbImg')){
+
 				var context = this.ui.canvas[0].getContext('2d');
-				context.drawImage(thumb, 0, 0);
+				var image = this.model.get('thumbImg');
+
+				_.defer(function(){
+					context.drawImage(image, 0, 0);
+				});
+
+				this.ui.image.removeClass('loading');
 
 			}
 		},
 
 		initialize: function(){
-			_.bindAll(this, 'editLabel', 'labelEdited', 'disableReturn', 'deleteImage');
+			_.bindAll(this, 'onRender','editLabel', 'labelEdited', 'disableReturn', 'deleteImage');
 		}
 
 	});
