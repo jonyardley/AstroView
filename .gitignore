@@ -13,3 +13,5 @@ npm-debug.log
 /assets/example_fits/m1-blue.fits
 /assets/example_fits/m1-green.fits
 /assets/example_fits/m1-red.fits
+
+/.sass-cache/

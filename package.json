@@ -3,7 +3,12 @@
   "version": "0.0.1",
   "dependencies": {
     "connect": "~2.9.2",
-    "request": "~2.27.0"
+    "request": "~2.27.0",
+    "grunt": "~0.4.2",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-contrib-requirejs": "~0.4.3",
+    "grunt-contrib-sass": "~0.7.2",
+    "requirejs": "~2.1.11"
   },
   "scripts": {
     "start": "node server.js"
