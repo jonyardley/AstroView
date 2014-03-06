@@ -1,22 +1,25 @@
 require.config({
 
-	deps: ['init'],
+	deps: ['js/init'],
 
-	baseUrl: 'js',
+	baseUrl: '/',
 
 	paths: {
-		jquery: '../lib/jquery',
-		underscore: '../lib/underscore',
-		Marionette: '../lib/marionette',
-		Backbone: '../lib/backbone',
-		fits: '../lib/fits',
-		Handlebars: '../lib/handlebars',
-		text: '../lib/require.text',
-		hbars: '../lib/hbars',
-		mods: '../mods',
-		dataModel: '../dataModel',
-		fileInput: '../lib/file.input',
-		ionSlider: '../lib/ion.rangeSlider.min'
+		jquery: 'lib/jquery',
+		underscore: 'lib/underscore',
+		Marionette: 'lib/marionette',
+		Backbone: 'lib/backbone',
+		fits: 'lib/fits',
+		Handlebars: 'lib/handlebars',
+		text: 'lib/require.text',
+		hbars: 'lib/hbars',
+		dataModel: 'dataModel',
+		fileInput: 'lib/file.input',
+		ionSlider: 'lib/ion.rangeSlider.min',
+		app: 'js/app',
+		controller: 'js/controller',
+		devTools: 'js/devTools',
+		router: 'js/router'
 	},
 
 	shim: {
@@ -50,7 +53,7 @@ require.config({
 	},
 
 	hbars: {
-		extension: '.hb',
+		extension: '.hb'
 	}
 
 });

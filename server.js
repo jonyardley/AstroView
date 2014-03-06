@@ -23,5 +23,5 @@ var server = connect()
 			next();
 		}
 	})
-	.use(connect.static(__dirname))
+	.use(connect.static(__dirname + '/public'))
 	.listen(process.env.VCAP_APP_PORT || 3000);
