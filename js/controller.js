@@ -4,21 +4,24 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'mods/images/views/images',
+	'mods/index/view',
+	'mods/images/views/imagesLayout',
 	'mods/scale/view',
 	'mods/fullImage/fullImage',
 	'mods/fitsHeader/header',
-], function($, _, Backbone, Marionette, App, ImagesView, ScaleView, FullImage, HeaderView){
+], function($, _, Backbone, Marionette, App, IndexView, ImagesView, ScaleView, FullImage, HeaderView){
 
 	
 	var controller = {
 
+		index: function(){
+			App.content.show(new IndexView());
+		},
+
 
 		images: function(){
 
-			App.content.show(new ImagesView({
-				collection: App.fits
-			}));
+			App.content.show(new ImagesView());
 
 		},
 
@@ -26,7 +29,7 @@ define([
 		image: function(fitsId){
 			
 			var model = App.fits.get(fitsId);
-			
+
 			if(model){
 				var fullImage = new FullImage({
 					model: model
@@ -70,10 +73,17 @@ define([
 
 		},
 
+		externalFile: function(url){
+			var newImage = App.fits.add({
+				file: '/remoteFits?url=' + url
+			});
+			App.Router.navigate('#/images', {trigger: true, replace: true});
+		},
+
 
 
 		other: function(){
-			App.Router.navigate('/', {replace: true, trigger: true});
+			App.Router.navigate('#/', {trigger: true});
 		}
 
 	};

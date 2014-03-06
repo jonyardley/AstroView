@@ -1,18 +1,28 @@
-$panel: #1D2123;
+/** Variables **/
+$appColor: #1F5DC2;
+$appColorLight: lighten($appColor, 20%);
+$appColorDark: darken($appColor, 20%);
 $highlight: #E76049;
-$greyMedium: lighten($panel, 10%);
-$greyLight: lighten($panel, 20%);
+$background: #E6EBEF;
 
+$greyMedium: #888;
+$greyDark: darken($greyMedium, 20%);
+$greyLight: lighten($greyMedium, 20%);
+$greyLightest: lighten($greyMedium, 30%);
+
+
+
+/** Library Includes **/
 @import 'includes/reset.css';
 @import 'includes/fonts.css';
 @import 'icons/font-awesome';
-
 @import 'includes/inputFile';
 @import 'includes/ion.rangeSlider.css';
 @import 'includes/ion.rangeSlider.skinFlat.css';
 
 
 
+/** Base Styles **/
 html, body {
 	height: 100%;
 	min-height: 100%;
@@ -22,8 +32,7 @@ html, body {
 body {
 	font-family: 'Noto Sans', 'Arial', 'Sans-serif';
 	color: #fff;
-	background: url(../img/bg.png);
-	box-shadow: rgba(0,0,0,0.4) 0 0 100px INSET;
+	background: $background;
 }
 
 #header {
@@ -41,10 +50,10 @@ body {
 #content {
 	min-width: 768px;
 	position: absolute;
-	top: 58px;
-	left: 16px;
-	right: 16px;
-	bottom: 16px;
+	top: 70px;
+	left: 20px;
+	right: 20px;
+	bottom: 20px;
 }
 
 
@@ -65,138 +74,34 @@ body {
 	}
 }
 
-.btn, input, textarea, button {
-	font-family: 'Noto Sans', 'Arial', 'Sans-serif';
+h2, h3, h4 {
 	font-weight: 700;
-	&:focus{
-		outline-width: 0;
-	}
-	border: 0;
-	margin: 0;
-}
+	color: #fff;
 
-.btn {
-	display: inline-block;
-	background: #fff;
-	padding: 8px 16px;
-	cursor: pointer;
-	&:hover {
-		background: $highlight;
-		color: #fff;
+	#content & {
+		color: #000;
 	}
-}
-
-input[type=text] {
-	padding: 10px;
-	font-size: 1em;
 }
 
 h2 {
-	margin-bottom: 16px;
-	font-size: 1.2em;
+	font-size: 1.6em;
+	line-height: 1.6em;
 }
 
-h2, h3, h4 {
-	font-weight: 700;
-	color: #eee;
-	text-shadow: -1px -1px 0 #000;
+h3 {
+	font-size: 1.1em;
 }
 
-#content h2 {
-	background: $greyMedium;
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	line-height: 32px;
-	padding: 8px 16px;
-	text-shadow: -1px -1px 0 darken($greyMedium, 20%);
-}
-
-.panel {
-	position: relative;
-	background: $panel;
-	padding: 64px 16px 0px;
-	overflow: hidden;
-}
-
-/** Components **/
-
-button {
-	border: none;
-	margin: 0;
-	background: #fff;
-	padding: 8px 12px;
-	font-size: 0.8em;
-	cursor: pointer;
-	font-weight: bold;
-	line-height: 1.2;
-
-	&:hover {
-		background: $highlight;
-		color: #fff;
-	}
-}
-
-.tools {
-	position: absolute;
-	top: 16px;
-	left: 16px;
-	right: 16px;
-
-	.fa {
-		font-size: 1.1em;
-		padding-left: 5px;
-		line-height: 1.1em;
-	}
+.hidden {
+	display: none;
 }
 
 
-.menu {
-	display: inline-block;
-	position: relative;
-	background: #fff;
-	padding: 8px 24px 8px 12px;
-	font-size: 0.8em;
-	cursor: pointer;
-	font-weight: bold;
-	color: #000;
-	line-height: 1.2;
-
-	.fa {
-		position: absolute;
-		right: 8px;
-	}
-
-	ul {
-		display: none;
-		position: absolute;
-		z-index: 1;
-		left: 0;
-		width: 100%;
-		top:100%;
-
-		li {
-			background: #fff;
-			padding: 8px 12px;
-			cursor: pointer;
-			font-weight: bold;
-			color: #000;
-		}
-	}
-
-	&:hover  ul{
-		display: block;
-	}
-
-	&:hover, li:hover {
-		color: #fff;
-		background: $highlight;
-	}
-}
-
-
+/** Module Includes **/
+@import 'components';
 @import '../../mods/header/header';
+@import '../../mods/index/index';
+@import '../../mods/selectImage/styles';
 @import '../../mods/images/images';
 @import '../../mods/scale/styles';
 @import '../../mods/fullImage/fullImage';

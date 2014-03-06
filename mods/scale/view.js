@@ -18,14 +18,12 @@ define([
 		ui: {
 			minMax: '#minMax',
 			scale: '#scale',
-			fullRange: '#fullRange',
 			canvas: 'canvas'
 		},
 
 		events: {
 			'change #scale': 'updateScale',
-			'click #done': 'done',
-			'click #fullRange': 'updateFullRange',
+			'click #done': 'done'
 		},
 
 		done: function(e){
@@ -34,13 +32,15 @@ define([
 				this.model.set('_dirty', true);
 			};
 
-			App.Router.navigate('/',{replace: true, trigger: true});
+			window.history.back();
 		},
 
 		updateMinMax: function(e){
 			var options = _.clone(this.model.get('options'));
 			options.min = e.fromNumber;
 			options.max = e.toNumber;
+			options.maxRaw = e.toRaw;
+			options.minRaw = e.fromRaw;
 			this.model.set('options', options);
 			this.renderImage();
 		},
@@ -53,40 +53,62 @@ define([
 			this.renderImage();
 		},
 
-		updateFullRange: function(e){
-			var checked = e.target.checked;
-			this.ui.minMax.ionRangeSlider("update", {
-				max: (checked)? 24000 : this.model.get('image').bzero || 1000,
-				from: this.model.get('options').min,
-				to: this.model.get('options').max
-			});
-		},
-
 
 		renderImage: function(){
 			var fits = this.model.toJSON();
+
+			var context = this.context;
+			var callback = function(img){
+				_.defer( function(){
+					context.drawImage(img, 0, 0);
+				});
+			};
 
 			var preview = renderImage({
 					fits: fits,
 					scale: this.imageScale,
 					width: this.width,
-					height: this.height
+					height: this.height,
+					callback: callback
 				});
+		},
 
-			this.context.drawImage(preview, 0, 0);
+		nonLinearScale: function(e, invert){
+
+			var s = function(value){
+				var c = 1,
+					t = value,
+					b = 0,
+					d = e.max,
+
+					output = c*(t/=d)*(t*t*t) + b;
+					output *= d;
+
+				return output;
+			};
+
+			e.toRaw = e.toNumber;
+			e.fromRaw = e.fromNumber;
+			e.toNumber = Math.round(s(e.toNumber));
+			e.fromNumber = Math.round(s(e.fromNumber));
+
+			return e;
 		},
 
 		initSlider: function(){
 			var options = this.model.get('options');
+			var throttledUpdate = _.throttle(this.updateMinMax, 100);
 			this.ui.minMax.ionRangeSlider({
 				type: 'double',
 				min:  0,
-				max: this.model.get('image').bzero || 1000,
-				from: options.min || 0,
-				to: options.max || 1000,
-				onChange: this.updateMinMax
+				max: 65535,
+				from: options.minRaw || 0,
+				to: options.maxRaw || 65535,
+				onChange: throttledUpdate,
+				scale: this.nonLinearScale
 			});
 		},
+
 
 		onRender: function(){
 			if(this.model.get('imageData')){
@@ -103,8 +125,8 @@ define([
 				
 				if(!fits.get('options')){
 					fits.set('options', {
-						min: -100,
-						max: fitsImage.bzero,
+						min: 0,
+						max: 65535,
 						scaleType: this.ui.scale.val()
 					});
 				}
@@ -122,7 +144,7 @@ define([
 
 
 		initialize: function(){
-			_.bindAll(this, 'updateMinMax', 'updateScale', 'updateFullRange', 'renderImage', 'done', 'initSlider');
+			_.bindAll(this, 'updateMinMax', 'updateScale', 'renderImage', 'done', 'initSlider');
 			this.previousOptions = _.clone(this.model.get('options'));
 		}
 
