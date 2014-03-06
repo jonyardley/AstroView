@@ -47,22 +47,34 @@ define([
 
 		updateImages: function(){
 			if(this.get('_dirty')){
-				var images = ['thumbImg','fullImg'],
-					fits = this.toJSON(),
-					imgConfig = this.imgConfig();
+				var fits = this.toJSON(),
+					imgConfig = this.imgConfig(),
+					count = 0;
 
-				_.each(images, _.bind(function(image){
-					_.defer(_.bind(function(){
-						this.set(image, renderImage({
-							fits: fits,
-							scale: imgConfig[image].scale,
-							width: imgConfig[image].width,
-							height: imgConfig[image].height
-						}));
-					}, this));
+				_.each(imgConfig, _.bind(function(value, key, list){
+
+					var callback = (function(img){
+						this.set(key, img);
+
+						if(count === _.size(list) - 1){
+							_.defer(_.bind(function(){ this.set('_dirty', false); }, this));
+							count = 0;
+						}else{
+							count++;
+						}
+
+					}).bind(this);
+
+					renderImage({
+						fits: fits,
+						scale: value.scale,
+						width: value.width,
+						height: value.height,
+						callback: callback
+					});
+
 				}, this));
 
-				this.set('_dirty', false);
 			}
 		},
 

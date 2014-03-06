@@ -57,14 +57,20 @@ define([
 		renderImage: function(){
 			var fits = this.model.toJSON();
 
+			var context = this.context;
+			var callback = function(img){
+				_.defer( function(){
+					context.drawImage(img, 0, 0);
+				});
+			};
+
 			var preview = renderImage({
 					fits: fits,
 					scale: this.imageScale,
 					width: this.width,
-					height: this.height
+					height: this.height,
+					callback: callback
 				});
-
-			this.context.drawImage(preview, 0, 0);
 		},
 
 		nonLinearScale: function(e, invert){

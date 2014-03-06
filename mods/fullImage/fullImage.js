@@ -30,7 +30,7 @@ define([
 		},
 
 		modelEvents: {
-			'change:fullImg': 'render'
+			'change:_dirty': 'render'
 		},
 
 		showHeader: function(){
@@ -127,14 +127,19 @@ define([
 
 			this.ui.canvasWrapper.addClass('loading');
 
-			if(this.model.get('fullImg')){
-
+			if(this.model.get('fullImg') && !this.model.get('_dirty')){
 
 				_.defer(_.bind(function(){
 
 					var context = this.ui.canvas[0].getContext('2d');
-					context.drawImage(this.model.get('fullImg'), 0, 0);
+					var model = this.model;
+
+					_.defer(function(){
+						context.drawImage(model.get('fullImg'), 0, 0);
+					});
+
 					_.defer(this.zoomFit);
+
 					this.ui.canvasWrapper.removeClass('loading');
 					this.updateSaveUrl();
 

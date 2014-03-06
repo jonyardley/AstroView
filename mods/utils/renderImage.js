@@ -4,8 +4,9 @@ define([
 	'Backbone',
 	'Marionette',
 	'app',
-	'./scale'
-], function($, _, Backbone, Marionette, App, scale){
+	'./scale',
+	'mods/utils/processArray'
+], function($, _, Backbone, Marionette, App, scale, processArray){
 
 	//scale, width, height, fits
 	return function(opts){
@@ -22,10 +23,19 @@ define([
 
 		var buffer = ctx.createImageData(canvas.width, canvas.height);
 
-		var i, ii;
+		var indexArray = [], i;
+		for (i = 0; i < height; i++){
+			indexArray[i] = i;
+		}
+
+		var ii;
 		var invScale = Math.floor(1 / opts.scale);
-		for(i=0; i < height; i++){
+
+		function process(index){
+
+			i = index;
 			var x = ( i * invScale ) * opts.fits.image.width;
+
 			for(ii=0; ii < width; ii++){
 				var y = ii * invScale;
 				var pixel = x+y;
@@ -36,17 +46,22 @@ define([
 				buffer.data[index+1] = value;
 				buffer.data[index+2] = value;
 				buffer.data[index+3] = 255;
-
 			}
+
+		};
+
+
+		function done(){
+			ctx.putImageData(buffer, 0, 0);
+
+			var imgData = canvas.toDataURL();
+			var img = new Image();
+			img.src = imgData;
+
+			opts.callback(img);
 		}
 
-		ctx.putImageData(buffer, 0, 0);
-
-		var imgData = canvas.toDataURL();
-		var img = new Image();
-		img.src = imgData;
-
-		return img;
+		processArray(indexArray, process, done);
 
 	};
 

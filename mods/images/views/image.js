@@ -14,7 +14,7 @@ define([
 		className: 'imageRow',
 
 		modelEvents: {
-			'change:thumbImg': 'render'
+			'change:_dirty': 'render'
 		},
 
 		ui: {
@@ -63,16 +63,23 @@ define([
 
 			this.ui.image.addClass('loading');
 
-			if(this.model.get('thumbImg')){
+			console.log(this.model.get('_dirty'));
 
-				var context = this.ui.canvas[0].getContext('2d');
-				var image = this.model.get('thumbImg');
+			if(!this.model.get('_dirty') && this.model.get('thumbImg')){
+
+				var ui = this.ui;
+				var model = this.model;
 
 				_.defer(function(){
-					context.drawImage(image, 0, 0);
-				});
 
-				this.ui.image.removeClass('loading');
+					var context = ui.canvas[0].getContext('2d');
+					var image = model.get('thumbImg');
+
+					_.defer(function(){ context.drawImage(image, 0, 0); });
+
+					ui.image.removeClass('loading');
+
+				});
 
 			}
 		},
