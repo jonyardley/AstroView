@@ -63,8 +63,6 @@ define([
 
 			this.ui.image.addClass('loading');
 
-			console.log(this.model.get('_dirty'));
-
 			if(!this.model.get('_dirty') && this.model.get('thumbImg')){
 
 				var ui = this.ui;
