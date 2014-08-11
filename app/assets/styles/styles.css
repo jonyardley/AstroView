@@ -1,0 +1,325 @@
+@import url(_reset.css);
+@import url(http://fonts.googleapis.com/css?family=Noto+Sans:400,700,400italic,700italic);
+@import url(icons/icons.css);
+@import url(includes/ion.rangeSlider.css);
+@import url(includes/ion.rangeSlider.skinFlat.css);
+/** Variables **/
+/** Default body styles **/
+body, input, textarea {
+  font-family: "Noto Sans", "Arial", "Sans-serif"; }
+
+/** Base Fonts **/
+h1 {
+  font-size: 2.4em;
+  font-weight: 700; }
+
+h2 {
+  font-size: 1.6em; }
+
+h3 {
+  font-size: 1.2em;
+  font-weight: 700; }
+
+.btn {
+  background: none;
+  border: 2px solid #fff;
+  font-size: 16px;
+  margin: 0;
+  padding: 2px 5px;
+  cursor: pointer;
+  color: #fff;
+  position: relative;
+  display: inline-block;
+  -webkit-transition: all 150ms linear "";
+  -moz-transition: all 150ms linear "";
+  -ms-transition: all 150ms linear "";
+  -o-transition: all 150ms linear "";
+  transition: all 150ms linear ""; }
+  .btn i:before {
+    font-size: 33px; }
+  .btn:focus {
+    outline: none; }
+  .btn:hover {
+    background: rgba(255, 255, 255, 0.1); }
+  .btn:active {
+    background: #fff;
+    color: #555555;
+    border-color: #555555; }
+    .btn:active:after {
+      color: #fff; }
+
+.tooltip:after {
+  -webkit-transition: all 0ms 0s ease-in-out;
+  -moz-transition: all 0ms 0s ease-in-out;
+  -ms-transition: all 0ms 0s ease-in-out;
+  -o-transition: all 0ms 0s ease-in-out;
+  transition: all 0ms 0s ease-in-out;
+  opacity: 0;
+  content: attr(data-label);
+  position: absolute;
+  left: 100%;
+  margin-left: 2px;
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.9);
+  top: -2px;
+  padding: 5px 10px;
+  line-height: 2em;
+  z-index: -1; }
+.tooltip:hover:after {
+  -webkit-transition: all 300ms 0.5s ease-in-out;
+  -moz-transition: all 300ms 0.5s ease-in-out;
+  -ms-transition: all 300ms 0.5s ease-in-out;
+  -o-transition: all 300ms 0.5s ease-in-out;
+  transition: all 300ms 0.5s ease-in-out;
+  opacity: 1;
+  z-index: 10; }
+
+/**
+ *		VIEWS
+ **/
+#header {
+  background: #1F5DC2;
+  color: #FFF;
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50px; }
+  #header h1 {
+    position: relative;
+    width: 60px;
+    height: 50px;
+    text-indent: 70px;
+    line-height: 50px;
+    font-weight: 700;
+    font-size: 1.8em;
+    z-index: 1; }
+    #header h1:before, #header h1:after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: rgba(0, 0, 0, 0.3);
+      width: 60px;
+      height: 50px; }
+    #header h1:after {
+      background: url(../img/logo-white-transparent-40.png) no-repeat transparent center center; }
+  #header .version {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    font-weight: 100;
+    font-size: 0.8em;
+    color: rgba(255, 255, 255, 0.7); }
+
+#stage {
+  background: #000;
+  position: absolute;
+  top: 50px;
+  right: 0;
+  bottom: 0;
+  left: 60px;
+  color: #fff;
+  -webkit-transition: all 350ms 0 ease-in-out;
+  -moz-transition: all 350ms 0 ease-in-out;
+  -ms-transition: all 350ms 0 ease-in-out;
+  -o-transition: all 350ms 0 ease-in-out;
+  transition: all 350ms 0 ease-in-out;
+  z-index: 5; }
+  #stage > div {
+    height: 100%; }
+  #stage.isEditing {
+    left: 600px;
+    right: -660px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.8); }
+  #stage .mainImage {
+    width: 100%;
+    height: auto !important; }
+    #stage .mainImage img {
+      width: 100%; }
+  #stage .largeImage {
+    background: #000;
+    width: 100%;
+    height: 100%;
+    background: url(../img/Helix_Nebula.png) no-repeat #000 center center;
+    background-size: cover; }
+  #stage h2 {
+    top: 50%;
+    line-height: 1;
+    text-align: center;
+    font-size: 3em;
+    position: relative;
+    color: #fff;
+    text-shadow: 0px 0px 12px rgba(0, 0, 0, 0.5); }
+    #stage h2:after {
+      content: '';
+      width: 120px;
+      height: 120px;
+      background: url(../img/logo-black-transparent-120.png) no-repeat transparent center center;
+      opacity: 0.45;
+      position: absolute;
+      top: -130px;
+      left: 50%;
+      margin-left: -60px; }
+  #stage h3 {
+    position: relative;
+    top: 52%;
+    width: 100%;
+    text-align: center;
+    text-shadow: 0px 0px 12px rgba(0, 0, 0, 0.5); }
+  #stage .addImage {
+    position: absolute;
+    padding: 22px;
+    margin-left: 30px;
+    font-weight: 700; }
+    #stage .addImage i:before {
+      position: absolute;
+      display: inline-block;
+      font-size: 47px;
+      left: -30px;
+      top: 8px; }
+  #stage .stageInner {
+    height: 100%; }
+  #stage .canvasWrapper {
+    height: 100%; }
+    #stage .canvasWrapper canvas {
+      width: 100%;
+      height: 100%; }
+
+#sidebar {
+  background: #222222;
+  position: absolute;
+  left: 0px;
+  top: 50px;
+  bottom: 0;
+  width: 60px; }
+  #sidebar .loading {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: url('/assets/img/loading.gif') no-repeat;
+    background-size: 50%;
+    background-position: center; }
+  #sidebar .label {
+    display: none;
+    position: absolute;
+    white-space: nowrap;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.6);
+    line-height: 46px;
+    padding: 0 16px;
+    z-index: 20;
+    left: 100%;
+    opacity: 0;
+    -webkit-transition: opacity 150ms 0 linear;
+    -moz-transition: opacity 150ms 0 linear;
+    -ms-transition: opacity 150ms 0 linear;
+    -o-transition: opacity 150ms 0 linear;
+    transition: opacity 150ms 0 linear; }
+  #sidebar .thumb {
+    background: #000;
+    margin: 8px 7px;
+    width: 46px;
+    height: 46px;
+    cursor: pointer;
+    position: relative; }
+    #sidebar .thumb img {
+      width: 100%; }
+    #sidebar .thumb:hover:after {
+      -webkit-transition: opacity 300ms 300ms linear;
+      -moz-transition: opacity 300ms 300ms linear;
+      -ms-transition: opacity 300ms 300ms linear;
+      -o-transition: opacity 300ms 300ms linear;
+      transition: opacity 300ms 300ms linear;
+      opacity: 1; }
+    #sidebar .thumb:hover .label {
+      display: block;
+      opacity: 1; }
+    #sidebar .thumb:after {
+      -webkit-transition: opacity 150ms 0ms linear;
+      -moz-transition: opacity 150ms 0ms linear;
+      -ms-transition: opacity 150ms 0ms linear;
+      -o-transition: opacity 150ms 0ms linear;
+      transition: opacity 150ms 0ms linear;
+      opacity: 0;
+      position: absolute;
+      font-family: "icomoon";
+      font-size: 48px;
+      content: '\e762';
+      color: #fff;
+      background: rgba(0, 0, 0, 0.6);
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0; }
+    #sidebar .thumb.selected {
+      outline: 2px solid #11336a; }
+      #sidebar .thumb.selected:after {
+        content: '\e6da'; }
+  #sidebar .addImage {
+    position: relative;
+    display: block;
+    width: 100%; }
+    #sidebar .addImage:before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 0;
+      right: 0;
+      border-top: 1px solid #555555; }
+    #sidebar .addImage .btn {
+      margin: 8px 7px 7px 7px; }
+
+#edit {
+  position: absolute;
+  top: 50px;
+  left: 60px;
+  bottom: 0;
+  width: 500px;
+  background: #555555;
+  color: #fff;
+  padding: 20px; }
+  #edit .imageLabel {
+    border: none;
+    background: none;
+    font-size: 24px;
+    font-weight: 100;
+    color: #fff; }
+    #edit .imageLabel:focus {
+      background: #888;
+      outline: none; }
+  #edit .canvasWrapper {
+    margin: 20px;
+    text-align: center; }
+  #edit canvas {
+    background: #000; }
+
+/**
+ *		MODULES
+ **/
+.addImage .add-file-wrapper {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  font-size: 33px;
+  margin: 7px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative; }
+  .addImage .add-file-wrapper:before {
+    position: absolute;
+    left: 5px;
+    top: 4px; }
+.addImage .add-file {
+  cursor: pointer !important;
+  position: absolute;
+  height: 42px !important;
+  width: 42px !important;
+  opacity: 0;
+  top: 0;
+  left: 0;
+  margin: 0;
+  -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
+  filter: progid:DXImageTransform.Microsoft.Alpha(Opacity=0);
+  cursor: pointer; }

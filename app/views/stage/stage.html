@@ -1,0 +1,9 @@
+<div rv-unless="fits" class="largeImage">
+	<div class="addImage"><i class="icon-arrowleft"></i>Start by adding an image</div>
+	<h2>AstroView</h2>
+	<h3>Astronomy FITS Viewer & Analysis Tool</h3>
+</div>
+
+<div rv-if="fits" class="canvasWrapper">
+	<canvas id="stageCanvas" resize></canvas>
+</div>

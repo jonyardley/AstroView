@@ -1,0 +1,48 @@
+#header {
+
+	background: $appColor;
+	color: #FFF;
+	position: absolute;
+	z-index: 10;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: $headerHeight;
+
+
+	h1 {
+		position: relative;
+		width: 60px;
+		height: $headerHeight;
+		text-indent: 70px;
+		line-height: $headerHeight;
+		font-weight: 700;
+		font-size: 1.8em;
+		z-index: 1;
+
+		&:before, &:after {
+			content: '';
+			position: absolute;
+			top: 0;
+			left: 0;
+			background: rgba(#000, 0.3);
+			width: 60px;
+			height: $headerHeight;
+		}
+
+		&:after {
+			background: url(../img/logo-white-transparent-40.png) no-repeat transparent center center;
+		}
+	}
+
+
+	.version {
+		position: absolute;
+		right: 8px;
+		top: 8px;
+		font-weight: 100;
+		font-size: 0.8em;
+		color: rgba(#fff, 0.7);
+	}
+
+}

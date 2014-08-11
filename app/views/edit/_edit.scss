@@ -1,0 +1,33 @@
+#edit {
+
+	position: absolute;
+	top: $headerHeight;
+	left: $sidebarWidthCollapsed;
+	bottom: 0;
+	width: 500px;
+	background: $greyDark;
+	color: #fff;
+	padding: 20px;
+
+	.imageLabel {
+		border: none;
+		background: none;
+		font-size: 24px;
+		font-weight: 100;
+		color: #fff;
+		&:focus {
+			background: $greyMedium;
+			outline: none;
+		}
+	}
+
+	.canvasWrapper {
+		margin: 20px;
+		text-align: center;
+	}
+
+	canvas {
+		background: #000;
+	}
+
+}

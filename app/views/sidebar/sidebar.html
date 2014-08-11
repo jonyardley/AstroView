@@ -1,0 +1,8 @@
+<ul>
+	<li class="thumb" rv-each-image="images:" rv-on-click="select" rv-class-selected="image:isSelected">
+		<span class="label">{image:label}</span>
+		<span rv-unless="image:_dirty" rv-rawhtml="image:img"></span>
+		<span class="loading" rv-if="image:_dirty"></span>
+	</li>
+</ul>
+<div class="addImageRegion"></div>

@@ -1,0 +1,29 @@
+//Core Styles
+@import "_reset.css";
+@import "variables";
+@import "animate";
+@import "base";
+
+//fonts
+@import "icons/icons.css";
+
+
+//components
+@import 'includes/ion.rangeSlider.css';
+@import 'includes/ion.rangeSlider.skinFlat.css';
+@import "components";
+
+/**
+ *		VIEWS
+ **/
+@import "../views/header/header";
+@import "../views/stage/stage";
+@import "../views/sidebar/sidebar";
+@import "../views/edit/edit";
+
+
+
+/**
+ *		MODULES
+ **/
+@import "../modules/addImage/addImage";
