@@ -22,7 +22,7 @@ App.addInitializer(function(){
 
 	//set up initial views!
 	App.header.show(new HeaderView());
-	App.stage.show(new StageView());
+	App.stage.show(new StageView({collection: App.FITS}));
 	App.sidebar.show(new SidebarView());
 
 	//for easier development
@@ -45,14 +45,6 @@ App.vent.on('edit:open', function(model){
 App.vent.on('edit:close', function(model){
 	App.stage.$el.removeClass('isEditing');
 	//TODO: Might want to close this view?
-});
-
-
-App.vent.on('stage:render', function(model){
-	App.vent.trigger('edit:close');
-	App.stage.show(new StageView({
-		model: model
-	}));
 });
 
 

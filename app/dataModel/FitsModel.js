@@ -2,7 +2,8 @@ var App = require('app'),
 	_ = require('underscore'),
 	Backbone = require('backbone'),
 	LoadFits = require('../utils/loadFits'),
-	renderImage = require('../utils/renderImage');
+	renderImage = require('../utils/renderImage'),
+	fabric = require('fabric').fabric;
 
 module.exports = Backbone.NestedModel.extend({
 
@@ -20,18 +21,38 @@ module.exports = Backbone.NestedModel.extend({
 				max: 500,
 				minRaw: 0,
 				maxRaw: 19369, //this is a little hack to init the non-linear slider in the right place on init.
-				scaleType: 'linear'
+				scaleType: 'linear',
+				color: '#FFFFFF'
 			},
 			img: null,
-			thumb: null,
 			_dirty: true,
 			loading: {
 				state: null,
 				progress: 0
 			},
 			isEditing: false,
-			isSelected: false
+			isSelected: false,
+			ctxImage: null
 		};
+	},
+
+	setCtxImage: function(){
+		var currentImage = this.ctxImage;
+
+		if(currentImage){
+			currentImage.remove();
+		}
+
+		var image = new fabric.Image(this.get('img'), {
+			selectable: true,
+			hasControls: false
+		});
+
+		this.ctxImage = image;
+	},
+
+	getCtxImage: function(){
+		return this.ctxImage;
 	},
 
 	edit: function(e){
@@ -61,10 +82,11 @@ module.exports = Backbone.NestedModel.extend({
 	},
 
 	reRenderImage: function(){
-		if(this.get('_dirty') === true){
+		if(this.get('_dirty')){
 			var model = this;
 			renderImage({fits: model.toJSON()}, function(img){
 				model.attributes.img = img;
+				model.setCtxImage();
 				model.set('_dirty', false);
 			});
 		}
@@ -83,6 +105,7 @@ module.exports = Backbone.NestedModel.extend({
 
 			renderImage({fits: model.toJSON()}, function(img){
 				model.attributes.img = img;
+				model.setCtxImage();
 				model.set('_dirty', false);
 			});
 

@@ -57,7 +57,8 @@
     "app": "./app/core/app.js",
     "fits": "./app/lib/fits.js",
 	"ionSlider": "./app/lib/ion.rangeSlider.min.js",
-	"fabric": "fabric/dist/fabric"
+	"fabric": "fabric/dist/fabric",
+	"spectrum": "./app/lib/spectrum.js"
   },
   "browserify": {
     "transform": [
@@ -106,6 +107,9 @@
       ]
     },
 	"ionSlider": {
+		"depends": ["jquery"]
+	},
+	"spectrum": {
 		"depends": ["jquery"]
 	}
   }

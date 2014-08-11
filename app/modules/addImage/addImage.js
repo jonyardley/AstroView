@@ -1,4 +1,5 @@
 var App = require('app'),
+	_ = require('underscore'),
 	Marionette = require('marionette');
 
 module.exports = Marionette.ItemView.extend({
@@ -20,7 +21,12 @@ module.exports = Marionette.ItemView.extend({
 			App.FITS.add({
 				file: file
 			});
+			this.ui.input.val('');
 		}
+	},
+
+	initialize: function(){
+		_.bindAll(this, 'addFile');
 	}
 
 

@@ -3,7 +3,8 @@ var Marionette = require('marionette'),
 	App = require('app'),
 	Rivets = require('rivets'),
 	renderImage = require('../../utils/renderImage'),
-	ionSlider = require('ionSlider');
+	ionSlider = require('ionSlider'),
+	spectrum = require('spectrum');
 
 module.exports = Marionette.ItemView.extend({
 
@@ -11,7 +12,8 @@ module.exports = Marionette.ItemView.extend({
 
 	ui: {
 		canvas: 'canvas',
-		minMax: '#minMax'
+		minMax: '#minMax',
+		color: '.color'
 	},
 
 	modelEvents: {
@@ -84,6 +86,20 @@ module.exports = Marionette.ItemView.extend({
 		this.renderImage();
 
 		_.defer(this.initSlider);
+		_.defer(this.initColor);
+	},
+
+	initColor: function(){
+		this.ui.color.spectrum({
+			showPalette: true,
+			preferredFormat: "hex",
+			palette: [
+				['white'],
+				['red'],
+				['green'],
+				['blue']
+			]
+		});
 	},
 
 
@@ -119,7 +135,7 @@ module.exports = Marionette.ItemView.extend({
 
 
 	initialize: function(){
-		_.bindAll(this, 'renderImage', 'updateMinMax', 'initSlider', 'apply', 'cancel');
+		_.bindAll(this, 'renderImage', 'updateMinMax', 'initSlider', 'apply', 'cancel', 'initColor');
 		this.previousOptions = _.clone(this.model.get('options'));
 	}
 
