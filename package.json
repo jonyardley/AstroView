@@ -44,21 +44,21 @@
     "backbone-nested": "afeld/backbone-nested",
     "rivets": "mikeric/rivets#v0.6.9",
     "rivets-backbone": "azproduction/rivets-backbone-adapter#1.3.0",
-	"fabric": "kangax/fabric.js#v1.4.10"
+    "fabric": "kangax/fabric.js#v1.4.10"
   },
   "browser": {
     "jquery": "./node_modules/jquery/dist/jquery.js",
     "underscore": "underscore/underscore",
     "backbone": "backbone/backbone",
-	"backbone-nested": "backbone-nested/backbone-nested",
+    "backbone-nested": "backbone-nested/backbone-nested",
     "marionette": "marionette/lib/backbone.marionette",
     "rivets": "rivets/dist/rivets",
     "rivets-backbone": "rivets-backbone/rivets-backbone",
     "app": "./app/core/app.js",
     "fits": "./app/lib/fits.js",
-	"ionSlider": "./app/lib/ion.rangeSlider.min.js",
-	"fabric": "fabric/dist/fabric",
-	"spectrum": "./app/lib/spectrum.js"
+    "ionSlider": "./app/lib/ion.rangeSlider.min.js",
+    "fabric": "fabric/dist/fabric",
+    "spectrum": "./app/lib/spectrum.js"
   },
   "browserify": {
     "transform": [
@@ -92,7 +92,7 @@
     },
     "backbone-nested": {
       "depends": [
-	    "jquery",
+        "jquery",
         "underscore",
         "backbone"
       ]
@@ -106,11 +106,19 @@
         "backbone"
       ]
     },
-	"ionSlider": {
-		"depends": ["jquery"]
-	},
-	"spectrum": {
-		"depends": ["jquery"]
-	}
+    "ionSlider": {
+      "depends": [
+        "jquery"
+      ]
+    },
+    "spectrum": {
+      "depends": [
+        "jquery"
+      ]
+    }
+  },
+  "dependencies": {
+    "connect": "^3.1.1",
+    "serve-static": "^1.5.1"
   }
 }

@@ -1,5 +1,6 @@
 var Marionette = require('marionette'),
 	_ = require('underscore'),
+	$ = require('jquery'),
 	Rivets = require('rivets'),
 	fabric = require('fabric').fabric;
 
@@ -11,12 +12,14 @@ module.exports = Marionette.ItemView.extend({
 	ui: {
 		canvas: '.canvasWrapper canvas',
 		zoom: '.zoom',
-		composite: '.composite'
+		composite: '.composite',
+		save: '.save'
 	},
 
 	events: {
 		'change @ui.zoom': 'setZoom',
-		'change @ui.composite': 'setComposite'
+		'change @ui.composite': 'setComposite',
+		'click @ui.save': 'saveImage'
 	},
 
 	collectionEvents: {
@@ -28,6 +31,14 @@ module.exports = Marionette.ItemView.extend({
 	imageGroup: null,
 	selectedImage: null,
 	isComposite: false,
+
+	saveImage: function(){
+		function download(url,name){
+			$('<a>').attr({href:url,download:name})[0].click();
+		}
+		var name = !this.isComposite ? this.selectedImage.get('label') : 'Composite Image';
+		download(this.context.getContext().toDataURL(),name+'.png');
+	},
 
 	setComposite: function(e){
 		var value = $(e.target).val();
@@ -107,7 +118,7 @@ module.exports = Marionette.ItemView.extend({
 
 
 	initialize: function(){
-		_.bindAll(this, 'renderImage', 'initializeCanvas', 'setZoom', 'toggleImage', 'setComposite', 'setAllOpacity');
+		_.bindAll(this, 'renderImage', 'initializeCanvas', 'setZoom', 'toggleImage', 'setComposite', 'setAllOpacity', 'saveImage');
 	}
 
 });
