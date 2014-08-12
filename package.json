@@ -50,7 +50,7 @@
     "jquery": "./node_modules/jquery/dist/jquery.js",
     "underscore": "underscore/underscore",
     "backbone": "backbone/backbone",
-    "backbone-nested": "./app/lib/backbone-nested.js",
+    "backbone-nested": "./app/lib/backbone-nested.js", 
     "marionette": "marionette/lib/backbone.marionette",
     "rivets": "rivets/dist/rivets",
     "rivets-backbone": "rivets-backbone/rivets-backbone",
