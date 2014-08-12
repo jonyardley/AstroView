@@ -41,7 +41,6 @@
     "underscore": "jashkenas/underscore#1.6.0",
     "jquery": "jquery/jquery#2.1.1",
     "marionette": "marionettejs/backbone.marionette#v2.1.0",
-    "backbone-nested": "afeld/backbone-nested",
     "rivets": "mikeric/rivets#v0.6.9",
     "rivets-backbone": "azproduction/rivets-backbone-adapter#1.3.0",
     "fabric": "kangax/fabric.js#v1.4.10"
@@ -50,7 +49,7 @@
     "jquery": "./node_modules/jquery/dist/jquery.js",
     "underscore": "underscore/underscore",
     "backbone": "backbone/backbone",
-    "backbone-nested": "backbone-nested/backbone-nested",
+    "backbone-nested": "./app/lib/backbone-nested.js",
     "marionette": "marionette/lib/backbone.marionette",
     "rivets": "rivets/dist/rivets",
     "rivets-backbone": "rivets-backbone/rivets-backbone",
