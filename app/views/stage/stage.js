@@ -37,7 +37,7 @@ module.exports = Marionette.ItemView.extend({
 			$('<a>').attr({href:url,download:name})[0].click();
 		}
 		var name = !this.isComposite ? this.selectedImage.get('label') : 'Composite Image';
-		download(this.context.getContext().toDataURL(),name+'.png');
+		download(this.ui.canvas[0].toDataURL(),name+'.png');
 	},
 
 	setComposite: function(e){
