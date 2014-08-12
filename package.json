@@ -11,6 +11,7 @@
     "type": "git",
     "url": "https://jonyardley@github.com/jonyardley/Angular-App-Archetype.git"
   },
+  "main": "server.js",
   "author": "",
   "license": "ISC",
   "bugs": {
