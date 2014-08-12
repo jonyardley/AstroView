@@ -35,9 +35,9 @@ function renderImage(opts, callback){
 				z = ( ( (height - i) * width ) + ii ) * 4,
 				value = scaleFunc( opts.fits.imageData[pixel], opts.fits );
 
-			buffer.data[z+0] = value;
-			buffer.data[z+1] = value;
-			buffer.data[z+2] = value;
+			buffer.data[z+0] = value || 0;
+			buffer.data[z+1] = value || 0;
+			buffer.data[z+2] = value || 0;
 			buffer.data[z+3] = 255;
 		}
 
@@ -46,6 +46,10 @@ function renderImage(opts, callback){
 
 	function done(){
 		ctx.putImageData(buffer, 0, 0);
+		ctx.globalCompositeOperation = "multiply";
+		ctx.rect(1, 1, canvas.width, canvas.height);
+		ctx.fillStyle = opts.fits.options.color;
+		ctx.fill();
 
 		var imgData = canvas.toDataURL();
 		var img = new Image();

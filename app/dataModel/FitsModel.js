@@ -25,7 +25,9 @@ module.exports = Backbone.NestedModel.extend({
 				color: '#FFFFFF'
 			},
 			canvasState: {
-				zoom: 'fit'
+				zoom: 'fit',
+				left: 0,
+				top: 0
 			},
 			img: null,
 			_dirty: true,
@@ -39,6 +41,11 @@ module.exports = Backbone.NestedModel.extend({
 		};
 	},
 
+	updateState: function(e){
+		this.set('canvasState.top', this.getCtxImage().getTop());
+		this.set('canvasState.left', this.getCtxImage().getLeft());
+	},
+
 	setCtxImage: function(){
 		var currentImage = this.ctxImage;
 
@@ -47,9 +54,13 @@ module.exports = Backbone.NestedModel.extend({
 		}
 
 		var image = new fabric.Image(this.get('img'), {
+			left: this.get('canvasState.left'),
+			top: this.get('canvasState.top'),
 			selectable: true,
 			hasControls: false
 		});
+
+		image.on('mouseup', this.updateState);
 
 		this.ctxImage = image;
 	},
@@ -97,7 +108,7 @@ module.exports = Backbone.NestedModel.extend({
 
 	initialize: function(){
 
-		_.bindAll(this, 'edit', 'reRenderImage', 'select');
+		_.bindAll(this, 'edit', 'reRenderImage', 'select', 'updateState');
 
 		var model = this;
 

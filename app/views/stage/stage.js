@@ -24,13 +24,13 @@ module.exports = Marionette.ItemView.extend({
 
 	collectionEvents: {
 		'change:_dirty': 'renderImage',
-		'change:isSelected': 'toggleImage',
-		'change:options.color': 'changeColor'
+		'change:isSelected': 'toggleImage'
 	},
 
 	imageGroup: null,
 	selectedImage: null,
 	isComposite: false,
+
 
 	saveImage: function(){
 		function download(url,name){
@@ -39,6 +39,7 @@ module.exports = Marionette.ItemView.extend({
 		var name = !this.isComposite ? this.selectedImage.get('label') : 'Composite Image';
 		download(this.ui.canvas[0].toDataURL(),name+'.png');
 	},
+
 
 	setComposite: function(e){
 		var value = $(e.target).is(":checked");
@@ -55,23 +56,13 @@ module.exports = Marionette.ItemView.extend({
 		this.ui.zoom.trigger('change');
 	},
 
+
 	setAllOpacity: function(isComposite){
 		var val = isComposite ? 1 : 0;
 		this.collection.each(function(model){
 			var image = model.getCtxImage();
 			image.setOpacity(val);
 		});
-	},
-
-
-	changeColor: function(model){
-		var color = model.get('options.color');
-		var filter = new fabric.Image.filters.Multiply({
-			color: color
-		});
-		var image = model.getCtxImage();
-		image.filters = [filter];
-		image.applyFilters(this.context.renderAll.bind(this.context));
 	},
 
 
@@ -86,19 +77,23 @@ module.exports = Marionette.ItemView.extend({
 
 		if(!this.isComposite) {
 			this.selectedImage.getCtxImage().scale(value);
+			this.selectedImage.set('canvasState.zoom', this.ui.zoom.val());
 		}else{
 			this.collection.each(function(model){
+				model.set('canvasState.zoom', this.ui.zoom.val());
 				model.getCtxImage().scale(value);
 			}, this);
 		}
 		this.context.renderAll();
 	},
 
+
 	initializeCanvas: function(){
 		this.ui.canvas.attr('width', this.$el.width());
 		this.ui.canvas.attr('height', this.$el.height());
 		this.context = new fabric.Canvas('stageCanvas');
 	},
+
 
 	toggleImage: function(model){
 		var image = model.getCtxImage();
@@ -109,6 +104,7 @@ module.exports = Marionette.ItemView.extend({
 					image.setOpacity(1);
 				}
 				image.bringToFront();
+				this.ui.zoom.val(model.get('canvasState.zoom'));
 
 			}else{
 				if(!this.isComposite) {
@@ -125,21 +121,21 @@ module.exports = Marionette.ItemView.extend({
 			var image = model.getCtxImage();
 
 			this.context.add(image);
-			this.changeColor(model);
 			this.ui.zoom.trigger('change');
 			this.context.renderAll();
 
 		}
 	},
 
+
 	onDomRefresh: function(){
 		this.initializeCanvas();
-
 	},
 
 
 	initialize: function(){
-		_.bindAll(this, 'renderImage', 'initializeCanvas', 'setZoom', 'toggleImage', 'setComposite', 'setAllOpacity', 'saveImage');
+		_.bindAll(this, 'renderImage', 'initializeCanvas', 'setZoom', 'toggleImage', 'setComposite',
+			'setAllOpacity', 'saveImage');
 	}
 
 });

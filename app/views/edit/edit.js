@@ -18,7 +18,8 @@ module.exports = Marionette.ItemView.extend({
 
 	modelEvents: {
 		'change:loading.state': 'renderImage',
-		'change:options.scaleType': 'renderImage'
+		'change:options.scaleType': 'renderImage',
+		'change:options.color': 'renderImage'
 	},
 
 

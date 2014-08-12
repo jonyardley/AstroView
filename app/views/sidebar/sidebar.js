@@ -1,12 +1,13 @@
 var App = require('app'),
-	$ = require('jquery'),
-	Rivets = require('rivets'),
 	Marionette = require('marionette'),
-	addImage = require('../../modules/addImage/addImage');
+	addImage = require('../../modules/addImage/addImage'),
+	ThumbView = require('../../modules/thumb/thumb');
 
-Rivets.binders.rawhtml = function(el, value) {
-	$(el).html($(value).clone());
-};
+
+var ThumbsView = Marionette.CollectionView.extend({
+	tasgName: 'ul',
+	childView: ThumbView
+});
 
 
 module.exports = Marionette.LayoutView.extend({
@@ -14,27 +15,13 @@ module.exports = Marionette.LayoutView.extend({
 	template: require('./sidebar.html'),
 
 	regions: {
-		addImage: '.addImageRegion'
+		addImage: '.addImageRegion',
+		thumbs: '.thumbsContainer'
 	},
 
 	onShow: function(){
 		this.addImage.show(new addImage());
-	},
-
-	select: function(el, obj){
-		var fits = obj.image;
-		if(fits.get('isSelected')){
-			fits.edit();
-		}else{
-			fits.select();
-		}
-	},
-
-	onRender: function(){
-		Rivets.bind(this.$el, {
-			images: App.FITS,
-			select: this.select
-		});
+		this.thumbs.show(new ThumbsView({collection: App.FITS}));
 	}
 
 });
