@@ -114,6 +114,7 @@ module.exports = Marionette.ItemView.extend({
 
 	onDomRefresh: function(){
 		this.initializeCanvas();
+		
 	},
 
 
