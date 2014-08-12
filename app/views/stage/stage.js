@@ -41,12 +41,18 @@ module.exports = Marionette.ItemView.extend({
 	},
 
 	setComposite: function(e){
-		var value = $(e.target).val();
+		var value = $(e.target).is(":checked");
 		this.isComposite = value;
+
 		this.setAllOpacity(value);
+
 		if(value){
 			this.context.getContext().globalCompositeOperation = "lighten";
+		}else{
+			this.context.getContext().globalCompositeOperation = "source-over";
+			this.selectedImage.getCtxImage().setOpacity(1);
 		}
+		this.ui.zoom.trigger('change');
 	},
 
 	setAllOpacity: function(isComposite){
@@ -71,7 +77,20 @@ module.exports = Marionette.ItemView.extend({
 
 	setZoom: function(e){
 		var value = this.ui.zoom.val();
-		this.selectedImage.getCtxImage().scale(value);
+
+		if(value === 'fit'){
+			var widthRatio = this.context.width / this.selectedImage.get('meta.width'),
+				heightRatio = this.context.height / this.selectedImage.get('meta.height');
+			value = (widthRatio > heightRatio) ? heightRatio : widthRatio;
+		}
+
+		if(!this.isComposite) {
+			this.selectedImage.getCtxImage().scale(value);
+		}else{
+			this.collection.each(function(model){
+				model.getCtxImage().scale(value);
+			}, this);
+		}
 		this.context.renderAll();
 	},
 
@@ -88,7 +107,6 @@ module.exports = Marionette.ItemView.extend({
 			if(model.get('isSelected')){
 				if(!this.isComposite){
 					image.setOpacity(1);
-					this.ui.zoom.val(image.getScaleX());
 				}
 				image.bringToFront();
 
@@ -105,10 +123,12 @@ module.exports = Marionette.ItemView.extend({
 	renderImage: function(model){
 		if(!model.get('_dirty')){
 			var image = model.getCtxImage();
+
 			this.context.add(image);
-			this.ui.zoom.val(image.getScaleX());
 			this.changeColor(model);
+			this.ui.zoom.trigger('change');
 			this.context.renderAll();
+
 		}
 	},
 

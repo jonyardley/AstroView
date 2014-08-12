@@ -1,7 +1,7 @@
 // Vendors
 var Backbone = require('backbone');
-require('backbone-nested');
 Backbone.$ = require('jquery');
+require('backbone-nested');
 require('rivets');
 require('../utils/rivets-adapter');
 

@@ -24,6 +24,9 @@ module.exports = Backbone.NestedModel.extend({
 				scaleType: 'linear',
 				color: '#FFFFFF'
 			},
+			canvasState: {
+				zoom: 'fit'
+			},
 			img: null,
 			_dirty: true,
 			loading: {

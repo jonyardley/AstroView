@@ -48,9 +48,9 @@
   },
   "browser": {
     "jquery": "./node_modules/jquery/dist/jquery.js",
-    "underscore": "underscore/underscore",
-    "backbone": "backbone/backbone",
-    "backbone-nested": "./app/lib/backbone-nested.js", 
+    "underscore": "./node_modules/underscore/underscore.js",
+    "backbone": "./node_modules/backbone/backbone.js",
+    "backbone-nested": "./app/lib/backbone-nested.js",
     "marionette": "marionette/lib/backbone.marionette",
     "rivets": "rivets/dist/rivets",
     "rivets-backbone": "rivets-backbone/rivets-backbone",
@@ -89,13 +89,6 @@
     },
     "jquery": {
       "exports": "$"
-    },
-    "backbone-nested": {
-      "depends": [
-        "jquery",
-        "underscore",
-        "backbone"
-      ]
     },
     "rivets": {
       "exports": "Rivets"
