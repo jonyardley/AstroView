@@ -4,6 +4,7 @@ var Marionette = require('marionette'),
 	Rivets = require('rivets'),
 	fabric = require('fabric').fabric;
 
+
 module.exports = Marionette.ItemView.extend({
 
 	template: require('./stage.html'),
@@ -69,17 +70,17 @@ module.exports = Marionette.ItemView.extend({
 	setZoom: function(e){
 		var value = this.ui.zoom.val();
 
-		if(value === 'fit'){
+		if (value === 'fit') {
 			var widthRatio = this.context.width / this.selectedImage.get('meta.width'),
 				heightRatio = this.context.height / this.selectedImage.get('meta.height');
 			value = (widthRatio > heightRatio) ? heightRatio : widthRatio;
 		}
 
-		if(!this.isComposite) {
+		if (!this.isComposite) {
 			this.selectedImage.getCtxImage().scale(value);
 			this.selectedImage.set('canvasState.zoom', this.ui.zoom.val());
-		}else{
-			this.collection.each(function(model){
+		} else {
+			this.collection.each(function (model) {
 				model.set('canvasState.zoom', this.ui.zoom.val());
 				model.getCtxImage().scale(value);
 			}, this);
@@ -127,8 +128,8 @@ module.exports = Marionette.ItemView.extend({
 		}
 	},
 
-
-	onDomRefresh: function(){
+	onShow: function(){
+		this.selectedImage = this.collection.at(0);
 		this.initializeCanvas();
 	},
 

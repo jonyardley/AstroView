@@ -136,52 +136,6 @@ h3 {
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.8); }
     #stage.isEditing .canvasWrapper, #stage.isEditing .toolbar {
       opacity: 0.2; }
-  #stage .mainImage {
-    width: 100%;
-    height: auto !important; }
-    #stage .mainImage img {
-      width: 100%; }
-  #stage .largeImage {
-    background: #000;
-    width: 100%;
-    height: 100%;
-    background: url(../img/Helix_Nebula.png) no-repeat #000 center center;
-    background-size: cover; }
-  #stage h2 {
-    top: 50%;
-    line-height: 1;
-    text-align: center;
-    font-size: 3em;
-    position: relative;
-    color: #fff;
-    text-shadow: 0px 0px 12px rgba(0, 0, 0, 0.5); }
-    #stage h2:after {
-      content: '';
-      width: 120px;
-      height: 120px;
-      background: url(../img/logo-black-transparent-120.png) no-repeat transparent center center;
-      opacity: 0.45;
-      position: absolute;
-      top: -130px;
-      left: 50%;
-      margin-left: -60px; }
-  #stage h3 {
-    position: relative;
-    top: 52%;
-    width: 100%;
-    text-align: center;
-    text-shadow: 0px 0px 12px rgba(0, 0, 0, 0.5); }
-  #stage .addImage {
-    position: absolute;
-    padding: 22px;
-    margin-left: 30px;
-    font-weight: 700; }
-    #stage .addImage i:before {
-      position: absolute;
-      display: inline-block;
-      font-size: 47px;
-      left: -30px;
-      top: 8px; }
   #stage .stageInner {
     height: 100%; }
   #stage .canvasWrapper {
@@ -322,6 +276,54 @@ h3 {
     text-align: center; }
   #edit canvas {
     background: #000; }
+
+#home .mainImage {
+  width: 100%;
+  height: auto !important; }
+  #home .mainImage img {
+    width: 100%; }
+#home .largeImage {
+  background: #000;
+  width: 100%;
+  height: 100%;
+  background: url(../img/Helix_Nebula.png) no-repeat #000 center center;
+  background-size: cover; }
+#home h2 {
+  top: 50%;
+  line-height: 1;
+  text-align: center;
+  font-size: 3em;
+  position: relative;
+  color: #fff;
+  text-shadow: 0px 0px 12px rgba(0, 0, 0, 0.5); }
+  #home h2:after {
+    content: '';
+    width: 120px;
+    height: 120px;
+    background: url(../img/logo-black-transparent-120.png) no-repeat transparent center center;
+    opacity: 0.45;
+    position: absolute;
+    top: -130px;
+    left: 50%;
+    margin-left: -60px; }
+#home h3 {
+  position: relative;
+  top: 52%;
+  width: 100%;
+  text-align: center;
+  text-shadow: 0px 0px 12px rgba(0, 0, 0, 0.5);
+  line-height: 1.5; }
+#home .addImage {
+  position: absolute;
+  padding: 22px;
+  margin-left: 25px;
+  font-weight: 700; }
+  #home .addImage i:before {
+    position: absolute;
+    display: inline-block;
+    font-size: 36px;
+    left: -20px;
+    top: 13px; }
 
 /**
  *		MODULES

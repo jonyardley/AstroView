@@ -3,7 +3,8 @@ var App = require('app'),
 	HeaderView = require('../views/header/header'),
 	StageView = require('../views/stage/stage'),
 	SidebarView = require('../views/sidebar/sidebar'),
-	EditView = require('../views/edit/edit');
+	EditView = require('../views/edit/edit'),
+	HomeView = require('../views/home/home');
 
 
 //Add App Regions
@@ -22,7 +23,7 @@ App.addInitializer(function(){
 
 	//set up initial views!
 	App.header.show(new HeaderView());
-	App.stage.show(new StageView({collection: App.FITS}));
+	App.stage.show(new HomeView());
 	App.sidebar.show(new SidebarView());
 
 	//for easier development
@@ -31,6 +32,16 @@ App.addInitializer(function(){
 	}
 
 });
+
+
+function updateStage(){
+	if(App.FITS.length > 0) {
+		App.stage.show(new StageView({collection: App.FITS}));
+		App.FITS.off('add', updateStage);
+	}
+}
+
+App.FITS.on('add', updateStage);
 
 /** Attach global events **/
 

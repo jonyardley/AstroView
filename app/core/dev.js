@@ -1,7 +1,7 @@
 var App = require('app');
 
 var files = [
-	'assets/example_fits/656nmos.fits'
+	//'assets/example_fits/656nmos.fits'
 ];
 
 //add files to the main array!
