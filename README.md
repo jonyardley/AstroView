@@ -4,7 +4,7 @@ AstroView is an astronomical image viewer, compositor & analysis tool which runs
 
 _Version 1.0 is currently in development although a preview is currently live._
 
-Visit the app at: [www.astroviewapp.com](www.astroviewapp.com)
+Visit the app at: [www.astroviewapp.com](http://www.astroviewapp.com)
 
 Supported browsers:
 - Chrome
