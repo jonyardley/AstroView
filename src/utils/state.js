@@ -7,7 +7,7 @@ export class State {
 
 	constructor (images) {
 		this.mode = 'view';
-		this.imageId = null;
+		this.selectedImage = null;
 		this.images = images;
 	}
 
