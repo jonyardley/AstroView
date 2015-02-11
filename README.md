@@ -12,3 +12,14 @@ Supported browsers:
 - Chrome
 - Firefox
 - IE 11+
+
+***
+
+## Developer Setup
+
+
+	$ (sudo) npm install -g gulp
+	$ (sudo) npm install -g jspm
+	
+	# Configure jspm
+	$ jspm endpoint config github
