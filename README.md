@@ -1,5 +1,7 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jonyardley/AstroView?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+![AstroView Logo](https://lh3.googleusercontent.com/CjfqGKUSPG9MOvbASJYO9V1QaMcV5CzRWHSmRusBQnAK96SmUIT3Gc7gYns8K-L1PN38Ynnq9pE)
+
 AstroView is an astronomical image viewer, compositor & analysis tool which runs in your browser.
 
 _Version 1.0 is currently in development although a preview is currently live._
