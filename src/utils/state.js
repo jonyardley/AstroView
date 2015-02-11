@@ -6,7 +6,7 @@ export class State {
 	static inject(){ return [Images]; }
 
 	constructor (images) {
-		this.mode = 'analyze';
+		this.mode = 'view';
 		this.imageId = null;
 		this.images = images;
 	}

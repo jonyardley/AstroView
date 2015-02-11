@@ -6,7 +6,10 @@ export class Sidebar {
 
 	activate(state){
 		this.state = state;
-		console.log(this);
+	}
+
+	show(){
+		return this.state = 'composite'
 	}
 
 }
