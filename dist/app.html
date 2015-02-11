@@ -1,0 +1,13 @@
+<template>
+	<h1>Main View</h1>
+
+	<button click.delegate="state.changeMode('composite')">Composite Mode</button>
+	<button click.delegate="state.changeMode('analyze')">Analyze Mode</button>
+	<button click.delegate="state.images.newImage()">New Image</button>
+
+	<compose
+			model.bind="state"
+			view-model="sidebar/sidebar">
+	</compose>
+
+</template>

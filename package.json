@@ -1,23 +1,9 @@
 {
-  "name": "aurelia-skeleton-navigation",
-  "version": "0.9.5",
-  "description": "A starter kit for building a standard navigation-style app with Aurelia.",
-  "keywords": [
-    "aurelia",
-    "navigation",
-    "skeleton"
-  ],
-  "homepage": "http://aurelia.io",
-  "bugs": {
-    "url": "https://github.com/aurelia/skeleton-navigation/issues"
-  },
-  "license": "MIT",
-  "author": "Rob Eisenberg <rob@bluespire.com> (http://robeisenberg.com/)",
+  "name": "AstroView",
+  "version": "0.1.0",
+  "description": "TODO: ADD THIS",
+  "keywords": [],
   "main": "dist/commonjs/index.js",
-  "repository": {
-    "type": "git",
-    "url": "http://github.com/aurelia/skeleton-navigation"
-  },
   "devDependencies": {
     "aurelia-tools": "^0.1.0",
     "browser-sync": "^1.8.1",
