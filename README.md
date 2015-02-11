@@ -17,9 +17,16 @@ Supported browsers:
 
 ## Developer Setup
 
-
+	# Pre-requisites
 	$ (sudo) npm install -g gulp
 	$ (sudo) npm install -g jspm
 	
 	# Configure jspm
 	$ jspm endpoint config github
+
+	# Install Dependencies
+	$ npm install
+	$ jspm install -y
+
+	# Start development server
+	$ gulp watch
