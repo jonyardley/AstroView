@@ -33,7 +33,21 @@
     transform: scale(1);
     -webkit-transform: scale(1);
     opacity: 0; } }
-.dropdown-menu i {
-  margin-right: 5px; }
+.navbar-logo {
+  padding: 5px 10px 5px 0; }
+
+.navbar-brand {
+  line-height: 30px; }
+
+.navbar-nav.navbar-right {
+  line-height: 50px;
+  padding-right: 20px; }
+
+.av-mode-selector {
+  width: auto; }
+
+.av-toolbar {
+  background: #000;
+  margin-top: -21px; }
 
 /*# sourceMappingURL=styles.css.map */

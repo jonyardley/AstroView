@@ -1,12 +1,12 @@
 import {State} from '../utils/state';
 
-export class Toolbar {
+export class Navbar {
 
 	static inject(){ return [State]; }
 
 	constructor(state){
 		this.state = state
-		console.log('toolbar loaded!');
+		console.log('navbar loaded!');
 	}
 
 }
