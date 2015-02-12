@@ -2,7 +2,11 @@
 
 	<div id="sidebar">
 		<div id="sidebar-inner">
-
+			<ul>
+				<li repeat.for="image of state.images.collection">
+					${image.isLoaded}
+				</li>
+			</ul>
 		</div>
 	</div>
 

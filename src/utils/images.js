@@ -4,6 +4,7 @@ export class Images {
 
 	constructor(){
 		this.collection = [];
+		this.active = null;
 	}
 
 	/**
@@ -15,5 +16,7 @@ export class Images {
 			newImage = new Image(id, opts);
 
 		this.collection.push(newImage);
+		this.active = newImage;
+		console.log(this);
 	}
 }

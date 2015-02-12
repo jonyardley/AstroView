@@ -1,6 +1,5 @@
 import {Images} from './images';
 
-
 export class State {
 
 	static inject(){ return [Images]; }
@@ -13,7 +12,6 @@ export class State {
 			analyze: false
 		};
 		this.images = images;
-		this.selectedImage = null;
 	}
 
 

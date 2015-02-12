@@ -7,6 +7,16 @@ System.config({
 });
 
 System.config({
+	"shim": {
+		"imageBuffer": {
+			"format": "cjs",
+			"exports": "ImageBuffer",
+			"main": "index.js"
+		}
+	}
+});
+
+System.config({
   "map": {
     "aurelia-bootstrapper": "github:aurelia/bootstrapper@0.9.3",
     "aurelia-dependency-injection": "github:aurelia/dependency-injection@0.4.2",
@@ -17,6 +27,7 @@ System.config({
     "bootswatch": "github:thomaspark/bootswatch@3.3.2",
     "css": "github:systemjs/plugin-css@0.1.5",
     "fitsjs": "github:jonyardley/fitsjs@0.6.3",
+    "imageBuffer": "github:mattdesl/imagebuffer@3.0.1",
     "github:aurelia/binding@0.3.3": {
       "aurelia-dependency-injection": "github:aurelia/dependency-injection@0.4.2",
       "aurelia-metadata": "github:aurelia/metadata@0.3.1",

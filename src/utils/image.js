@@ -1,4 +1,5 @@
-import {_astro} from 'fitsjs'; //available globally with astro.FITS
+import astro from 'fitsjs'; //available globally with astro.FITS
+import {RenderImage} from './renderImage';
 
 export class Image {
 
@@ -6,6 +7,7 @@ export class Image {
 		this.id = id;
 		this.opts = opts;
 		this.loaded = false;
+		this.img = {};
 
 		this.loadImage(opts.file);
 	}
@@ -33,6 +35,7 @@ export class Image {
 	getImageData (imageData) {
 		this.imageData = imageData;
 		this.isLoaded = true;
+		new RenderImage(this);
 	}
 
 	loadError () {
