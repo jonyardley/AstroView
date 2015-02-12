@@ -15,7 +15,5 @@ export class Images {
 			newImage = new Image(id, opts);
 
 		this.collection.push(newImage);
-
-		//TODO: Load new image into application!
 	}
 }

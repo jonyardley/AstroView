@@ -1,25 +1,28 @@
-System.register([], function (_export) {
+System.register(["../../utils/state"], function (_export) {
   "use strict";
 
-  var _prototypeProperties, _classCallCheck, LoadFile;
+  var State, _prototypeProperties, _classCallCheck, LoadFile;
   return {
-    setters: [],
+    setters: [function (_utilsState) {
+      State = _utilsState.State;
+    }],
     execute: function () {
       _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
 
       _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
       LoadFile = _export("LoadFile", (function () {
-        function LoadFile(element) {
+        function LoadFile(element, state) {
           _classCallCheck(this, LoadFile);
 
+          this.state = state;
           this.el = element;
         }
 
         _prototypeProperties(LoadFile, {
           inject: {
             value: function inject() {
-              return [Element];
+              return [Element, State];
             },
             writable: true,
             configurable: true
@@ -29,7 +32,8 @@ System.register([], function (_export) {
             value: function fileSelected() {
               var $input = $(this.el).find("input"),
                   file = $input[0].files[0];
-              console.log(file);
+
+              this.state.images.newImage({ file: file });
             },
             writable: true,
             configurable: true
@@ -41,4 +45,4 @@ System.register([], function (_export) {
     }
   };
 });
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImNvbXBvbmVudHMvbG9hZC1maWxlL2xvYWQtZmlsZS5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7NkNBQWEsUUFBUTs7Ozs7Ozs7QUFBUixjQUFRO0FBSVQsaUJBSkMsUUFBUSxDQUlSLE9BQU87Z0NBSlAsUUFBUTs7QUFLbkIsY0FBSSxDQUFDLEVBQUUsR0FBRyxPQUFPLENBQUM7U0FDbEI7OzZCQU5XLFFBQVE7QUFFYixnQkFBTTttQkFBQSxrQkFBRztBQUFFLHFCQUFPLENBQUMsT0FBTyxDQUFDLENBQUM7YUFBRTs7Ozs7QUFNckMsc0JBQVk7bUJBQUEsd0JBQUU7QUFDYixrQkFBSSxNQUFNLEdBQUcsQ0FBQyxDQUFDLElBQUksQ0FBQyxFQUFFLENBQUMsQ0FBQyxJQUFJLENBQUMsT0FBTyxDQUFDO2tCQUNwQyxJQUFJLEdBQUcsTUFBTSxDQUFDLENBQUMsQ0FBQyxDQUFDLEtBQUssQ0FBQyxDQUFDLENBQUMsQ0FBQztBQUMzQixxQkFBTyxDQUFDLEdBQUcsQ0FBQyxJQUFJLENBQUMsQ0FBQzthQUNsQjs7Ozs7O2VBWlcsUUFBUSIsImZpbGUiOiJjb21wb25lbnRzL2xvYWQtZmlsZS9sb2FkLWZpbGUuanMiLCJzb3VyY2VSb290IjoiL3NyYy8ifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImNvbXBvbmVudHMvbG9hZC1maWxlL2xvYWQtZmlsZS5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7TUFBUSxLQUFLLHlDQUVBLFFBQVE7OztBQUZiLFdBQUssZUFBTCxLQUFLOzs7Ozs7O0FBRUEsY0FBUTtBQUlULGlCQUpDLFFBQVEsQ0FJUixPQUFPLEVBQUUsS0FBSztnQ0FKZCxRQUFROztBQUtuQixjQUFJLENBQUMsS0FBSyxHQUFHLEtBQUssQ0FBQztBQUNuQixjQUFJLENBQUMsRUFBRSxHQUFHLE9BQU8sQ0FBQztTQUNsQjs7NkJBUFcsUUFBUTtBQUViLGdCQUFNO21CQUFBLGtCQUFHO0FBQUUscUJBQU8sQ0FBQyxPQUFPLEVBQUUsS0FBSyxDQUFDLENBQUM7YUFBRTs7Ozs7QUFPNUMsc0JBQVk7bUJBQUEsd0JBQUU7QUFFYixrQkFBSSxNQUFNLEdBQUcsQ0FBQyxDQUFDLElBQUksQ0FBQyxFQUFFLENBQUMsQ0FBQyxJQUFJLENBQUMsT0FBTyxDQUFDO2tCQUNwQyxJQUFJLEdBQUcsTUFBTSxDQUFDLENBQUMsQ0FBQyxDQUFDLEtBQUssQ0FBQyxDQUFDLENBQUMsQ0FBQzs7QUFFM0Isa0JBQUksQ0FBQyxLQUFLLENBQUMsTUFBTSxDQUFDLFFBQVEsQ0FBQyxFQUFDLElBQUksRUFBSixJQUFJLEVBQUMsQ0FBQyxDQUFDO2FBQ25DOzs7Ozs7ZUFmVyxRQUFRIiwiZmlsZSI6ImNvbXBvbmVudHMvbG9hZC1maWxlL2xvYWQtZmlsZS5qcyIsInNvdXJjZVJvb3QiOiIvc3JjLyJ9
