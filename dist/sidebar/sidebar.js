@@ -1,30 +1,27 @@
-System.register([], function (_export) {
+System.register(["../utils/state"], function (_export) {
   "use strict";
 
-  var _prototypeProperties, _classCallCheck, Sidebar;
+  var State, _prototypeProperties, _classCallCheck, Sidebar;
   return {
-    setters: [],
+    setters: [function (_utilsState) {
+      State = _utilsState.State;
+    }],
     execute: function () {
       _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
 
       _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
       Sidebar = _export("Sidebar", (function () {
-        function Sidebar() {
+        function Sidebar(state) {
           _classCallCheck(this, Sidebar);
+
+          this.state = state;
         }
 
-        _prototypeProperties(Sidebar, null, {
-          activate: {
-            value: function activate(state) {
-              this.state = state;
-            },
-            writable: true,
-            configurable: true
-          },
-          show: {
-            value: function show() {
-              return this.state = "composite";
+        _prototypeProperties(Sidebar, {
+          inject: {
+            value: function inject() {
+              return [State];
             },
             writable: true,
             configurable: true
@@ -36,4 +33,4 @@ System.register([], function (_export) {
     }
   };
 });
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInNpZGViYXIvc2lkZWJhci5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7NkNBQ2EsT0FBTzs7Ozs7Ozs7QUFBUCxhQUFPO0FBRVIsaUJBRkMsT0FBTztnQ0FBUCxPQUFPO1NBR2xCOzs2QkFIVyxPQUFPO0FBS25CLGtCQUFRO21CQUFBLGtCQUFDLEtBQUssRUFBQztBQUNkLGtCQUFJLENBQUMsS0FBSyxHQUFHLEtBQUssQ0FBQzthQUNuQjs7OztBQUVELGNBQUk7bUJBQUEsZ0JBQUU7QUFDTCxxQkFBTyxJQUFJLENBQUMsS0FBSyxHQUFHLFdBQVcsQ0FBQTthQUMvQjs7Ozs7O2VBWFcsT0FBTyIsImZpbGUiOiJzaWRlYmFyL3NpZGViYXIuanMiLCJzb3VyY2VSb290IjoiL3NyYy8ifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInNpZGViYXIvc2lkZWJhci5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7TUFBUSxLQUFLLHlDQUVBLE9BQU87OztBQUZaLFdBQUssZUFBTCxLQUFLOzs7Ozs7O0FBRUEsYUFBTztBQUlSLGlCQUpDLE9BQU8sQ0FJUCxLQUFLO2dDQUpMLE9BQU87O0FBS2xCLGNBQUksQ0FBQyxLQUFLLEdBQUcsS0FBSyxDQUFBO1NBQ2xCOzs2QkFOVyxPQUFPO0FBRVosZ0JBQU07bUJBQUEsa0JBQUU7QUFBRSxxQkFBTyxDQUFDLEtBQUssQ0FBQyxDQUFDO2FBQUU7Ozs7OztlQUZ0QixPQUFPIiwiZmlsZSI6InNpZGViYXIvc2lkZWJhci5qcyIsInNvdXJjZVJvb3QiOiIvc3JjLyJ9

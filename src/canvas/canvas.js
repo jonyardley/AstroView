@@ -6,7 +6,6 @@ export class Canvas {
 
 	constructor(state){
 		this.state = state;
-		console.log('canvas loaded!');
 	}
 
 }

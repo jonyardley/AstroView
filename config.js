@@ -16,6 +16,7 @@ System.config({
     "bootstrap": "github:twbs/bootstrap@3.3.2",
     "bootswatch": "github:thomaspark/bootswatch@3.3.2",
     "css": "github:systemjs/plugin-css@0.1.5",
+    "fitsjs": "github:jonyardley/fitsjs@0.6.3",
     "github:aurelia/binding@0.3.3": {
       "aurelia-dependency-injection": "github:aurelia/dependency-injection@0.4.2",
       "aurelia-metadata": "github:aurelia/metadata@0.3.1",

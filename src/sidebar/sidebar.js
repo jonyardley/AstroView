@@ -1,15 +1,11 @@
+import {State} from '../utils/state';
 
 export class Sidebar {
 
-	constructor() {
-	}
+	static inject(){ return [State]; }
 
-	activate(state){
-		this.state = state;
-	}
-
-	show(){
-		return this.state = 'composite'
+	constructor(state){
+		this.state = state
 	}
 
 }

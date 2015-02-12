@@ -9,18 +9,21 @@ export class State {
 		this.mode = 'view';
 		this.modes = {
 			view: true,
-			composite: false
+			composite: false,
+			analyze: false
 		};
-		this.selectedImage = null;
 		this.images = images;
+		this.selectedImage = null;
 	}
 
+
+	/**
+	 * Change the current application mode
+	 * and update the
+	 * @param mode String - One of this.modes
+	 */
 	changeMode (mode) {
-
-		Object.keys(this.modes).forEach( key =>
-			this.modes[key] = (mode === key)
-		);
-
+		Object.keys(this.modes).forEach( key => this.modes[key] = (mode === key) );
 		this.mode = mode;
 	}
 

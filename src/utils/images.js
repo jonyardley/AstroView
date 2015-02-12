@@ -6,10 +6,16 @@ export class Images {
 		this.collection = [];
 	}
 
+	/**
+	 * Add a new image to the image collection
+	 * @param opts Object - Options which point to image file (local or remote)
+	 */
 	newImage (opts) {
-		var id = this.collection.length + 1,
+		let id = this.collection.length + 1,
 			newImage = new Image(id, opts);
+
 		this.collection.push(newImage);
-		console.log(this);
+
+		//TODO: Load new image into application!
 	}
 }

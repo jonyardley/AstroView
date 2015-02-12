@@ -1,4 +1,6 @@
 export class NoImage {
-	constructor(){
+
+	constructor() {
 	}
+
 }

@@ -5,8 +5,7 @@ export class Navbar {
 	static inject(){ return [State]; }
 
 	constructor(state){
-		this.state = state
-		console.log('navbar loaded!');
+		this.state = state;
 	}
 
 }

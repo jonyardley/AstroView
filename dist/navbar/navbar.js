@@ -16,7 +16,6 @@ System.register(["../utils/state"], function (_export) {
           _classCallCheck(this, Navbar);
 
           this.state = state;
-          console.log("navbar loaded!");
         }
 
         _prototypeProperties(Navbar, {
@@ -34,4 +33,4 @@ System.register(["../utils/state"], function (_export) {
     }
   };
 });
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIm5hdmJhci9uYXZiYXIuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7O01BQVEsS0FBSyx5Q0FFQSxNQUFNOzs7QUFGWCxXQUFLLGVBQUwsS0FBSzs7Ozs7OztBQUVBLFlBQU07QUFJUCxpQkFKQyxNQUFNLENBSU4sS0FBSztnQ0FKTCxNQUFNOztBQUtqQixjQUFJLENBQUMsS0FBSyxHQUFHLEtBQUssQ0FBQTtBQUNsQixpQkFBTyxDQUFDLEdBQUcsQ0FBQyxnQkFBZ0IsQ0FBQyxDQUFDO1NBQzlCOzs2QkFQVyxNQUFNO0FBRVgsZ0JBQU07bUJBQUEsa0JBQUU7QUFBRSxxQkFBTyxDQUFDLEtBQUssQ0FBQyxDQUFDO2FBQUU7Ozs7OztlQUZ0QixNQUFNIiwiZmlsZSI6Im5hdmJhci9uYXZiYXIuanMiLCJzb3VyY2VSb290IjoiL3NyYy8ifQ==
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIm5hdmJhci9uYXZiYXIuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7O01BQVEsS0FBSyx5Q0FFQSxNQUFNOzs7QUFGWCxXQUFLLGVBQUwsS0FBSzs7Ozs7OztBQUVBLFlBQU07QUFJUCxpQkFKQyxNQUFNLENBSU4sS0FBSztnQ0FKTCxNQUFNOztBQUtqQixjQUFJLENBQUMsS0FBSyxHQUFHLEtBQUssQ0FBQztTQUNuQjs7NkJBTlcsTUFBTTtBQUVYLGdCQUFNO21CQUFBLGtCQUFFO0FBQUUscUJBQU8sQ0FBQyxLQUFLLENBQUMsQ0FBQzthQUFFOzs7Ozs7ZUFGdEIsTUFBTSIsImZpbGUiOiJuYXZiYXIvbmF2YmFyLmpzIiwic291cmNlUm9vdCI6Ii9zcmMvIn0=

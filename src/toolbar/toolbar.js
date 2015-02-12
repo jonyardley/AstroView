@@ -6,7 +6,6 @@ export class Toolbar {
 
 	constructor(state){
 		this.state = state;
-		console.log('toolbar loaded!');
 	}
 
 }
