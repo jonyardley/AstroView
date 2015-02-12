@@ -1,0 +1,10 @@
+#toolbar {
+
+	background: $toolbar-bg;
+	margin-top: -21px; /** Fix positioning **/
+
+	.av-mode-selector {
+		width: auto;
+	}
+
+}

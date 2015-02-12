@@ -1,16 +1,12 @@
-/**
- * Main Canvas Class
- */
+import {State} from '../utils/state';
+
 export class Canvas {
 
-	constructor() {
-		this.mode = '';
+	static inject(){ return [State]; }
 
-	}
-
-	activate(params, queryString, routeConfig){
-
-		console.log('Canvas Loaded: ');
+	constructor(state){
+		this.state = state;
+		console.log('canvas loaded!');
 	}
 
 }

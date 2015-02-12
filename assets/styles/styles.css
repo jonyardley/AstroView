@@ -1,3 +1,82 @@
+/**
+ *	Module Imports
+ */
+/**
+ *	Colours
+ */
+/**
+ *	Dimensions
+ */
+#navbar .navbar-logo {
+  padding: 5px 10px 5px 0; }
+#navbar .navbar-brand {
+  line-height: 30px; }
+#navbar .navbar-nav.navbar-right {
+  line-height: 50px;
+  padding-right: 10px; }
+
+#toolbar {
+  background: #000;
+  margin-top: -21px;
+  /** Fix positioning **/ }
+  #toolbar .av-mode-selector {
+    width: auto; }
+
+#sidebar {
+  background: #4e5d6c;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 60px; }
+
+#canvas {
+  position: absolute;
+  top: 0;
+  left: 60px;
+  bottom: 0;
+  right: 0; }
+  #canvas .no-image {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); }
+    #canvas .no-image .logo {
+      opacity: 0.05;
+      width: 180px; }
+    #canvas .no-image .file-upload {
+      position: relative;
+      overflow: hidden;
+      cursor: pointer !important; }
+    #canvas .no-image .file-upload input {
+      cursor: pointer !important;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      opacity: 0.001; }
+
+/**
+ *	App Styles
+ */
+html, body {
+  height: 100% !important;
+  min-height: 100% !important; }
+
+#main {
+  position: absolute;
+  top: 90px;
+  left: 0;
+  right: 0;
+  bottom: 0; }
+
+.jumbotron {
+  padding: 30px; }
+
+/**
+ *	Components
+ */
 .init {
   position: absolute;
   top: 0;
@@ -33,21 +112,5 @@
     transform: scale(1);
     -webkit-transform: scale(1);
     opacity: 0; } }
-.navbar-logo {
-  padding: 5px 10px 5px 0; }
-
-.navbar-brand {
-  line-height: 30px; }
-
-.navbar-nav.navbar-right {
-  line-height: 50px;
-  padding-right: 20px; }
-
-.av-mode-selector {
-  width: auto; }
-
-.av-toolbar {
-  background: #000;
-  margin-top: -21px; }
 
 /*# sourceMappingURL=styles.css.map */

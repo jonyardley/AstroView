@@ -1,3 +1,42 @@
+/**
+ *	Module Imports
+ */
+
+@import "_variables";
+@import "../../src/navbar/_navbar";
+@import "../../src/toolbar/_toolbar";
+@import "../../src/sidebar/_sidebar";
+@import "../../src/canvas/_canvas";
+
+
+
+/**
+ *	App Styles
+ */
+
+html, body {
+	height: 100%!important;
+	min-height: 100%!important;
+}
+
+#main {
+	position: absolute;
+	top: $header-height;
+	left: 0;
+	right: 0;
+	bottom: 0;
+}
+
+.jumbotron {
+	padding: 30px;
+}
+
+
+
+/**
+ *	Components
+ */
+
 .init {
 	position: absolute;
 	top: 0;
@@ -41,26 +80,4 @@
 		  -webkit-transform: scale(1.0);
 		  opacity: 0;
 	  }
-}
-
-.navbar-logo {
-	padding: 5px 10px 5px 0;
-}
-
-.navbar-brand {
-	line-height: 30px;
-}
-
-.navbar-nav.navbar-right {
-	line-height: 50px;
-	padding-right: 20px;
-}
-
-.av-mode-selector {
-	width: auto;
-}
-
-.av-toolbar {
-	background: #000;
-	margin-top: -21px;
 }

@@ -1,0 +1,9 @@
+#canvas {
+	position: absolute;
+	top: 0;
+	left: $sidebar-width-closed;
+	bottom: 0;
+	right: 0;
+
+	@import "no-image/_no-image";
+}
