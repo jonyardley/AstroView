@@ -1,7 +1,7 @@
 <template>
 	<div id="canvas">
 
-		<compose view-model="./no-image/no-image"></compose>
+		<compose if.bind="state.images.collection.length < 1" view-model="./no-image/no-image"></compose>
 
 	</div>
 </template>
