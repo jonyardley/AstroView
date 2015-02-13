@@ -16,6 +16,7 @@ System.config({
     "bootstrap": "github:twbs/bootstrap@3.3.2",
     "bootswatch": "github:thomaspark/bootswatch@3.3.2",
     "css": "github:systemjs/plugin-css@0.1.5",
+    "fabric": "github:kangax/fabric.js@1.4.13",
     "fitsjs": "github:jonyardley/fitsjs@0.6.3",
     "imageBuffer": "github:mattdesl/imagebuffer@3.0.1",
     "operative": "github:padolsey/operative@0.3.2",
