@@ -20,17 +20,15 @@ export class RenderImage {
 
 		this.renderPixels();
 
-		//render image on canvas
-		this.ctx.putImageData(this.imageData, 0, 0);
-		var img = new Image();
-		img.src = this.canvas.toDataURL();
-		image.img.raw = img;
+		//Generate Image from buffer!
+		image.img.raw = this.buffer.createImage();
 		
 	}
 
 	renderPixels(){
 
 		log.info('Start rendering pixels');
+		log.info('TODO: MAKE THIS ASYNC / NON BLOCKING');
 
 		var area = this.width * this.height;
 		var min = 0,
