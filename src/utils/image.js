@@ -41,7 +41,19 @@ export class Image {
 		log.info('Image load complete!');
 		this.imageData = imageData;
 		this.isLoaded = true;
-		new RenderImage(this);
+		this.renderImage();
+	}
+
+	renderImage(){
+
+		var thumbWidth = 100,
+			thumbHeight = (this.metaData.width/this.metaData.height) * thumbWidth;
+
+		var thumb = new RenderImage(this, thumbWidth, thumbHeight);
+		this.img.thumb = thumb.result;
+
+		var raw = new RenderImage(this);
+		this.img.raw = raw.result;
 	}
 
 	loadError () {
