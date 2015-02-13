@@ -1,3 +1,6 @@
+import {LogManager} from 'aurelia-framework';
+let log = LogManager.getLogger('av::image');
+
 import astro from 'fitsjs'; //available globally with astro.FITS
 import {RenderImage} from './renderImage';
 
@@ -13,11 +16,13 @@ export class Image {
 	}
 
 	loadImage(file){
+		log.info('Attempting to load file');
 		var fits = new astro.FITS(file, this.onLoad.bind(this));
-
 	}
 
 	onLoad(fits, opts){
+
+		log.info('Attempting to get image data');
 
 		if (fits.hdus.length > 0) {
 
@@ -33,12 +38,14 @@ export class Image {
 	}
 
 	getImageData (imageData) {
+		log.info('Image load complete!');
 		this.imageData = imageData;
 		this.isLoaded = true;
 		new RenderImage(this);
 	}
 
 	loadError () {
+		log.error('Couldn\'t load image', this);
 		window.alert('For some reason that file couldn\'t be loaded');
 	}
 }

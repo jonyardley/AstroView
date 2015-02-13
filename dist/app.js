@@ -1,27 +1,49 @@
-System.register(["./utils/state"], function (_export) {
+System.register(["aurelia-framework", "./utils/images"], function (_export) {
   "use strict";
 
-  var State, _prototypeProperties, _classCallCheck, App;
+  var LogManager, Images, _prototypeProperties, _classCallCheck, log, App;
   return {
-    setters: [function (_utilsState) {
-      State = _utilsState.State;
+    setters: [function (_aureliaFramework) {
+      LogManager = _aureliaFramework.LogManager;
+    }, function (_utilsImages) {
+      Images = _utilsImages.Images;
     }],
     execute: function () {
       _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
 
       _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
+      log = LogManager.getLogger("av::state");
       App = _export("App", (function () {
-        function App(state) {
+        function App(images) {
           _classCallCheck(this, App);
 
-          this.state = state;
+          this.mode = "view";
+          this.modes = {
+            view: true,
+            composite: false,
+            analyze: false
+          };
+          this.images = images;
         }
 
         _prototypeProperties(App, {
           inject: {
             value: function inject() {
-              return [State];
+              return [Images];
+            },
+            writable: true,
+            configurable: true
+          }
+        }, {
+          changeMode: {
+            value: function changeMode(mode) {
+              var _this = this;
+              Object.keys(this.modes).forEach(function (key) {
+                return _this.modes[key] = mode === key;
+              });
+              this.mode = mode;
+              log.info("state changed:", this.mode);
             },
             writable: true,
             configurable: true
@@ -33,4 +55,4 @@ System.register(["./utils/state"], function (_export) {
     }
   };
 });
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImFwcC5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7TUFBUSxLQUFLLHlDQUtBLEdBQUc7OztBQUxSLFdBQUssZUFBTCxLQUFLOzs7Ozs7O0FBS0EsU0FBRztBQUlILGlCQUpBLEdBQUcsQ0FJRixLQUFLO2dDQUpOLEdBQUc7O0FBS2QsY0FBSSxDQUFDLEtBQUssR0FBRyxLQUFLLENBQUM7U0FDbkI7OzZCQU5XLEdBQUc7QUFFUixnQkFBTTttQkFBQSxrQkFBRTtBQUFFLHFCQUFPLENBQUMsS0FBSyxDQUFDLENBQUM7YUFBRTs7Ozs7O2VBRnRCLEdBQUciLCJmaWxlIjoiYXBwLmpzIiwic291cmNlUm9vdCI6Ii9zcmMvIn0=
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImFwcC5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7TUFBUSxVQUFVLEVBR1YsTUFBTSx5Q0FGVixHQUFHLEVBSU0sR0FBRzs7O0FBTFIsZ0JBQVUscUJBQVYsVUFBVTs7QUFHVixZQUFNLGdCQUFOLE1BQU07Ozs7Ozs7QUFGVixTQUFHLEdBQUcsVUFBVSxDQUFDLFNBQVMsQ0FBQyxXQUFXLENBQUM7QUFJOUIsU0FBRztBQUlILGlCQUpBLEdBQUcsQ0FJRixNQUFNO2dDQUpQLEdBQUc7O0FBS2QsY0FBSSxDQUFDLElBQUksR0FBRyxNQUFNLENBQUM7QUFDbkIsY0FBSSxDQUFDLEtBQUssR0FBRztBQUNaLGdCQUFJLEVBQUUsSUFBSTtBQUNWLHFCQUFTLEVBQUUsS0FBSztBQUNoQixtQkFBTyxFQUFFLEtBQUs7V0FDZCxDQUFDO0FBQ0YsY0FBSSxDQUFDLE1BQU0sR0FBRyxNQUFNLENBQUM7U0FDckI7OzZCQVpXLEdBQUc7QUFFUixnQkFBTTttQkFBQSxrQkFBRTtBQUFFLHFCQUFPLENBQUMsTUFBTSxDQUFDLENBQUM7YUFBRTs7Ozs7QUFrQm5DLG9CQUFVO21CQUFDLG9CQUFDLElBQUksRUFBRTs7QUFDakIsb0JBQU0sQ0FBQyxJQUFJLENBQUMsSUFBSSxDQUFDLEtBQUssQ0FBQyxDQUFDLE9BQU8sQ0FBRSxVQUFBLEdBQUc7dUJBQUksTUFBSyxLQUFLLENBQUMsR0FBRyxDQUFDLEdBQUksSUFBSSxLQUFLLEdBQUcsQUFBQztlQUFBLENBQUUsQ0FBQztBQUMzRSxrQkFBSSxDQUFDLElBQUksR0FBRyxJQUFJLENBQUM7QUFDakIsaUJBQUcsQ0FBQyxJQUFJLENBQUMsZ0JBQWdCLEVBQUUsSUFBSSxDQUFDLElBQUksQ0FBQyxDQUFDO2FBQ3RDOzs7Ozs7ZUF4QlcsR0FBRyIsImZpbGUiOiJhcHAuanMiLCJzb3VyY2VSb290IjoiL3NyYy8ifQ==

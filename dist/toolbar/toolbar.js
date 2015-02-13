@@ -1,10 +1,10 @@
-System.register(["../utils/state"], function (_export) {
+System.register(["../app"], function (_export) {
   "use strict";
 
-  var State, _prototypeProperties, _classCallCheck, Toolbar;
+  var App, _prototypeProperties, _classCallCheck, Toolbar;
   return {
-    setters: [function (_utilsState) {
-      State = _utilsState.State;
+    setters: [function (_app) {
+      App = _app.App;
     }],
     execute: function () {
       _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
@@ -12,16 +12,16 @@ System.register(["../utils/state"], function (_export) {
       _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
       Toolbar = _export("Toolbar", (function () {
-        function Toolbar(state) {
+        function Toolbar(app) {
           _classCallCheck(this, Toolbar);
 
-          this.state = state;
+          this.app = app;
         }
 
         _prototypeProperties(Toolbar, {
           inject: {
             value: function inject() {
-              return [State];
+              return [App];
             },
             writable: true,
             configurable: true
@@ -33,4 +33,4 @@ System.register(["../utils/state"], function (_export) {
     }
   };
 });
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInRvb2xiYXIvdG9vbGJhci5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7TUFBUSxLQUFLLHlDQUVBLE9BQU87OztBQUZaLFdBQUssZUFBTCxLQUFLOzs7Ozs7O0FBRUEsYUFBTztBQUlSLGlCQUpDLE9BQU8sQ0FJUCxLQUFLO2dDQUpMLE9BQU87O0FBS2xCLGNBQUksQ0FBQyxLQUFLLEdBQUcsS0FBSyxDQUFDO1NBQ25COzs2QkFOVyxPQUFPO0FBRVosZ0JBQU07bUJBQUEsa0JBQUU7QUFBRSxxQkFBTyxDQUFDLEtBQUssQ0FBQyxDQUFDO2FBQUU7Ozs7OztlQUZ0QixPQUFPIiwiZmlsZSI6InRvb2xiYXIvdG9vbGJhci5qcyIsInNvdXJjZVJvb3QiOiIvc3JjLyJ9
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInRvb2xiYXIvdG9vbGJhci5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7TUFBUSxHQUFHLHlDQUVFLE9BQU87OztBQUZaLFNBQUcsUUFBSCxHQUFHOzs7Ozs7O0FBRUUsYUFBTztBQUlSLGlCQUpDLE9BQU8sQ0FJUCxHQUFHO2dDQUpILE9BQU87O0FBS2xCLGNBQUksQ0FBQyxHQUFHLEdBQUcsR0FBRyxDQUFDO1NBQ2Y7OzZCQU5XLE9BQU87QUFFWixnQkFBTTttQkFBQSxrQkFBRTtBQUFFLHFCQUFPLENBQUMsR0FBRyxDQUFDLENBQUM7YUFBRTs7Ozs7O2VBRnBCLE9BQU8iLCJmaWxlIjoidG9vbGJhci90b29sYmFyLmpzIiwic291cmNlUm9vdCI6Ii9zcmMvIn0=

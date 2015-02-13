@@ -7,16 +7,6 @@ System.config({
 });
 
 System.config({
-	"shim": {
-		"imageBuffer": {
-			"format": "cjs",
-			"exports": "ImageBuffer",
-			"main": "index.js"
-		}
-	}
-});
-
-System.config({
   "map": {
     "aurelia-bootstrapper": "github:aurelia/bootstrapper@0.9.3",
     "aurelia-dependency-injection": "github:aurelia/dependency-injection@0.4.2",

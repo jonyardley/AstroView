@@ -1,10 +1,10 @@
-System.register(["../utils/state"], function (_export) {
+System.register(["../app"], function (_export) {
   "use strict";
 
-  var State, _prototypeProperties, _classCallCheck, Navbar;
+  var App, _prototypeProperties, _classCallCheck, Navbar;
   return {
-    setters: [function (_utilsState) {
-      State = _utilsState.State;
+    setters: [function (_app) {
+      App = _app.App;
     }],
     execute: function () {
       _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
@@ -12,16 +12,16 @@ System.register(["../utils/state"], function (_export) {
       _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
       Navbar = _export("Navbar", (function () {
-        function Navbar(state) {
+        function Navbar(app) {
           _classCallCheck(this, Navbar);
 
-          this.state = state;
+          this.app = app;
         }
 
         _prototypeProperties(Navbar, {
           inject: {
             value: function inject() {
-              return [State];
+              return [App];
             },
             writable: true,
             configurable: true
@@ -33,4 +33,4 @@ System.register(["../utils/state"], function (_export) {
     }
   };
 });
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIm5hdmJhci9uYXZiYXIuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7O01BQVEsS0FBSyx5Q0FFQSxNQUFNOzs7QUFGWCxXQUFLLGVBQUwsS0FBSzs7Ozs7OztBQUVBLFlBQU07QUFJUCxpQkFKQyxNQUFNLENBSU4sS0FBSztnQ0FKTCxNQUFNOztBQUtqQixjQUFJLENBQUMsS0FBSyxHQUFHLEtBQUssQ0FBQztTQUNuQjs7NkJBTlcsTUFBTTtBQUVYLGdCQUFNO21CQUFBLGtCQUFFO0FBQUUscUJBQU8sQ0FBQyxLQUFLLENBQUMsQ0FBQzthQUFFOzs7Ozs7ZUFGdEIsTUFBTSIsImZpbGUiOiJuYXZiYXIvbmF2YmFyLmpzIiwic291cmNlUm9vdCI6Ii9zcmMvIn0=
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbIm5hdmJhci9uYXZiYXIuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6Ijs7O01BQVEsR0FBRyx5Q0FFRSxNQUFNOzs7QUFGWCxTQUFHLFFBQUgsR0FBRzs7Ozs7OztBQUVFLFlBQU07QUFJUCxpQkFKQyxNQUFNLENBSU4sR0FBRztnQ0FKSCxNQUFNOztBQUtqQixjQUFJLENBQUMsR0FBRyxHQUFHLEdBQUcsQ0FBQztTQUNmOzs2QkFOVyxNQUFNO0FBRVgsZ0JBQU07bUJBQUEsa0JBQUU7QUFBRSxxQkFBTyxDQUFDLEdBQUcsQ0FBQyxDQUFDO2FBQUU7Ozs7OztlQUZwQixNQUFNIiwiZmlsZSI6Im5hdmJhci9uYXZiYXIuanMiLCJzb3VyY2VSb290IjoiL3NyYy8ifQ==

@@ -1,3 +1,6 @@
+import {LogManager} from 'aurelia-framework';
+let log = LogManager.getLogger('av::images');
+
 import {Image} from './image';
 
 export class Images {
@@ -17,6 +20,6 @@ export class Images {
 
 		this.collection.push(newImage);
 		this.active = newImage;
-		console.log(this);
+		log.info('created new image', this);
 	}
 }

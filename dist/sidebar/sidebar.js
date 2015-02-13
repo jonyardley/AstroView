@@ -1,10 +1,10 @@
-System.register(["../utils/state"], function (_export) {
+System.register(["../app"], function (_export) {
   "use strict";
 
-  var State, _prototypeProperties, _classCallCheck, Sidebar;
+  var App, _prototypeProperties, _classCallCheck, Sidebar;
   return {
-    setters: [function (_utilsState) {
-      State = _utilsState.State;
+    setters: [function (_app) {
+      App = _app.App;
     }],
     execute: function () {
       _prototypeProperties = function (child, staticProps, instanceProps) { if (staticProps) Object.defineProperties(child, staticProps); if (instanceProps) Object.defineProperties(child.prototype, instanceProps); };
@@ -12,16 +12,16 @@ System.register(["../utils/state"], function (_export) {
       _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
       Sidebar = _export("Sidebar", (function () {
-        function Sidebar(state) {
+        function Sidebar(app) {
           _classCallCheck(this, Sidebar);
 
-          this.state = state;
+          this.images = app.images;
         }
 
         _prototypeProperties(Sidebar, {
           inject: {
             value: function inject() {
-              return [State];
+              return [App];
             },
             writable: true,
             configurable: true
@@ -33,4 +33,4 @@ System.register(["../utils/state"], function (_export) {
     }
   };
 });
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInNpZGViYXIvc2lkZWJhci5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7TUFBUSxLQUFLLHlDQUVBLE9BQU87OztBQUZaLFdBQUssZUFBTCxLQUFLOzs7Ozs7O0FBRUEsYUFBTztBQUlSLGlCQUpDLE9BQU8sQ0FJUCxLQUFLO2dDQUpMLE9BQU87O0FBS2xCLGNBQUksQ0FBQyxLQUFLLEdBQUcsS0FBSyxDQUFBO1NBQ2xCOzs2QkFOVyxPQUFPO0FBRVosZ0JBQU07bUJBQUEsa0JBQUU7QUFBRSxxQkFBTyxDQUFDLEtBQUssQ0FBQyxDQUFDO2FBQUU7Ozs7OztlQUZ0QixPQUFPIiwiZmlsZSI6InNpZGViYXIvc2lkZWJhci5qcyIsInNvdXJjZVJvb3QiOiIvc3JjLyJ9
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInNpZGViYXIvc2lkZWJhci5qcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiOzs7TUFBUSxHQUFHLHlDQUVFLE9BQU87OztBQUZaLFNBQUcsUUFBSCxHQUFHOzs7Ozs7O0FBRUUsYUFBTztBQUlSLGlCQUpDLE9BQU8sQ0FJUCxHQUFHO2dDQUpILE9BQU87O0FBS2xCLGNBQUksQ0FBQyxNQUFNLEdBQUcsR0FBRyxDQUFDLE1BQU0sQ0FBQztTQUN6Qjs7NkJBTlcsT0FBTztBQUVaLGdCQUFNO21CQUFBLGtCQUFFO0FBQUUscUJBQU8sQ0FBQyxHQUFHLENBQUMsQ0FBQzthQUFFOzs7Ozs7ZUFGcEIsT0FBTyIsImZpbGUiOiJzaWRlYmFyL3NpZGViYXIuanMiLCJzb3VyY2VSb290IjoiL3NyYy8ifQ==

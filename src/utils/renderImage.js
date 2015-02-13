@@ -1,3 +1,6 @@
+import {LogManager} from 'aurelia-framework';
+let log = LogManager.getLogger('av::renderImage');
+
 import ImageBuffer from 'imageBuffer'; //Shimmed import
 
 export class RenderImage {
@@ -13,6 +16,8 @@ export class RenderImage {
 		this.imageData = this.ctx.createImageData(this.width, this.height);
 		this.buffer = new ImageBuffer(this.imageData);
 
+		log.info('set data needed for image render');
+
 		this.renderPixels();
 
 		//render image on canvas
@@ -24,6 +29,9 @@ export class RenderImage {
 	}
 
 	renderPixels(){
+
+		log.info('Start rendering pixels');
+
 		var area = this.width * this.height;
 		var min = 0,
 			max = 1000;
@@ -44,6 +52,8 @@ export class RenderImage {
 			// set the pixel, using original alpha
 			this.buffer.setPixel(i, r, g, b, a);
 		}
+
+		log.info('Finished rendering pixels');
 	}
 
 

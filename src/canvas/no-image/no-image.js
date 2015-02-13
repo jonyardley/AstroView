@@ -1,6 +1,1 @@
-export class NoImage {
-
-	constructor() {
-	}
-
-}
+export class NoImage {}

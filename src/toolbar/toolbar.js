@@ -1,11 +1,11 @@
-import {State} from '../utils/state';
+import {App} from '../app';
 
 export class Toolbar {
 
-	static inject(){ return [State]; }
+	static inject(){ return [App]; }
 
-	constructor(state){
-		this.state = state;
+	constructor(app){
+		this.app = app;
 	}
 
 }

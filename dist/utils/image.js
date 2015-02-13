@@ -1,9 +1,11 @@
-System.register(["fitsjs", "./renderImage"], function (_export) {
+System.register(["aurelia-framework", "fitsjs", "./renderImage"], function (_export) {
   "use strict";
 
-  var astro, RenderImage, _prototypeProperties, _classCallCheck, Image;
+  var LogManager, astro, RenderImage, _prototypeProperties, _classCallCheck, log, Image;
   return {
-    setters: [function (_fitsjs) {
+    setters: [function (_aureliaFramework) {
+      LogManager = _aureliaFramework.LogManager;
+    }, function (_fitsjs) {
       astro = _fitsjs["default"];
     }, function (_renderImage) {
       RenderImage = _renderImage.RenderImage;
@@ -13,6 +15,7 @@ System.register(["fitsjs", "./renderImage"], function (_export) {
 
       _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
+      log = LogManager.getLogger("av::image");
       Image = _export("Image", (function () {
         function Image(id, opts) {
           _classCallCheck(this, Image);
@@ -28,6 +31,7 @@ System.register(["fitsjs", "./renderImage"], function (_export) {
         _prototypeProperties(Image, null, {
           loadImage: {
             value: function loadImage(file) {
+              log.info("Attempting to load file");
               var fits = new astro.FITS(file, this.onLoad.bind(this));
             },
             writable: true,
@@ -35,6 +39,8 @@ System.register(["fitsjs", "./renderImage"], function (_export) {
           },
           onLoad: {
             value: function onLoad(fits, opts) {
+              log.info("Attempting to get image data");
+
               if (fits.hdus.length > 0) {
                 this.header = fits.getHeader();
                 this.metaData = fits.getDataUnit();
@@ -49,6 +55,7 @@ System.register(["fitsjs", "./renderImage"], function (_export) {
           },
           getImageData: {
             value: function getImageData(imageData) {
+              log.info("Image load complete!");
               this.imageData = imageData;
               this.isLoaded = true;
               new RenderImage(this);
@@ -58,6 +65,7 @@ System.register(["fitsjs", "./renderImage"], function (_export) {
           },
           loadError: {
             value: function loadError() {
+              log.error("Couldn't load image", this);
               window.alert("For some reason that file couldn't be loaded");
             },
             writable: true,
@@ -70,4 +78,4 @@ System.register(["fitsjs", "./renderImage"], function (_export) {
     }
   };
 });
-//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInV0aWxzL2ltYWdlLmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7OztNQUFPLEtBQUssRUFDSixXQUFXLHlDQUVOLEtBQUs7OztBQUhYLFdBQUs7O0FBQ0osaUJBQVcsZ0JBQVgsV0FBVzs7Ozs7OztBQUVOLFdBQUs7QUFFTCxpQkFGQSxLQUFLLENBRUosRUFBRSxFQUFFLElBQUk7Z0NBRlQsS0FBSzs7QUFHaEIsY0FBSSxDQUFDLEVBQUUsR0FBRyxFQUFFLENBQUM7QUFDYixjQUFJLENBQUMsSUFBSSxHQUFHLElBQUksQ0FBQztBQUNqQixjQUFJLENBQUMsTUFBTSxHQUFHLEtBQUssQ0FBQztBQUNwQixjQUFJLENBQUMsR0FBRyxHQUFHLEVBQUUsQ0FBQzs7QUFFZCxjQUFJLENBQUMsU0FBUyxDQUFDLElBQUksQ0FBQyxJQUFJLENBQUMsQ0FBQztTQUMxQjs7NkJBVFcsS0FBSztBQVdqQixtQkFBUzttQkFBQSxtQkFBQyxJQUFJLEVBQUM7QUFDZCxrQkFBSSxJQUFJLEdBQUcsSUFBSSxLQUFLLENBQUMsSUFBSSxDQUFDLElBQUksRUFBRSxJQUFJLENBQUMsTUFBTSxDQUFDLElBQUksQ0FBQyxJQUFJLENBQUMsQ0FBQyxDQUFDO2FBRXhEOzs7O0FBRUQsZ0JBQU07bUJBQUEsZ0JBQUMsSUFBSSxFQUFFLElBQUksRUFBQztBQUVqQixrQkFBSSxJQUFJLENBQUMsSUFBSSxDQUFDLE1BQU0sR0FBRyxDQUFDLEVBQUU7QUFFekIsb0JBQUksQ0FBQyxNQUFNLEdBQUcsSUFBSSxDQUFDLFNBQVMsRUFBRSxDQUFDO0FBQy9CLG9CQUFJLENBQUMsUUFBUSxHQUFHLElBQUksQ0FBQyxXQUFXLEVBQUUsQ0FBQzs7QUFHbkMsb0JBQUksQ0FBQyxRQUFRLENBQUMsUUFBUSxDQUFDLENBQUMsRUFBRSxJQUFJLENBQUMsWUFBWSxDQUFDLElBQUksQ0FBQyxJQUFJLENBQUMsQ0FBQyxDQUFDO2VBRXhELE1BQU07QUFDTixvQkFBSSxDQUFDLFNBQVMsRUFBRSxDQUFDO2VBQ2pCO2FBQ0Q7Ozs7QUFFRCxzQkFBWTttQkFBQyxzQkFBQyxTQUFTLEVBQUU7QUFDeEIsa0JBQUksQ0FBQyxTQUFTLEdBQUcsU0FBUyxDQUFDO0FBQzNCLGtCQUFJLENBQUMsUUFBUSxHQUFHLElBQUksQ0FBQztBQUNyQixrQkFBSSxXQUFXLENBQUMsSUFBSSxDQUFDLENBQUM7YUFDdEI7Ozs7QUFFRCxtQkFBUzttQkFBQyxxQkFBRztBQUNaLG9CQUFNLENBQUMsS0FBSyxDQUFDLDhDQUErQyxDQUFDLENBQUM7YUFDOUQ7Ozs7OztlQXZDVyxLQUFLIiwiZmlsZSI6InV0aWxzL2ltYWdlLmpzIiwic291cmNlUm9vdCI6Ii9zcmMvIn0=
+//# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInV0aWxzL2ltYWdlLmpzIl0sIm5hbWVzIjpbXSwibWFwcGluZ3MiOiI7OztNQUFRLFVBQVUsRUFHWCxLQUFLLEVBQ0osV0FBVyx5Q0FIZixHQUFHLEVBS00sS0FBSzs7O0FBTlYsZ0JBQVUscUJBQVYsVUFBVTs7QUFHWCxXQUFLOztBQUNKLGlCQUFXLGdCQUFYLFdBQVc7Ozs7Ozs7QUFIZixTQUFHLEdBQUcsVUFBVSxDQUFDLFNBQVMsQ0FBQyxXQUFXLENBQUM7QUFLOUIsV0FBSztBQUVMLGlCQUZBLEtBQUssQ0FFSixFQUFFLEVBQUUsSUFBSTtnQ0FGVCxLQUFLOztBQUdoQixjQUFJLENBQUMsRUFBRSxHQUFHLEVBQUUsQ0FBQztBQUNiLGNBQUksQ0FBQyxJQUFJLEdBQUcsSUFBSSxDQUFDO0FBQ2pCLGNBQUksQ0FBQyxNQUFNLEdBQUcsS0FBSyxDQUFDO0FBQ3BCLGNBQUksQ0FBQyxHQUFHLEdBQUcsRUFBRSxDQUFDOztBQUVkLGNBQUksQ0FBQyxTQUFTLENBQUMsSUFBSSxDQUFDLElBQUksQ0FBQyxDQUFDO1NBQzFCOzs2QkFUVyxLQUFLO0FBV2pCLG1CQUFTO21CQUFBLG1CQUFDLElBQUksRUFBQztBQUNkLGlCQUFHLENBQUMsSUFBSSxDQUFDLHlCQUF5QixDQUFDLENBQUM7QUFDcEMsa0JBQUksSUFBSSxHQUFHLElBQUksS0FBSyxDQUFDLElBQUksQ0FBQyxJQUFJLEVBQUUsSUFBSSxDQUFDLE1BQU0sQ0FBQyxJQUFJLENBQUMsSUFBSSxDQUFDLENBQUMsQ0FBQzthQUN4RDs7OztBQUVELGdCQUFNO21CQUFBLGdCQUFDLElBQUksRUFBRSxJQUFJLEVBQUM7QUFFakIsaUJBQUcsQ0FBQyxJQUFJLENBQUMsOEJBQThCLENBQUMsQ0FBQzs7QUFFekMsa0JBQUksSUFBSSxDQUFDLElBQUksQ0FBQyxNQUFNLEdBQUcsQ0FBQyxFQUFFO0FBRXpCLG9CQUFJLENBQUMsTUFBTSxHQUFHLElBQUksQ0FBQyxTQUFTLEVBQUUsQ0FBQztBQUMvQixvQkFBSSxDQUFDLFFBQVEsR0FBRyxJQUFJLENBQUMsV0FBVyxFQUFFLENBQUM7O0FBR25DLG9CQUFJLENBQUMsUUFBUSxDQUFDLFFBQVEsQ0FBQyxDQUFDLEVBQUUsSUFBSSxDQUFDLFlBQVksQ0FBQyxJQUFJLENBQUMsSUFBSSxDQUFDLENBQUMsQ0FBQztlQUV4RCxNQUFNO0FBQ04sb0JBQUksQ0FBQyxTQUFTLEVBQUUsQ0FBQztlQUNqQjthQUNEOzs7O0FBRUQsc0JBQVk7bUJBQUMsc0JBQUMsU0FBUyxFQUFFO0FBQ3hCLGlCQUFHLENBQUMsSUFBSSxDQUFDLHNCQUFzQixDQUFDLENBQUM7QUFDakMsa0JBQUksQ0FBQyxTQUFTLEdBQUcsU0FBUyxDQUFDO0FBQzNCLGtCQUFJLENBQUMsUUFBUSxHQUFHLElBQUksQ0FBQztBQUNyQixrQkFBSSxXQUFXLENBQUMsSUFBSSxDQUFDLENBQUM7YUFDdEI7Ozs7QUFFRCxtQkFBUzttQkFBQyxxQkFBRztBQUNaLGlCQUFHLENBQUMsS0FBSyxDQUFDLHFCQUFzQixFQUFFLElBQUksQ0FBQyxDQUFDO0FBQ3hDLG9CQUFNLENBQUMsS0FBSyxDQUFDLDhDQUErQyxDQUFDLENBQUM7YUFDOUQ7Ozs7OztlQTNDVyxLQUFLIiwiZmlsZSI6InV0aWxzL2ltYWdlLmpzIiwic291cmNlUm9vdCI6Ii9zcmMvIn0=

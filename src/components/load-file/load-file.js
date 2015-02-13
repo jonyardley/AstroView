@@ -1,11 +1,11 @@
-import {State} from '../../utils/state';
+import {App} from '../../app';
 
 export class LoadFile {
 
-	static inject() { return [Element, State]; }
+	static inject() { return [Element, App]; }
 
-	constructor(element, state) {
-		this.state = state;
+	constructor(element, app) {
+		this.images = app.images;
 		this.el = element;
 	}
 
@@ -14,7 +14,7 @@ export class LoadFile {
 		var $input = $(this.el).find('input'),
 			file = $input[0].files[0];
 
-		this.state.images.newImage({file});
+		this.images.newImage({file});
 	}
 
 }
