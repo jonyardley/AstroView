@@ -36,6 +36,7 @@ export class RenderImage {
 
 		log.info('Start rendering pixels');
 		log.warn('TODO: MAKE THIS ASYNC / NON BLOCKING');
+		log.warn('TODO: THIS IS NOT WORKING CORRECTLY! MAKE THIS WORK WHEN SCALING!');
 
 		var area = this.targetWidth * this.targetHeight;
 		var min = 0,
