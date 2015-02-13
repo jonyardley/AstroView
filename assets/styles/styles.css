@@ -29,6 +29,10 @@
   bottom: 0;
   left: 0;
   width: 60px; }
+  #sidebar .inner {
+    padding-top: 5px; }
+  #sidebar .thumb {
+    margin: 0 5px 5px 5px; }
 
 #canvas {
   position: absolute;

@@ -5,15 +5,14 @@ import ImageBuffer from 'imageBuffer'; //Shimmed import
 
 export class RenderImage {
 
-	constructor(image, w, h){
+	constructor(image, scale){
 		this.image = image;
 		this.width = image.metaData.width;
 		this.height = image.metaData.height;
-
-		this.scale = 0.3;
+		this.scale = scale || 1;
 		this.sample = Math.floor(1 / this.scale);
-		this.targetWidth = Math.floor(this.width * this.scale);
-		this.targetHeight = Math.floor(this.height * this.scale);
+		this.targetWidth = this.width * this.scale;
+		this.targetHeight = this.height * this.scale;
 
 		this.canvas = document.createElement('canvas');
 		this.canvas.width = this.targetWidth;
@@ -36,15 +35,19 @@ export class RenderImage {
 
 		log.info('Start rendering pixels');
 		log.warn('TODO: MAKE THIS ASYNC / NON BLOCKING');
-		log.warn('TODO: THIS IS NOT WORKING CORRECTLY! MAKE THIS WORK WHEN SCALING!');
 
 		var area = this.targetWidth * this.targetHeight;
 		var min = 0,
 			max = 1000,
-			row = 0;
+			row = 0,
+			x = 0,
+			y = 0;
+
+
 
 		for (var i=0; i < area; i++) {
-			var pixelIndex = (i*this.sample) + (row*this.targetWidth);
+
+			var pixelIndex = (x * this.sample) + ((y * this.sample) * this.width);
 			var value = this.image.imageData[pixelIndex];
 			var v = ((value + min) / max) * 255 || 0;
 
@@ -60,9 +63,13 @@ export class RenderImage {
 			// set the pixel, using original alpha
 			this.buffer.setPixel(i, r, g, b, a);
 
-			if(i % this.width === 0){
-				row++;
+			if(i % this.targetWidth === 0){
+				x = 0;
+				y++;
+			}else{
+				x++;
 			}
+
 		}
 
 		log.info('Finished rendering pixels');

@@ -8,6 +8,8 @@ export class Images {
 	constructor(){
 		this.collection = [];
 		this.active = null;
+
+		this.newImage({file: '/assets/fits/656nmos.fits'});
 	}
 
 	/**

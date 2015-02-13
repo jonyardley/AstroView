@@ -20,7 +20,7 @@ export class Image {
 		var fits = new astro.FITS(file, this.onLoad.bind(this));
 	}
 
-	onLoad(fits, opts){
+	onLoad(fits){
 
 		log.info('Attempting to get image data');
 
@@ -44,12 +44,13 @@ export class Image {
 		this.renderImage();
 	}
 
+	getscale(w){
+		return w / this.metaData.width;
+	}
+
 	renderImage(){
-
-		var thumbWidth = 100,
-			thumbHeight = (this.metaData.width/this.metaData.height) * thumbWidth;
-
-		var thumb = new RenderImage(this, thumbWidth, thumbHeight);
+		var thumbScale = this.getscale(50),
+			thumb = new RenderImage(this, thumbScale);
 		this.img.thumb = thumb.result;
 
 		var raw = new RenderImage(this);

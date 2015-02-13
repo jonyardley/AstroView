@@ -1,12 +1,10 @@
 <template>
 
 	<div id="sidebar">
-		<div id="sidebar-inner">
-			<ul>
-				<li repeat.for="image of images.collection">
-					<img src="${image.img.thumb.src}"/>
-				</li>
-			</ul>
+		<div class="inner">
+			<div class="thumb" repeat.for="image of images.collection">
+				<img src="${image.img.thumb.src}"/>
+			</div>
 		</div>
 	</div>
 
