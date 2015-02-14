@@ -1,4 +1,5 @@
 import {App} from '../app';
+import fabric from 'fabric';
 
 export class Canvas {
 
