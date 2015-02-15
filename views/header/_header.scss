@@ -1,0 +1,20 @@
+#header {
+
+	.navbar-logo {
+		padding: 5px 10px 5px 0;
+	}
+
+	.navbar-brand {
+		line-height: 30px;
+	}
+
+	.navbar-nav {
+
+		&.navbar-right {
+			line-height: 50px;
+			padding-right: 10px;
+		}
+
+	}
+
+}

@@ -1,121 +1,30 @@
-/**
- *	Module Imports
- */
-/**
- *	Colours
- */
-/**
- *	Dimensions
- */
-#navbar .navbar-logo {
+@import url(bootstrap.css);
+@import url(bootswatch.css);
+#header .navbar-logo {
   padding: 5px 10px 5px 0; }
-#navbar .navbar-brand {
+#header .navbar-brand {
   line-height: 30px; }
-#navbar .navbar-nav.navbar-right {
+#header .navbar-nav.navbar-right {
   line-height: 50px;
   padding-right: 10px; }
 
-#toolbar {
-  background: black;
-  margin-top: -21px;
-  /** Fix positioning **/ }
-  #toolbar .av-mode-selector {
-    width: auto; }
-
-#sidebar {
-  background: #4e5d6c;
+.no-image {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 60px; }
-  #sidebar .inner {
-    padding-top: 5px; }
-  #sidebar .thumb {
-    margin: 0 5px 5px 5px; }
-
-#stage {
-  position: absolute;
-  top: 0;
-  left: 60px;
-  bottom: 0;
-  right: 0;
-  overflow: hidden; }
-  #stage .no-image {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%); }
-    #stage .no-image .logo {
-      opacity: 0.05;
-      width: 180px; }
-    #stage .no-image .file-upload {
-      position: relative;
-      overflow: hidden;
-      cursor: pointer !important; }
-    #stage .no-image .file-upload input {
-      cursor: pointer !important;
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      opacity: 0.001; }
-
-/**
- *	App Styles
- */
-html, body {
-  height: 100% !important;
-  min-height: 100% !important; }
-
-#main {
-  position: absolute;
-  top: 90px;
-  left: 0;
-  right: 0;
-  bottom: 0; }
-
-.jumbotron {
-  padding: 30px; }
-
-/**
- *	Components
- */
-.init {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 100%; }
-  .init .spinner {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); }
+  .no-image .logo {
+    opacity: 0.05;
+    width: 180px; }
+  .no-image .file-upload {
     position: relative;
-    top: 50%;
-    margin: auto auto -20px auto; }
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  margin: 100px auto;
-  background-color: #FFF;
-  border-radius: 100%;
-  -webkit-animation: scaleout 1.0s infinite ease-in-out;
-  animation: scaleout 1.0s infinite ease-in-out; }
-
-@-webkit-keyframes scaleout {
-  0% {
-    -webkit-transform: scale(0); }
-
-  100% {
-    -webkit-transform: scale(1);
-    opacity: 0; } }
-@keyframes scaleout {
-  0% {
-    transform: scale(0);
-    -webkit-transform: scale(0); }
-
-  100% {
-    transform: scale(1);
-    -webkit-transform: scale(1);
-    opacity: 0; } }
+    overflow: hidden;
+    cursor: pointer !important; }
+  .no-image .file-upload input {
+    cursor: pointer !important;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 0.001; }
