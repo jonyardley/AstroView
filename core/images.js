@@ -10,10 +10,6 @@ module.exports = function Images(riot){
 		var image = new Image(opts);
 		riot.observable(image);
 		this.collection.push(image);
-
-		image.on('image:loaded', function(image){
-			console.log(image);
-		});
-	});
+	}.bind(this));
 
 }

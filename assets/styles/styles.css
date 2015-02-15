@@ -8,6 +8,18 @@
   line-height: 50px;
   padding-right: 10px; }
 
+#sidebar {
+  background: #000;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 60px; }
+  #sidebar .inner {
+    padding-top: 5px; }
+  #sidebar .thumb {
+    margin: 0 5px 5px 5px; }
+
 .no-image {
   position: absolute;
   top: 50%;

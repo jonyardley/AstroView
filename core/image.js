@@ -1,5 +1,6 @@
 var _astro = require('fitsjs'),
-	FITS = _astro.astro.FITS;
+	FITS = _astro.astro.FITS,
+	RenderImage = require('./renderImage');
 
 window.astro = _astro.astro; //Hack to stop fitsjs breaking!
 
@@ -10,14 +11,25 @@ function Image (opts){
 	this.img = {};
 	this._dirty = true;
 
+
+	//Load image into memory!
 	this.loadImage();
 
 }
 
+
+/**
+ * Kick of Load Image
+ */
 Image.prototype.loadImage = function(){
 	var fits = new FITS(this.file, this.onLoad.bind(this));
 };
 
+
+/**
+ * Get Image data on load complete!
+ * @param fits
+ */
 Image.prototype.onLoad = function(fits){
 	if (fits.hdus.length > 0) {
 
@@ -32,6 +44,11 @@ Image.prototype.onLoad = function(fits){
 	}
 };
 
+
+/**
+ * Set Image data from frame then render image!
+ * @param imageData
+ */
 Image.prototype.getImageData = function(imageData) {
 	this.imageData = imageData;
 	this.isLoaded = true;
@@ -39,15 +56,25 @@ Image.prototype.getImageData = function(imageData) {
 	this.renderImage();
 }
 
+/**
+ * Calculate scale from a desired width
+ * @param w
+ * @returns {number}
+ */
+Image.prototype.getscale = function(w) {
+	return w / this.metaData.width;
+}
+
+/**
+ * Render the image (raw & thumb)
+ */
 Image.prototype.renderImage = function(){
-	/**var thumbScale = this.getscale(50),
+	var thumbScale = this.getscale(50),
 		thumb = new RenderImage(this, thumbScale);
 	this.img.thumb = thumb.result;
 
 	var raw = new RenderImage(this);
 	this.img.raw = raw.result;
-
-	events.publish('image:rendered', this);**/
 
 	this._dirty = false;
 	this.trigger('image:rendered', this);

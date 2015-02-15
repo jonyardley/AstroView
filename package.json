@@ -28,7 +28,9 @@
   },
   "homepage": "https://github.com/jonyardley/AstroView",
   "napa": {
-    "fitsjs": "astrojs/fitsjs"
+    "fitsjs": "astrojs/fitsjs",
+    "imageBuffer": "mattdesl/imagebuffer",
+    "fabric": "kangax/fabric.js"
   },
   "browser": {
     "fitsjs": "fitsjs/lib/fits"

@@ -3,9 +3,13 @@
 	<av-header/>
 
 	<div id="main">
+
+		<sidebar/>
+
 		<div id="stage">
 			<no-image if="{images.collection.length < 1}"></no-image>
 		</div>
+
 	</div>
 
 
