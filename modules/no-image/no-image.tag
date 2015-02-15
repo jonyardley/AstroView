@@ -27,12 +27,12 @@
 		</div>
 	</div>
 
+	<!-- CONTROLLER -->
 	<script>
 		this.loadImage = {
 			class: 'no-image',
 			label: 'Load Image'
 		};
-
 	</script>
 
 </no-image>

@@ -22,6 +22,7 @@
 		</div>
 	</nav>
 
+	<!-- CONTROLLER -->
 	<script>
 		var app = riot.app;
 		this.name = app.name;
@@ -31,7 +32,6 @@
 			app.trigger('mode:change', e.item);
 			this.update();
 		}.bind(this);
-
 	</script>
 
 </av-header>

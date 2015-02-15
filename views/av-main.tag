@@ -9,14 +9,11 @@
 	</div>
 
 
-
-
+	<!-- CONTROLLER -->
 	<script>
 		var app = riot.app;
 		this.images = app.images;
-
 		this.images.on('image:new', this.update);
-
 	</script>
 
 </av-main>
