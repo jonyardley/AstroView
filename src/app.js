@@ -2,6 +2,7 @@ import {LogManager} from 'aurelia-framework';
 let log = LogManager.getLogger('av::state');
 
 import {Images} from './utils/images';
+import events from './utils/events';
 
 export class App {
 
@@ -15,6 +16,7 @@ export class App {
 			analyze: false
 		};
 		this.images = images;
+		events.subscribe('canvas:ready', this.canvasReady.bind(this));
 	}
 
 
@@ -26,7 +28,12 @@ export class App {
 	changeMode (mode) {
 		Object.keys(this.modes).forEach( key => this.modes[key] = (mode === key) );
 		this.mode = mode;
+		events.publish('mode:change', this.mode);
 		log.info('state changed:', this.mode);
+	}
+
+	canvasReady(){
+		this.images.newImage({file: '/assets/fits/656nmos.fits'});
 	}
 
 }

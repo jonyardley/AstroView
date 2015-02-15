@@ -1,7 +1,5 @@
 #TODO
 
---> * Load image with fitsjs
-
 * Convert into preview
 * list images
 * display image on canvas
@@ -12,3 +10,4 @@
 * Colour Image
 * Save Image
 * View FITS Header
+* re-render/re-size canvas on window resize event!

@@ -1,11 +1,16 @@
 <template>
 
-	<compose view-model="navbar/navbar"></compose>
-	<compose view-model="toolbar/toolbar"></compose>
+	<import from='navbar/navbar'></import>
+	<import from='toolbar/toolbar'></import>
+	<import from='sidebar/sidebar'></import>
+	<import from='stage/stage'></import>
+
+	<navbar></navbar>
+	<toolbar></toolbar>
 
 	<div id="main">
-		<compose view-model="sidebar/sidebar"></compose>
-		<compose view-model="canvas/canvas"></compose>
+		<sidebar></sidebar>
+		<stage></stage>
 	</div>
 
 </template>

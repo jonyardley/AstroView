@@ -2,14 +2,15 @@ import {LogManager} from 'aurelia-framework';
 let log = LogManager.getLogger('av::images');
 
 import {Image} from './image';
+import events from './events';
+
+
 
 export class Images {
 
 	constructor(){
 		this.collection = [];
 		this.active = null;
-
-		this.newImage({file: '/assets/fits/656nmos.fits'});
 	}
 
 	/**
@@ -21,7 +22,14 @@ export class Images {
 			newImage = new Image(id, opts);
 
 		this.collection.push(newImage);
-		this.active = newImage;
-		log.info('created new image', this);
+		log.info('created new image');
+
+		this.setActiveImage(newImage);
+	}
+
+	setActiveImage(image){
+		this.active = image;
+		log.info('new active image set!');
+		events.publish('image:active', image);
 	}
 }

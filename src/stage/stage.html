@@ -1,0 +1,10 @@
+<template>
+	<div id="stage">
+
+		<import from="./no-image/no-image"></import>
+
+		<no-image if.bind="images.collection.length < 1"></no-image>
+		<canvas id="stageCanvas" if.bind="images.collection.length > 0"></canvas>
+
+	</div>
+</template>

@@ -16,7 +16,7 @@
   padding-right: 10px; }
 
 #toolbar {
-  background: #000;
+  background: black;
   margin-top: -21px;
   /** Fix positioning **/ }
   #toolbar .av-mode-selector {
@@ -34,25 +34,26 @@
   #sidebar .thumb {
     margin: 0 5px 5px 5px; }
 
-#canvas {
+#stage {
   position: absolute;
   top: 0;
   left: 60px;
   bottom: 0;
-  right: 0; }
-  #canvas .no-image {
+  right: 0;
+  overflow: hidden; }
+  #stage .no-image {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%); }
-    #canvas .no-image .logo {
+    #stage .no-image .logo {
       opacity: 0.05;
       width: 180px; }
-    #canvas .no-image .file-upload {
+    #stage .no-image .file-upload {
       position: relative;
       overflow: hidden;
       cursor: pointer !important; }
-    #canvas .no-image .file-upload input {
+    #stage .no-image .file-upload input {
       cursor: pointer !important;
       position: absolute;
       top: 0;
@@ -105,6 +106,7 @@ html, body {
 @-webkit-keyframes scaleout {
   0% {
     -webkit-transform: scale(0); }
+
   100% {
     -webkit-transform: scale(1);
     opacity: 0; } }
@@ -112,9 +114,8 @@ html, body {
   0% {
     transform: scale(0);
     -webkit-transform: scale(0); }
+
   100% {
     transform: scale(1);
     -webkit-transform: scale(1);
     opacity: 0; } }
-
-/*# sourceMappingURL=styles.css.map */

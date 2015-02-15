@@ -3,6 +3,7 @@ let log = LogManager.getLogger('av::image');
 
 import astro from 'fitsjs'; //available globally with astro.FITS
 import {RenderImage} from './renderImage';
+import events from './events';
 
 export class Image {
 
@@ -11,6 +12,7 @@ export class Image {
 		this.opts = opts;
 		this.loaded = false;
 		this.img = {};
+		this._dirty = true;
 
 		this.loadImage(opts.file);
 	}
@@ -55,6 +57,11 @@ export class Image {
 
 		var raw = new RenderImage(this);
 		this.img.raw = raw.result;
+
+		this._dirty = false;
+
+		events.publish('image:rendered', this);
+
 	}
 
 	loadError () {
