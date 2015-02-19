@@ -1,0 +1,42 @@
+.loader {
+	width: 40px;
+	height: 40px;
+	background-color: #FFF;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	margin-left: -20px;
+	margin-top: -20px;
+
+	border-radius: 100%;
+	-webkit-animation: scaleout 1.0s infinite ease-in-out;
+	animation: scaleout 1.0s infinite ease-in-out;
+
+	&.small {
+		width: 20px;
+		height: 20px;
+		margin-top: -10px;
+		margin-left: -10px;
+	}
+
+
+}
+
+@-webkit-keyframes scaleout {
+	0% { -webkit-transform: scale(0.0) }
+	100% {
+		-webkit-transform: scale(1.0);
+		opacity: 0;
+	}
+}
+
+@keyframes scaleout {
+	0% {
+		transform: scale(0.0);
+		-webkit-transform: scale(0.0);
+	} 100% {
+		  transform: scale(1.0);
+		  -webkit-transform: scale(1.0);
+		  opacity: 0;
+	  }
+}
