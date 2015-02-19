@@ -1,49 +1,5 @@
 @import url(bootstrap.css);
 @import url(bootswatch.css);
-#header .navbar-logo {
-  padding: 5px 10px 5px 0; }
-#header .navbar-brand {
-  line-height: 30px; }
-#header .navbar-nav.navbar-right {
-  line-height: 50px;
-  padding-right: 10px; }
-
-sidebar {
-  display: none;
-  background: #000;
-  position: absolute;
-  top: 50px;
-  bottom: 0;
-  left: 0;
-  width: 60px; }
-  .init sidebar {
-    display: block; }
-  sidebar .inner {
-    padding-top: 5px; }
-  sidebar .thumb {
-    margin: 0 5px 5px 5px; }
-
-.no-image {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%); }
-  .no-image .logo {
-    opacity: 0.05;
-    width: 180px; }
-  .no-image .file-upload {
-    position: relative;
-    overflow: hidden;
-    cursor: pointer !important; }
-  .no-image .file-upload input {
-    cursor: pointer !important;
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    opacity: 0.001; }
-
 #stage {
   position: absolute;
   top: 50px;
