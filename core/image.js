@@ -4,10 +4,11 @@ var _astro = require('fitsjs'),
 
 window.astro = _astro.astro; //Hack to stop fitsjs breaking!
 
-function Image (opts){
+function Image (opts, parent){
 
+	this.parent = parent;
 	this.file = opts.file;
-	this.loaded = false;
+	this.isLoaded = false;
 	this.img = {};
 	this._dirty = true;
 
@@ -53,6 +54,7 @@ Image.prototype.getImageData = function(imageData) {
 	this.imageData = imageData;
 	this.isLoaded = true;
 	this.trigger('image:loaded', this);
+	this.parent.trigger('image:loaded', this);
 	this.renderImage();
 }
 
@@ -78,6 +80,7 @@ Image.prototype.renderImage = function(){
 
 	this._dirty = false;
 	this.trigger('image:rendered', this);
+	this.parent.trigger('image:rendered', this);
 
 }
 

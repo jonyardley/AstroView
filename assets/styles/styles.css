@@ -8,16 +8,19 @@
   line-height: 50px;
   padding-right: 10px; }
 
-#sidebar {
+sidebar {
+  display: none;
   background: #000;
   position: absolute;
-  top: 0;
+  top: 50px;
   bottom: 0;
   left: 0;
   width: 60px; }
-  #sidebar .inner {
+  .init sidebar {
+    display: block; }
+  sidebar .inner {
     padding-top: 5px; }
-  #sidebar .thumb {
+  sidebar .thumb {
     margin: 0 5px 5px 5px; }
 
 .no-image {
@@ -40,3 +43,16 @@
     left: 0;
     right: 0;
     opacity: 0.001; }
+
+#stage {
+  position: absolute;
+  top: 50px;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  border-left: 1px solid #2b3e50; }
+  .init #stage {
+    left: 60px; }
+
+.init #stageCanvas {
+  background: #000; }

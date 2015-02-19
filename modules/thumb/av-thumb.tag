@@ -1,16 +1,13 @@
 <av-thumb>
 
 	<div class="thumb">
-		<img src="{image.img.thumb.src}"/>
+		<img src="{image.img.thumb.src}" class="{active: isActive}"/>
 	</div>
 
 	<script>
 
 		this.image = this.opts.data;
-
-		this.image.on('image:rendered', function(){
-			this.update();
-		}.bind(this));
+		this.isActive = this.image.parent.active === this.image;
 
 	</script>
 </av-thumb>

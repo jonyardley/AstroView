@@ -1,10 +1,15 @@
-#sidebar {
+sidebar {
+	display: none;
 	background: #000;
 	position: absolute;
-	top: 0;
+	top: 50px;
 	bottom: 0;
 	left: 0;
 	width: 60px;
+
+	.init & {
+		display: block;
+	}
 
 	.inner {
 		padding-top: 5px;

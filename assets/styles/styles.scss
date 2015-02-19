@@ -4,3 +4,24 @@
 @import "../../views/header/_header";
 @import "../../views/sidebar/sidebar";
 @import "../../modules/no-image/_no-image";
+
+#stage {
+	position: absolute;
+	top: 50px;
+	left: 0;
+	bottom: 0;
+	right: 0;
+
+	.init & {
+		left: 60px;
+	}
+
+	border-left: 1px solid #2b3e50;
+}
+
+#stageCanvas {
+
+	.init & {
+		background: #000;
+	}
+}

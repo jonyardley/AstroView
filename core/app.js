@@ -1,7 +1,12 @@
-var Images = require('./images');
+var Images = require('./images'),
+	Stage = require('./stage');
 
 module.exports = function App (riot){
 
+	//Make app an event emitter
+	riot.observable(this);
+
+	//Attach public attr and methods
 	this.name = 'AstroView';
 	this.images = new Images(riot);
 	this.modes = [
@@ -22,7 +27,7 @@ module.exports = function App (riot){
 		}
 	];
 
-	riot.observable(this);
+	this.stage = new Stage(this);
 
 	function changeMode(mode){
 		this.modes.forEach(function(m){
@@ -30,6 +35,9 @@ module.exports = function App (riot){
 		});
 	}
 
+	//App level events
 	this.on('mode:change', changeMode);
+
+	console.log('---> App: ',this);
 
 };

@@ -8,6 +8,9 @@
 
 		<div id="stage">
 			<no-image if="{images.collection.length < 1}"></no-image>
+
+			<canvas id="stageCanvas"></canvas>
+
 		</div>
 
 	</div>

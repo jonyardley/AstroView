@@ -17,3 +17,6 @@ require('./modules/load-image/load-image.tag');
 require('./modules/thumb/av-thumb.tag');
 
 riot.mount('*');
+
+/** Dev **/
+riot.app.images.trigger('image:new', {file: './assets/fits/656nmos.fits'});
