@@ -1,4 +1,52 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"/Users/jonyardley/Development/AstroView/components/header.vue":[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"/Users/jonyardley/Development/AstroView/components/app.vue":[function(require,module,exports){
+require("insert-css")(".loader{width:40px;height:40px;background-color:#fff;position:absolute;left:50%;top:50%;margin-left:-20px;margin-top:-20px;border-radius:100%;-webkit-animation:scaleout 1s infinite ease-in-out;animation:scaleout 1s infinite ease-in-out}.loader.small{width:20px;height:20px;margin-top:-10px;margin-left:-10px}@-webkit-keyframes scaleout{0%{-webkit-transform:scale(0)}100%{-webkit-transform:scale(1);opacity:0}}@-moz-keyframes scaleout{0%{transform:scale(0);-webkit-transform:scale(0)}100%{transform:scale(1);-webkit-transform:scale(1);opacity:0}}@-webkit-keyframes scaleout{0%{transform:scale(0);-webkit-transform:scale(0)}100%{transform:scale(1);-webkit-transform:scale(1);opacity:0}}@-o-keyframes scaleout{0%{transform:scale(0);-webkit-transform:scale(0)}100%{transform:scale(1);-webkit-transform:scale(1);opacity:0}}@keyframes scaleout{0%{transform:scale(0);-webkit-transform:scale(0)}100%{transform:scale(1);-webkit-transform:scale(1);opacity:0}}#main{position:absolute;top:50px;left:60px;bottom:0;right:0}");
+var __vue_template__ = "<div v-component=\"header\"></div>\n\n	<div v-component=\"splash\" v-if=\"!hasImages\"></div>\n\n	<div v-component=\"sidebar\" id=\"sidebar\" v-if=\"hasImages\"></div>\n\n	<div id=\"main\" v-if=\"hasImages\">\n		<div v-component=\"stage\"></div>\n	</div>";
+var Image = require('../utils/Image');
+
+	var app = {
+		data: {
+			mode: 'view',
+			images: [],
+			activeImage: null
+		},
+		methods: {
+			addImage: addImage
+		},
+		computed: {
+			hasImages: function(){
+				return !!this.images.length
+			}
+		},
+		components: {
+			'header': require('./header.vue'),
+			'splash': require('./splash.vue'),
+			'sidebar': require('./sidebar.vue'),
+			'stage': require('./stage.vue')
+		},
+		attached: function(){
+			/** DEV **/
+			console.log('app ready!');
+			this.addImage({file: 'assets/fits/656nmos.fits'});
+		}
+	};
+
+	function addImage(opts){
+		console.log('adding image');
+		opts.app = this;
+		var image = new Image(opts);
+		this.images.push(image);
+		this.activeImage = image;
+		image.renderCallback = imageRenderedCallback.bind(this);
+	}
+
+	function imageRenderedCallback(image){
+		this.$broadcast('image:rendered', image);
+	}
+
+	module.exports = app;
+module.exports.template = __vue_template__;
+
+},{"../utils/Image":"/Users/jonyardley/Development/AstroView/utils/Image.js","./header.vue":"/Users/jonyardley/Development/AstroView/components/header.vue","./sidebar.vue":"/Users/jonyardley/Development/AstroView/components/sidebar.vue","./splash.vue":"/Users/jonyardley/Development/AstroView/components/splash.vue","./stage.vue":"/Users/jonyardley/Development/AstroView/components/stage.vue","insert-css":"/Users/jonyardley/Development/AstroView/node_modules/insert-css/index.js"}],"/Users/jonyardley/Development/AstroView/components/header.vue":[function(require,module,exports){
 require("insert-css")(".navbar-logo{padding:5px 10px 5px 0}.navbar-brand{line-height:30px}");
 var __vue_template__ = "<nav id=\"header\" class=\"navbar navbar-default\">\n		<div class=\"container-fluid\">\n\n			<div class=\"navbar-header\">\n				<img class=\"navbar-logo\" src=\"assets/img/logo-white.png\">\n			</div>\n\n			<div class=\"navbar-header\">\n				<a class=\"navbar-brand\" href=\"#\">AstroView</a>\n			</div>\n\n		</div>\n	</nav>";
 module.exports = {
@@ -58,9 +106,7 @@ var fabric = require('fabric').fabric,
 			};
 		},
 		created: function(){
-			this.$on('image:rendered', function(image){
-				console.log('image: boom!', image);
-			});
+			this.$on('image:rendered', renderImage.bind(this));
 		},
 		attached: function(){
 			var canvasSelector = '#stage';
@@ -70,6 +116,13 @@ var fabric = require('fabric').fabric,
 			$canvas.attr('width', $main.width());
 			$canvas.attr('height', $main.height());
 			this.context = new fabric.Canvas(canvasSelector.replace('#',''));
+		}
+	}
+
+	function renderImage(image){
+		if(!image.ctxImage){
+			image.ctxImage = new fabric.Image(image.img.raw);
+			this.context.add(image.ctxImage);
 		}
 	}
 module.exports.template = __vue_template__;
@@ -86,228 +139,19 @@ module.exports = {
 	}
 module.exports.template = __vue_template__;
 
-},{"insert-css":"/Users/jonyardley/Development/AstroView/node_modules/insert-css/index.js"}],"/Users/jonyardley/Development/AstroView/core/app.vue":[function(require,module,exports){
-require("insert-css")(".loader{width:40px;height:40px;background-color:#fff;position:absolute;left:50%;top:50%;margin-left:-20px;margin-top:-20px;border-radius:100%;-webkit-animation:scaleout 1s infinite ease-in-out;animation:scaleout 1s infinite ease-in-out}.loader.small{width:20px;height:20px;margin-top:-10px;margin-left:-10px}@-webkit-keyframes scaleout{0%{-webkit-transform:scale(0)}100%{-webkit-transform:scale(1);opacity:0}}@-moz-keyframes scaleout{0%{transform:scale(0);-webkit-transform:scale(0)}100%{transform:scale(1);-webkit-transform:scale(1);opacity:0}}@-webkit-keyframes scaleout{0%{transform:scale(0);-webkit-transform:scale(0)}100%{transform:scale(1);-webkit-transform:scale(1);opacity:0}}@-o-keyframes scaleout{0%{transform:scale(0);-webkit-transform:scale(0)}100%{transform:scale(1);-webkit-transform:scale(1);opacity:0}}@keyframes scaleout{0%{transform:scale(0);-webkit-transform:scale(0)}100%{transform:scale(1);-webkit-transform:scale(1);opacity:0}}#main{position:absolute;top:50px;left:60px;bottom:0;right:0}");
-var __vue_template__ = "<div v-component=\"header\"></div>\n\n	<div v-component=\"splash\" v-if=\"!hasImages\"></div>\n\n	<div v-component=\"sidebar\" id=\"sidebar\" v-if=\"hasImages\"></div>\n\n	<div id=\"main\" v-if=\"hasImages\">\n		<div v-component=\"stage\"></div>\n	</div>";
-var Image = require('./image');
-
-	var app = {
-		data: {
-			mode: 'view',
-			images: [],
-			activeImage: null
-		},
-		methods: {
-			addImage: addImage
-		},
-		computed: {
-			hasImages: function(){
-				return !!this.images.length
-			}
-		},
-		components: {
-			'header': require('../components/header.vue'),
-			'splash': require('../components/splash.vue'),
-			'sidebar': require('../components/sidebar.vue'),
-			'stage': require('../components/stage.vue')
-		}
-	};
-
-	function addImage(opts){
-		opts.app = this;
-		var image = new Image(opts);
-		this.images.push(image);
-		this.activeImage = image;
-		image.renderCallback = function(i){
-			this.$broadcast('image:rendered', i);
-		}.bind(this);
-	}
-
-	module.exports = app;
-module.exports.template = __vue_template__;
-
-},{"../components/header.vue":"/Users/jonyardley/Development/AstroView/components/header.vue","../components/sidebar.vue":"/Users/jonyardley/Development/AstroView/components/sidebar.vue","../components/splash.vue":"/Users/jonyardley/Development/AstroView/components/splash.vue","../components/stage.vue":"/Users/jonyardley/Development/AstroView/components/stage.vue","./image":"/Users/jonyardley/Development/AstroView/core/image.js","insert-css":"/Users/jonyardley/Development/AstroView/node_modules/insert-css/index.js"}],"/Users/jonyardley/Development/AstroView/core/image.js":[function(require,module,exports){
-var _astro = require('fitsjs'),
-	FITS = _astro.astro.FITS,
-	RenderImage = require('./renderImage');
-
-window.astro = _astro.astro; //Hack to stop fitsjs breaking!
-
-function Image (opts){
-
-	this.file = opts.file;
-	this.isLoaded = false;
-	this.img = {};
-	this.isRendering = true;
-	this.renderCallback = null;
-
-	//Load image into memory!
-	this.loadImage();
-
-}
-
-
-/**
- * Kick of Load Image
- */
-Image.prototype.loadImage = function(){
-	var fits = new FITS(this.file, this.onLoad.bind(this));
-};
-
-
-/**
- * Get Image data on load complete!
- * @param fits
- */
-Image.prototype.onLoad = function(fits){
-	if (fits.hdus.length > 0) {
-
-		this.header = fits.getHeader();
-		this.metaData = fits.getDataUnit();
-
-		//Assumes that each image only has one frame!
-		this.metaData.getFrame(0, this.getImageData.bind(this));
-
-	} else {
-		this.loadError();
-	}
-};
-
-
-/**
- * Set Image data from frame then render image!
- * @param imageData
- */
-Image.prototype.getImageData = function(imageData) {
-	this.imageData = imageData;
-	this.isLoaded = true;
-	this.renderImage();
-}
-
-/**
- * Calculate scale from a desired width
- * @param w
- * @returns {number}
- */
-Image.prototype.getscale = function(w) {
-	return w / this.metaData.width;
-}
-
-/**
- * Render the image (raw & thumb)
- */
-Image.prototype.renderImage = function(){
-	var thumbScale = this.getscale(50),
-		thumb = new RenderImage(this, thumbScale);
-	this.img.thumb = thumb.result;
-
-	var raw = new RenderImage(this);
-	this.img.raw = raw.result;
-
-	this.isRendering = false;
-
-	if(this.renderCallback){
-		console.log('triggerCallback')
-		this.renderCallback(this);
-	}
-
-}
-
-
-Image.prototype.loadError = function(){
-	window.alert('For some reason that file couldn\'t be loaded');
-};
-
-
-module.exports = Image;
-},{"./renderImage":"/Users/jonyardley/Development/AstroView/core/renderImage.js","fitsjs":"/Users/jonyardley/Development/AstroView/node_modules/fitsjs/lib/fits.js"}],"/Users/jonyardley/Development/AstroView/core/renderImage.js":[function(require,module,exports){
-var ImageBuffer = require('imageBuffer');
-
-
-function RenderImage (image, scale) {
-
-	this.image = image;
-	this.width = image.metaData.width;
-	this.height = image.metaData.height;
-	this.scale = scale || 1;
-	this.sample = Math.floor(1 / this.scale);
-	this.targetWidth = this.width * this.scale;
-	this.targetHeight = this.height * this.scale;
-
-	this.canvas = document.createElement('canvas');
-	this.canvas.width = this.targetWidth;
-	this.canvas.height = this.targetHeight;
-	this.ctx = this.canvas.getContext('2d');
-
-	this.imageData = this.ctx.createImageData(this.targetWidth, this.targetHeight);
-	this.buffer = new ImageBuffer(this.imageData);
-
-	console.log('set data needed for image render');
-
-	this.renderPixels();
-
-	//Generate Image from buffer!
-	this.result = this.buffer.createImage();
-
-}
-
-RenderImage.prototype.renderPixels = function(){
-
-	console.log('Start rendering pixels');
-	console.log('TODO: MAKE THIS ASYNC / NON BLOCKING');
-
-	var area = this.targetWidth * this.targetHeight;
-	var min = 0,
-		max = 1000,
-		x = 0,
-		y = 0;
-
-	for (var i=0; i < area; i++) {
-
-		var pixelIndex = (x * this.sample) + ((y * this.sample) * this.width);
-		var value = this.image.imageData[pixelIndex];
-		var v = ((value + min) / max) * 255 || 0;
-
-		//clamp
-		if(v < 0){ v = 0; }
-		if(v > 255 || isNaN(v)){ v = 255; }
-
-		var r = v,
-			g = v,
-			b = v,
-			a = 255;
-
-		// set the pixel, using original alpha
-		this.buffer.setPixel(i, r, g, b, a);
-
-		if(i % this.targetWidth === 0){
-			x = 0;
-			y++;
-		}else{
-			x++;
-		}
-
-	}
-
-	console.log('Finished rendering pixels');
-
-}
-
-module.exports = RenderImage;
-},{"imageBuffer":"/Users/jonyardley/Development/AstroView/node_modules/imageBuffer/index.js"}],"/Users/jonyardley/Development/AstroView/main.js":[function(require,module,exports){
+},{"insert-css":"/Users/jonyardley/Development/AstroView/node_modules/insert-css/index.js"}],"/Users/jonyardley/Development/AstroView/main.js":[function(require,module,exports){
 var jQuery = require('jquery');
 window.jQuery = jQuery;
 require('bootstrap');
 
 var Vue = require('vue'),
-	appOptions = require('./core/app.vue'),
+	appOptions = require('./components/app.vue'),
 	app = new Vue(appOptions).$mount('#app');
 
-console.log('--> App Initialized!');
-
-/** DEV **/
-app.addImage({file: 'assets/fits/656nmos.fits'});
-},{"./core/app.vue":"/Users/jonyardley/Development/AstroView/core/app.vue","bootstrap":"/Users/jonyardley/Development/AstroView/node_modules/bootstrap/dist/js/npm.js","jquery":"/Users/jonyardley/Development/AstroView/node_modules/jquery/dist/jquery.js","vue":"/Users/jonyardley/Development/AstroView/node_modules/vue/src/vue.js"}],"/Users/jonyardley/Development/AstroView/node_modules/bootstrap/dist/js/npm.js":[function(require,module,exports){
+app.$on('ready', function(){
+	console.log('APP IS READY!');
+});
+},{"./components/app.vue":"/Users/jonyardley/Development/AstroView/components/app.vue","bootstrap":"/Users/jonyardley/Development/AstroView/node_modules/bootstrap/dist/js/npm.js","jquery":"/Users/jonyardley/Development/AstroView/node_modules/jquery/dist/jquery.js","vue":"/Users/jonyardley/Development/AstroView/node_modules/vue/src/vue.js"}],"/Users/jonyardley/Development/AstroView/node_modules/bootstrap/dist/js/npm.js":[function(require,module,exports){
 // This file is autogenerated via the `commonjs` Grunt task. You can require() this file in a CommonJS environment.
 require('../../js/transition.js')
 require('../../js/alert.js')
@@ -52050,4 +51894,172 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/util/support/isBufferBrowser.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js","inherits":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/inherits/inherits_browser.js"}]},{},["/Users/jonyardley/Development/AstroView/main.js"]);
+},{"./support/isBuffer":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/util/support/isBufferBrowser.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js","inherits":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/inherits/inherits_browser.js"}],"/Users/jonyardley/Development/AstroView/utils/Image.js":[function(require,module,exports){
+var _astro = require('fitsjs'),
+	FITS = _astro.astro.FITS,
+	RenderImage = require('./renderImage');
+
+window.astro = _astro.astro; //Hack to stop fitsjs breaking!
+
+function Image (opts){
+
+	this.file = opts.file;
+	this.isLoaded = false;
+	this.img = {};
+	this.isRendering = true;
+	this.renderCallback = null;
+
+	//Load image into memory!
+	this.loadImage();
+
+}
+
+
+/**
+ * Kick of Load Image
+ */
+Image.prototype.loadImage = function(){
+	var fits = new FITS(this.file, this.onLoad.bind(this));
+};
+
+
+/**
+ * Get Image data on load complete!
+ * @param fits
+ */
+Image.prototype.onLoad = function(fits){
+	if (fits.hdus.length > 0) {
+
+		this.header = fits.getHeader();
+		this.metaData = fits.getDataUnit();
+
+		//Assumes that each image only has one frame!
+		this.metaData.getFrame(0, this.getImageData.bind(this));
+
+	} else {
+		this.loadError();
+	}
+};
+
+
+/**
+ * Set Image data from frame then render image!
+ * @param imageData
+ */
+Image.prototype.getImageData = function(imageData) {
+	this.imageData = imageData;
+	this.isLoaded = true;
+	this.renderImage();
+}
+
+/**
+ * Calculate scale from a desired width
+ * @param w
+ * @returns {number}
+ */
+Image.prototype.getscale = function(w) {
+	return w / this.metaData.width;
+}
+
+/**
+ * Render the image (raw & thumb)
+ */
+Image.prototype.renderImage = function(){
+	var thumbScale = this.getscale(50),
+		thumb = new RenderImage(this, thumbScale);
+	this.img.thumb = thumb.result;
+
+	var raw = new RenderImage(this);
+	this.img.raw = raw.result;
+
+	this.isRendering = false;
+
+	if(this.renderCallback){
+		console.log('trigger render callback');
+		this.renderCallback(this);
+	}
+
+}
+
+
+Image.prototype.loadError = function(){
+	window.alert('For some reason that file couldn\'t be loaded');
+};
+
+
+module.exports = Image;
+},{"./renderImage":"/Users/jonyardley/Development/AstroView/utils/renderImage.js","fitsjs":"/Users/jonyardley/Development/AstroView/node_modules/fitsjs/lib/fits.js"}],"/Users/jonyardley/Development/AstroView/utils/renderImage.js":[function(require,module,exports){
+var ImageBuffer = require('imageBuffer');
+
+
+function RenderImage (image, scale) {
+
+	this.image = image;
+	this.width = image.metaData.width;
+	this.height = image.metaData.height;
+	this.scale = scale || 1;
+	this.sample = Math.floor(1 / this.scale);
+	this.targetWidth = this.width * this.scale;
+	this.targetHeight = this.height * this.scale;
+
+	this.canvas = document.createElement('canvas');
+	this.canvas.width = this.targetWidth;
+	this.canvas.height = this.targetHeight;
+	this.ctx = this.canvas.getContext('2d');
+
+	this.imageData = this.ctx.createImageData(this.targetWidth, this.targetHeight);
+	this.buffer = new ImageBuffer(this.imageData);
+
+	console.log('set data needed for image render');
+
+	this.renderPixels();
+
+	//Generate Image from buffer!
+	this.result = this.buffer.createImage();
+
+}
+
+RenderImage.prototype.renderPixels = function(){
+
+	console.log('Start rendering pixels');
+	console.log('TODO: MAKE THIS ASYNC / NON BLOCKING');
+
+	var area = this.targetWidth * this.targetHeight;
+	var min = 0,
+		max = 1000,
+		x = 0,
+		y = 0;
+
+	for (var i=0; i < area; i++) {
+
+		var pixelIndex = (x * this.sample) + ((y * this.sample) * this.width);
+		var value = this.image.imageData[pixelIndex];
+		var v = ((value + min) / max) * 255 || 0;
+
+		//clamp
+		if(v < 0){ v = 0; }
+		if(v > 255 || isNaN(v)){ v = 255; }
+
+		var r = v,
+			g = v,
+			b = v,
+			a = 255;
+
+		// set the pixel, using original alpha
+		this.buffer.setPixel(i, r, g, b, a);
+
+		if(i % this.targetWidth === 0){
+			x = 0;
+			y++;
+		}else{
+			x++;
+		}
+
+	}
+
+	console.log('Finished rendering pixels');
+
+}
+
+module.exports = RenderImage;
+},{"imageBuffer":"/Users/jonyardley/Development/AstroView/node_modules/imageBuffer/index.js"}]},{},["/Users/jonyardley/Development/AstroView/main.js"]);

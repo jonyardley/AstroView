@@ -78,6 +78,7 @@ Image.prototype.renderImage = function(){
 	this.isRendering = false;
 
 	if(this.renderCallback){
+		console.log('trigger render callback');
 		this.renderCallback(this);
 	}
 

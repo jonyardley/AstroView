@@ -3,10 +3,9 @@ window.jQuery = jQuery;
 require('bootstrap');
 
 var Vue = require('vue'),
-	appOptions = require('./core/app.vue'),
+	appOptions = require('./components/app.vue'),
 	app = new Vue(appOptions).$mount('#app');
 
-console.log('--> App Initialized!');
-
-/** DEV **/
-app.addImage({file: 'assets/fits/656nmos.fits'});
+app.$on('ready', function(){
+	console.log('APP IS READY!');
+});

@@ -18,9 +18,7 @@
 			};
 		},
 		created: function(){
-			this.$on('image:rendered', function(image){
-				console.log('image: boom!', image);
-			});
+			this.$on('image:rendered', renderImage.bind(this));
 		},
 		attached: function(){
 			var canvasSelector = '#stage';
@@ -30,6 +28,13 @@
 			$canvas.attr('width', $main.width());
 			$canvas.attr('height', $main.height());
 			this.context = new fabric.Canvas(canvasSelector.replace('#',''));
+		}
+	}
+
+	function renderImage(image){
+		if(!image.ctxImage){
+			image.ctxImage = new fabric.Image(image.img.raw);
+			this.context.add(image.ctxImage);
 		}
 	}
 </script>

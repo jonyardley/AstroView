@@ -25,7 +25,7 @@
 
 
 <script>
-	var Image = require('./image');
+	var Image = require('../utils/Image');
 
 	var app = {
 		data: {
@@ -42,21 +42,29 @@
 			}
 		},
 		components: {
-			'header': require('../components/header.vue'),
-			'splash': require('../components/splash.vue'),
-			'sidebar': require('../components/sidebar.vue'),
-			'stage': require('../components/stage.vue')
+			'header': require('./header.vue'),
+			'splash': require('./splash.vue'),
+			'sidebar': require('./sidebar.vue'),
+			'stage': require('./stage.vue')
+		},
+		attached: function(){
+			/** DEV **/
+			console.log('app ready!');
+			this.addImage({file: 'assets/fits/656nmos.fits'});
 		}
 	};
 
 	function addImage(opts){
+		console.log('adding image');
 		opts.app = this;
 		var image = new Image(opts);
 		this.images.push(image);
 		this.activeImage = image;
-		image.renderCallback = function(i){
-			this.$broadcast('image:rendered', i);
-		}.bind(this);
+		image.renderCallback = imageRenderedCallback.bind(this);
+	}
+
+	function imageRenderedCallback(image){
+		this.$broadcast('image:rendered', image);
 	}
 
 	module.exports = app;
