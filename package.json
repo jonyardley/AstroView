@@ -1,0 +1,43 @@
+{
+  "name": "AstroView",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {},
+  "devDependencies": {
+    "bootstrap": "^3.3.2",
+    "flux": "^2.0.1",
+    "http-server": "^0.7.5",
+    "jquery": "^2.1.3",
+    "liveify": "^2.0.0",
+    "livescript": "0.0.1",
+    "napa": "^1.2.0",
+    "prelude-ls": "^1.1.1",
+    "react": "^0.12.2",
+    "watchify": "^2.3.0"
+  },
+  "scripts": {
+    "install": "./node_modules/.bin/napa",
+    "start": "npm run watch & npm run static",
+    "watch": "./node_modules/.bin/watchify -t liveify -o dist/bundle.js src/main.ls",
+    "static": "./node_modules/.bin/http-server dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jonyardley/AstroView.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jonyardley/AstroView/issues"
+  },
+  "homepage": "https://github.com/jonyardley/AstroView",
+  "napa": {
+    "fitsjs": "astrojs/fitsjs",
+    "imageBuffer": "mattdesl/imagebuffer",
+    "fabric": "kangax/fabric.js"
+  },
+  "browser": {
+    "fitsjs": "fitsjs/lib/fits"
+  }
+}
