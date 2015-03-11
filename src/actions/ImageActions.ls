@@ -3,8 +3,6 @@ require! <[
 	../dispatcher/AppDispatcher.ls
 ]>
 
-console.log AppDispatcher
-
 ImageActions =
 
 	createImage: (data) -> AppDispatcher.dispatch do
@@ -15,5 +13,11 @@ ImageActions =
 	deleteImage: (index) -> AppDispatcher.dispatch do
 		actionType: constants.IMAGE_DELETE
 		data: index
+
+
+	updateImage: (image) -> AppDispatcher.dispatch do
+		actionType: constants.IMAGE_UPDATE
+		data: image
+
 
 module.exports = ImageActions

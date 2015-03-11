@@ -14,36 +14,52 @@ Images = []
 # Store Methods
 createImage = (opts) ->
 	id-keep++
-	newImage = id: id-keep
+	newImage = do
+		id: id-keep
+		isRendered: false
 	Images.push newImage
+	renderImage newImage
 	newImage
 
-deleteImage = (index) ->
-	console.log 'DELETE IMAGE'
+deleteImage = (image) ->
+	index = Images.indexOf image
+	Images.splice index, 1
+
+renderImage = (image) ->
+	console.log 'RENDER IMAGE'
+	
+	setTimeout ->
+		image.isRendered = true
+		console.log 'IMAGE IS RENDERED!'
+		ImageStore.emitChange!
+	, 1000
+
 
 
 # Create Image Store
 ImageStore = assign {}, EventEmitter.prototype, do
-	
-	getAll: -> Images
-	getById: -> find (.id), Images
 
-	emitChange: -> 
-		@emit 'change'
-
+	emitChange: -> @emit 'change'
 	addChangeListener: (cb) -> @on 'change', cb
 	removeChangeListener: (cb) -> @on 'change', cb
+
+	getAll: -> Images
+	getById: -> find (.id), Images
 	
 	dispatcherIndex: AppDispatcher.register (payload) ->
 
 		switch payload.actionType
 
 			case constants.IMAGE_CREATE
-				createImage payload.data
+				newImage = createImage payload.data
 				ImageStore.emitChange!
 
 			case constants.IMAGE_DELETE
 				deleteImage payload.data
+				ImageStore.emitChange!
+
+			case constants.IMAGE_UPDATE
+				console.log('UPDATE THIS IMAGE', payload)
 				ImageStore.emitChange!
 
 

@@ -1,29 +1,28 @@
 require! react:React
-require! '../stores/ImageStore.ls'
-require! '../actions/ImageActions.ls'
+require! <[
+	../stores/ImageStore.ls
+	../actions/ImageActions.ls
+	../components/sidebar.ls
+	../components/header.ls
+	../components/imagePreview.ls
+	../common/globalEvents.ls
+]>
 
 d = React.DOM
-
-getState = ->
-	items: ImageStore.getAll!
-
-createItem = !->
-	ImageActions.createImage test: 'testing'
-
 
 App = React.createClass do
 
 	displayName : 'App'
-	getInitialState: -> getState!
-	onChange: -> @setState getState!
-	componentDidMount: -> ImageStore.addChangeListener @onChange
-	componentWillUnmount: -> ImageStore.removeChangeListener @onChange
 
 	render: ->
-		name = @props.name || \World
-		d.div null,
-			d.h1 null, "HELLO #name"
-			d.button onClick: createItem, "CREATE ITEM"
-			d.h2 null, @state.items.length
+
+		setTimeout ->
+			globalEvents.emit 'showPreview', 'TESTING!'
+		, 2000
+
+		d.div id: 'main-inner',
+			header!
+			sidebar!
+			imagePreview!
 
 module.exports = App
