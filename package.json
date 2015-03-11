@@ -12,6 +12,7 @@
     "liveify": "^2.0.0",
     "livescript": "0.0.1",
     "napa": "^1.2.0",
+    "object-assign": "^2.0.0",
     "prelude-ls": "^1.1.1",
     "react": "^0.12.2",
     "watchify": "^2.3.0"
