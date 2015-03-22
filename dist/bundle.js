@@ -1,351 +1,4612 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({"/Users/jonyardley/Development/AstroView/node_modules/flux/index.js":[function(require,module,exports){
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /**
- * Copyright (c) 2014, Facebook, Inc.
- * All rights reserved.
+ * Baobab Default Options
+ * =======================
  *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
  */
+module.exports = {
 
-module.exports.Dispatcher = require('./lib/Dispatcher')
+  // Should the tree handle its transactions on its own?
+  autoCommit: true,
 
-},{"./lib/Dispatcher":"/Users/jonyardley/Development/AstroView/node_modules/flux/lib/Dispatcher.js"}],"/Users/jonyardley/Development/AstroView/node_modules/flux/lib/Dispatcher.js":[function(require,module,exports){
-/*
- * Copyright (c) 2014, Facebook, Inc.
- * All rights reserved.
- *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- *
- * @providesModule Dispatcher
- * @typechecks
- */
+  // Should the transactions be handled asynchronously?
+  asynchronous: true,
 
-"use strict";
+  // Should the tree clone data when giving it back to the user?
+  clone: false,
 
-var invariant = require('./invariant');
+  // Which cloning function should the tree use?
+  cloningFunction: null,
 
-var _lastID = 1;
-var _prefix = 'ID_';
+  // Should cursors be singletons?
+  cursorSingletons: true,
 
-/**
- * Dispatcher is used to broadcast payloads to registered callbacks. This is
- * different from generic pub-sub systems in two ways:
- *
- *   1) Callbacks are not subscribed to particular events. Every payload is
- *      dispatched to every registered callback.
- *   2) Callbacks can be deferred in whole or part until other callbacks have
- *      been executed.
- *
- * For example, consider this hypothetical flight destination form, which
- * selects a default city when a country is selected:
- *
- *   var flightDispatcher = new Dispatcher();
- *
- *   // Keeps track of which country is selected
- *   var CountryStore = {country: null};
- *
- *   // Keeps track of which city is selected
- *   var CityStore = {city: null};
- *
- *   // Keeps track of the base flight price of the selected city
- *   var FlightPriceStore = {price: null}
- *
- * When a user changes the selected city, we dispatch the payload:
- *
- *   flightDispatcher.dispatch({
- *     actionType: 'city-update',
- *     selectedCity: 'paris'
- *   });
- *
- * This payload is digested by `CityStore`:
- *
- *   flightDispatcher.register(function(payload) {
- *     if (payload.actionType === 'city-update') {
- *       CityStore.city = payload.selectedCity;
- *     }
- *   });
- *
- * When the user selects a country, we dispatch the payload:
- *
- *   flightDispatcher.dispatch({
- *     actionType: 'country-update',
- *     selectedCountry: 'australia'
- *   });
- *
- * This payload is digested by both stores:
- *
- *    CountryStore.dispatchToken = flightDispatcher.register(function(payload) {
- *     if (payload.actionType === 'country-update') {
- *       CountryStore.country = payload.selectedCountry;
- *     }
- *   });
- *
- * When the callback to update `CountryStore` is registered, we save a reference
- * to the returned token. Using this token with `waitFor()`, we can guarantee
- * that `CountryStore` is updated before the callback that updates `CityStore`
- * needs to query its data.
- *
- *   CityStore.dispatchToken = flightDispatcher.register(function(payload) {
- *     if (payload.actionType === 'country-update') {
- *       // `CountryStore.country` may not be updated.
- *       flightDispatcher.waitFor([CountryStore.dispatchToken]);
- *       // `CountryStore.country` is now guaranteed to be updated.
- *
- *       // Select the default city for the new country
- *       CityStore.city = getDefaultCityForCountry(CountryStore.country);
- *     }
- *   });
- *
- * The usage of `waitFor()` can be chained, for example:
- *
- *   FlightPriceStore.dispatchToken =
- *     flightDispatcher.register(function(payload) {
- *       switch (payload.actionType) {
- *         case 'country-update':
- *           flightDispatcher.waitFor([CityStore.dispatchToken]);
- *           FlightPriceStore.price =
- *             getFlightPriceStore(CountryStore.country, CityStore.city);
- *           break;
- *
- *         case 'city-update':
- *           FlightPriceStore.price =
- *             FlightPriceStore(CountryStore.country, CityStore.city);
- *           break;
- *     }
- *   });
- *
- * The `country-update` payload will be guaranteed to invoke the stores'
- * registered callbacks in order: `CountryStore`, `CityStore`, then
- * `FlightPriceStore`.
- */
+  // Maximum records in the tree's history
+  maxHistory: 0,
 
-  function Dispatcher() {
-    this.$Dispatcher_callbacks = {};
-    this.$Dispatcher_isPending = {};
-    this.$Dispatcher_isHandled = {};
-    this.$Dispatcher_isDispatching = false;
-    this.$Dispatcher_pendingPayload = null;
-  }
+  // Collection of react mixins to merge with the tree's ones
+  mixins: [],
 
-  /**
-   * Registers a callback to be invoked with every dispatched payload. Returns
-   * a token that can be used with `waitFor()`.
-   *
-   * @param {function} callback
-   * @return {string}
-   */
-  Dispatcher.prototype.register=function(callback) {
-    var id = _prefix + _lastID++;
-    this.$Dispatcher_callbacks[id] = callback;
-    return id;
-  };
+  // Should the tree shift its internal reference when applying mutations?
+  shiftReferences: false,
 
-  /**
-   * Removes a callback based on its token.
-   *
-   * @param {string} id
-   */
-  Dispatcher.prototype.unregister=function(id) {
-    invariant(
-      this.$Dispatcher_callbacks[id],
-      'Dispatcher.unregister(...): `%s` does not map to a registered callback.',
-      id
-    );
-    delete this.$Dispatcher_callbacks[id];
-  };
+  // Custom typology object to use along with the validation utilities
+  typology: null,
 
-  /**
-   * Waits for the callbacks specified to be invoked before continuing execution
-   * of the current callback. This method should only be used by a callback in
-   * response to a dispatched payload.
-   *
-   * @param {array<string>} ids
-   */
-  Dispatcher.prototype.waitFor=function(ids) {
-    invariant(
-      this.$Dispatcher_isDispatching,
-      'Dispatcher.waitFor(...): Must be invoked while dispatching.'
-    );
-    for (var ii = 0; ii < ids.length; ii++) {
-      var id = ids[ii];
-      if (this.$Dispatcher_isPending[id]) {
-        invariant(
-          this.$Dispatcher_isHandled[id],
-          'Dispatcher.waitFor(...): Circular dependency detected while ' +
-          'waiting for `%s`.',
-          id
-        );
-        continue;
-      }
-      invariant(
-        this.$Dispatcher_callbacks[id],
-        'Dispatcher.waitFor(...): `%s` does not map to a registered callback.',
-        id
-      );
-      this.$Dispatcher_invokeCallback(id);
-    }
-  };
-
-  /**
-   * Dispatches a payload to all registered callbacks.
-   *
-   * @param {object} payload
-   */
-  Dispatcher.prototype.dispatch=function(payload) {
-    invariant(
-      !this.$Dispatcher_isDispatching,
-      'Dispatch.dispatch(...): Cannot dispatch in the middle of a dispatch.'
-    );
-    this.$Dispatcher_startDispatching(payload);
-    try {
-      for (var id in this.$Dispatcher_callbacks) {
-        if (this.$Dispatcher_isPending[id]) {
-          continue;
-        }
-        this.$Dispatcher_invokeCallback(id);
-      }
-    } finally {
-      this.$Dispatcher_stopDispatching();
-    }
-  };
-
-  /**
-   * Is this Dispatcher currently dispatching.
-   *
-   * @return {boolean}
-   */
-  Dispatcher.prototype.isDispatching=function() {
-    return this.$Dispatcher_isDispatching;
-  };
-
-  /**
-   * Call the callback stored with the given id. Also do some internal
-   * bookkeeping.
-   *
-   * @param {string} id
-   * @internal
-   */
-  Dispatcher.prototype.$Dispatcher_invokeCallback=function(id) {
-    this.$Dispatcher_isPending[id] = true;
-    this.$Dispatcher_callbacks[id](this.$Dispatcher_pendingPayload);
-    this.$Dispatcher_isHandled[id] = true;
-  };
-
-  /**
-   * Set up bookkeeping needed when dispatching.
-   *
-   * @param {object} payload
-   * @internal
-   */
-  Dispatcher.prototype.$Dispatcher_startDispatching=function(payload) {
-    for (var id in this.$Dispatcher_callbacks) {
-      this.$Dispatcher_isPending[id] = false;
-      this.$Dispatcher_isHandled[id] = false;
-    }
-    this.$Dispatcher_pendingPayload = payload;
-    this.$Dispatcher_isDispatching = true;
-  };
-
-  /**
-   * Clear bookkeeping used for dispatching.
-   *
-   * @internal
-   */
-  Dispatcher.prototype.$Dispatcher_stopDispatching=function() {
-    this.$Dispatcher_pendingPayload = null;
-    this.$Dispatcher_isDispatching = false;
-  };
-
-
-module.exports = Dispatcher;
-
-},{"./invariant":"/Users/jonyardley/Development/AstroView/node_modules/flux/lib/invariant.js"}],"/Users/jonyardley/Development/AstroView/node_modules/flux/lib/invariant.js":[function(require,module,exports){
-/**
- * Copyright (c) 2014, Facebook, Inc.
- * All rights reserved.
- *
- * This source code is licensed under the BSD-style license found in the
- * LICENSE file in the root directory of this source tree. An additional grant
- * of patent rights can be found in the PATENTS file in the same directory.
- *
- * @providesModule invariant
- */
-
-"use strict";
-
-/**
- * Use invariant() to assert state which your program assumes to be true.
- *
- * Provide sprintf-style format (only %s is supported) and arguments
- * to provide information about what broke and what you were
- * expecting.
- *
- * The invariant message will be stripped in production, but the invariant
- * will remain to ensure logic does not differ in production.
- */
-
-var invariant = function(condition, format, a, b, c, d, e, f) {
-  if (false) {
-    if (format === undefined) {
-      throw new Error('invariant requires an error message argument');
-    }
-  }
-
-  if (!condition) {
-    var error;
-    if (format === undefined) {
-      error = new Error(
-        'Minified exception occurred; use the non-minified dev environment ' +
-        'for the full error message and additional helpful warnings.'
-      );
-    } else {
-      var args = [a, b, c, d, e, f];
-      var argIndex = 0;
-      error = new Error(
-        'Invariant Violation: ' +
-        format.replace(/%s/g, function() { return args[argIndex++]; })
-      );
-    }
-
-    error.framesToPop = 1; // we don't care about invariant's own frame
-    throw error;
-  }
+  // Validation specifications
+  validate: null
 };
 
-module.exports = invariant;
+},{}],2:[function(require,module,exports){
+/**
+ * Baobab Public Interface
+ * ========================
+ *
+ * Exposes the main library classes.
+ */
+var Baobab = require('./src/baobab.js'),
+    helpers = require('./src/helpers.js');
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/object-assign/index.js":[function(require,module,exports){
-'use strict';
+// Non-writable version
+Object.defineProperty(Baobab, 'version', {
+  value: '0.4.2'
+});
 
-function ToObject(val) {
-	if (val == null) {
-		throw new TypeError('Object.assign cannot be called with null or undefined');
-	}
+// Exposing helpers
+Baobab.getIn = helpers.getIn;
 
-	return Object(val);
+// Exporting
+module.exports = Baobab;
+
+},{"./src/baobab.js":5,"./src/helpers.js":8}],3:[function(require,module,exports){
+(function() {
+  'use strict';
+
+  /**
+   * Here is the list of every allowed parameter when using Emitter#on:
+   * @type {Object}
+   */
+  var __allowedOptions = {
+    once: 'boolean',
+    scope: 'object'
+  };
+
+
+  /**
+   * The emitter's constructor. It initializes the handlers-per-events store and
+   * the global handlers store.
+   *
+   * Emitters are useful for non-DOM events communication. Read its methods
+   * documentation for more information about how it works.
+   *
+   * @return {Emitter}         The fresh new instance.
+   */
+  var Emitter = function() {
+    this._enabled = true;
+    this._children = [];
+    this._handlers = {};
+    this._handlersAll = [];
+  };
+
+
+  /**
+   * This method binds one or more functions to the emitter, handled to one or a
+   * suite of events. So, these functions will be executed anytime one related
+   * event is emitted.
+   *
+   * It is also possible to bind a function to any emitted event by not
+   * specifying any event to bind the function to.
+   *
+   * Recognized options:
+   * *******************
+   *  - {?boolean} once   If true, the handlers will be unbound after the first
+   *                      execution. Default value: false.
+   *  - {?object}  scope  If a scope is given, then the listeners will be called
+   *                      with this scope as "this".
+   *
+   * Variant 1:
+   * **********
+   * > myEmitter.on('myEvent', function(e) { console.log(e); });
+   * > // Or:
+   * > myEmitter.on('myEvent', function(e) { console.log(e); }, { once: true });
+   *
+   * @param  {string}   event   The event to listen to.
+   * @param  {function} handler The function to bind.
+   * @param  {?object}  options Eventually some options.
+   * @return {Emitter}          Returns this.
+   *
+   * Variant 2:
+   * **********
+   * > myEmitter.on(
+   * >   ['myEvent1', 'myEvent2'],
+   * >   function(e) { console.log(e); }
+   * >);
+   * > // Or:
+   * > myEmitter.on(
+   * >   ['myEvent1', 'myEvent2'],
+   * >   function(e) { console.log(e); }
+   * >   { once: true }}
+   * >);
+   *
+   * @param  {array}    events  The events to listen to.
+   * @param  {function} handler The function to bind.
+   * @param  {?object}  options Eventually some options.
+   * @return {Emitter}          Returns this.
+   *
+   * Variant 3:
+   * **********
+   * > myEmitter.on({
+   * >   myEvent1: function(e) { console.log(e); },
+   * >   myEvent2: function(e) { console.log(e); }
+   * > });
+   * > // Or:
+   * > myEmitter.on({
+   * >   myEvent1: function(e) { console.log(e); },
+   * >   myEvent2: function(e) { console.log(e); }
+   * > }, { once: true });
+   *
+   * @param  {object}  bindings An object containing pairs event / function.
+   * @param  {?object}  options Eventually some options.
+   * @return {Emitter}          Returns this.
+   *
+   * Variant 4:
+   * **********
+   * > myEmitter.on(function(e) { console.log(e); });
+   * > // Or:
+   * > myEmitter.on(function(e) { console.log(e); }, { once: true});
+   *
+   * @param  {function} handler The function to bind to every events.
+   * @param  {?object}  options Eventually some options.
+   * @return {Emitter}          Returns this.
+   */
+  Emitter.prototype.on = function(a, b, c) {
+    var i,
+        l,
+        k,
+        event,
+        eArray,
+        bindingObject;
+
+    // Variant 1 and 2:
+    if (typeof b === 'function') {
+      eArray = typeof a === 'string' ?
+        [a] :
+        a;
+
+      for (i = 0, l = eArray.length; i !== l; i += 1) {
+        event = eArray[i];
+
+        // Check that event is not '':
+        if (!event)
+          continue;
+
+        if (!this._handlers[event])
+          this._handlers[event] = [];
+
+        bindingObject = {
+          handler: b
+        };
+
+        for (k in c || {})
+          if (__allowedOptions[k])
+            bindingObject[k] = c[k];
+          else
+            throw new Error(
+              'The option "' + k + '" is not recognized by Emmett.'
+            );
+
+        this._handlers[event].push(bindingObject);
+      }
+
+    // Variant 3:
+    } else if (a && typeof a === 'object' && !Array.isArray(a))
+      for (event in a)
+        Emitter.prototype.on.call(this, event, a[event], b);
+
+    // Variant 4:
+    else if (typeof a === 'function') {
+      bindingObject = {
+        handler: a
+      };
+
+      for (k in c || {})
+        if (__allowedOptions[k])
+          bindingObject[k] = c[k];
+        else
+          throw new Error(
+            'The option "' + k + '" is not recognized by Emmett.'
+          );
+
+      this._handlersAll.push(bindingObject);
+    }
+
+    // No matching variant:
+    else
+      throw new Error('Wrong arguments.');
+
+    return this;
+  };
+
+
+  /**
+   * This method works exactly as the previous #on, but will add an options
+   * object if none is given, and set the option "once" to true.
+   *
+   * The polymorphism works exactly as with the #on method.
+   */
+  Emitter.prototype.once = function(a, b, c) {
+    // Variant 1 and 2:
+    if (typeof b === 'function') {
+      c = c || {};
+      c.once = true;
+      this.on(a, b, c);
+
+    // Variants 3 and 4:
+    } else if (
+      // Variant 3:
+      (a && typeof a === 'object' && !Array.isArray(a)) ||
+      // Variant 4:
+      (typeof a === 'function')
+    ) {
+      b = b || {};
+      b.once = true;
+      this.on(a, b);
+
+    // No matching variant:
+    } else
+      throw new Error('Wrong arguments.');
+
+    return this;
+  };
+
+
+  /**
+   * This method unbinds one or more functions from events of the emitter. So,
+   * these functions will no more be executed when the related events are
+   * emitted. If the functions were not bound to the events, nothing will
+   * happen, and no error will be thrown.
+   *
+   * Variant 1:
+   * **********
+   * > myEmitter.off('myEvent', myHandler);
+   *
+   * @param  {string}   event   The event to unbind the handler from.
+   * @param  {function} handler The function to unbind.
+   * @return {Emitter}          Returns this.
+   *
+   * Variant 2:
+   * **********
+   * > myEmitter.off(['myEvent1', 'myEvent2'], myHandler);
+   *
+   * @param  {array}    events  The events to unbind the handler from.
+   * @param  {function} handler The function to unbind.
+   * @return {Emitter}          Returns this.
+   *
+   * Variant 3:
+   * **********
+   * > myEmitter.off({
+   * >   myEvent1: myHandler1,
+   * >   myEvent2: myHandler2
+   * > });
+   *
+   * @param  {object} bindings An object containing pairs event / function.
+   * @return {Emitter}         Returns this.
+   *
+   * Variant 4:
+   * **********
+   * > myEmitter.off(myHandler);
+   *
+   * @param  {function} handler The function to unbind from every events.
+   * @return {Emitter}          Returns this.
+   */
+  Emitter.prototype.off = function(events, handler) {
+    var i,
+        n,
+        j,
+        m,
+        k,
+        a,
+        event,
+        eArray = typeof events === 'string' ?
+          [events] :
+          events;
+
+    if (arguments.length === 1 && typeof eArray === 'function') {
+      handler = arguments[0];
+
+      // Handlers bound to events:
+      for (k in this._handlers) {
+        a = [];
+        for (i = 0, n = this._handlers[k].length; i !== n; i += 1)
+          if (this._handlers[k][i].handler !== handler)
+            a.push(this._handlers[k][i]);
+        this._handlers[k] = a;
+      }
+
+      a = [];
+      for (i = 0, n = this._handlersAll.length; i !== n; i += 1)
+        if (this._handlersAll[i].handler !== handler)
+          a.push(this._handlersAll[i]);
+      this._handlersAll = a;
+    }
+
+    else if (arguments.length === 2) {
+      for (i = 0, n = eArray.length; i !== n; i += 1) {
+        event = eArray[i];
+        if (this._handlers[event]) {
+          a = [];
+          for (j = 0, m = this._handlers[event].length; j !== m; j += 1)
+            if (this._handlers[event][j].handler !== handler)
+              a.push(this._handlers[event][j]);
+
+          this._handlers[event] = a;
+        }
+
+        if (this._handlers[event] && this._handlers[event].length === 0)
+          delete this._handlers[event];
+      }
+    }
+
+    return this;
+  };
+
+
+  /**
+   * This method unbinds every handlers attached to every or any events. So,
+   * these functions will no more be executed when the related events are
+   * emitted. If the functions were not bound to the events, nothing will
+   * happen, and no error will be thrown.
+   *
+   * Usage:
+   * ******
+   * > myEmitter.unbindAll();
+   *
+   * @return {Emitter}      Returns this.
+   */
+  Emitter.prototype.unbindAll = function() {
+    var k;
+
+    this._handlersAll = [];
+    for (k in this._handlers)
+      delete this._handlers[k];
+
+    return this;
+  };
+
+
+  /**
+   * This method emits the specified event(s), and executes every handlers bound
+   * to the event(s).
+   *
+   * Use cases:
+   * **********
+   * > myEmitter.emit('myEvent');
+   * > myEmitter.emit('myEvent', myData);
+   * > myEmitter.emit(['myEvent1', 'myEvent2']);
+   * > myEmitter.emit(['myEvent1', 'myEvent2'], myData);
+   *
+   * @param  {string|array} events The event(s) to emit.
+   * @param  {object?}      data   The data.
+   * @return {Emitter}             Returns this.
+   */
+  Emitter.prototype.emit = function(events, data) {
+    var i,
+        n,
+        j,
+        m,
+        z,
+        a,
+        event,
+        child,
+        handlers,
+        eventName,
+        self = this,
+        eArray = typeof events === 'string' ?
+          [events] :
+          events;
+
+    // Check that the emitter is enabled:
+    if (!this._enabled)
+      return this;
+
+    data = data === undefined ? {} : data;
+
+    for (i = 0, n = eArray.length; i !== n; i += 1) {
+      eventName = eArray[i];
+      handlers = (this._handlers[eventName] || []).concat(this._handlersAll);
+
+      if (handlers.length) {
+        event = {
+          type: eventName,
+          data: data || {},
+          target: this
+        };
+        a = [];
+
+        for (j = 0, m = handlers.length; j !== m; j += 1) {
+
+          // We have to verify that the handler still exists in the array,
+          // as it might have been mutated already
+          if (
+            (
+              this._handlers[eventName] &&
+              this._handlers[eventName].indexOf(handlers[j]) >= 0
+            ) ||
+            this._handlersAll.indexOf(handlers[j]) >= 0
+          ) {
+            handlers[j].handler.call(
+              'scope' in handlers[j] ? handlers[j].scope : this,
+              event
+            );
+
+            // Since the listener callback can mutate the _handlers,
+            // we register the handlers we want to remove, not the ones
+            // we want to keep
+            if (handlers[j].once)
+              a.push(handlers[j]);
+          }
+        }
+
+        // Go through handlers to remove
+        for (z = 0; z < a.length; z++) {
+          this._handlers[eventName].splice(a.indexOf(a[z]), 1);
+        }
+      }
+    }
+
+    // Events propagation:
+    for (i = 0, n = this._children.length; i !== n; i += 1) {
+      child = this._children[i];
+      child.emit.apply(child, arguments);
+    }
+
+    return this;
+  };
+
+
+  /**
+   * This method creates a new instance of Emitter and binds it as a child. Here
+   * is what children do:
+   *  - When the parent emits an event, the children will emit the same later
+   *  - When a child is killed, it is automatically unreferenced from the parent
+   *  - When the parent is killed, all children will be killed as well
+   *
+   * @return {Emitter} Returns the fresh new child.
+   */
+  Emitter.prototype.child = function() {
+    var self = this,
+        child = new Emitter();
+
+    child.on('emmett:kill', function() {
+      if (self._children)
+        for (var i = 0, l = self._children.length; i < l; i++)
+          if (self._children[i] === child) {
+            self._children.splice(i, 1);
+            break;
+          }
+    });
+    this._children.push(child);
+
+    return child;
+  };
+
+  /**
+   * This returns an array of handler functions corresponding to the given
+   * event or every handler functions if an event were not to be given.
+   *
+   * @param  {?string} event Name of the event.
+   * @return {Emitter} Returns this.
+   */
+  function mapHandlers(a) {
+    var i, l, h = [];
+
+    for (i = 0, l = a.length; i < l; i++)
+      h.push(a[i].handler);
+
+    return h;
+  }
+
+  Emitter.prototype.listeners = function(event) {
+    var handlers = [],
+        k,
+        i,
+        l;
+
+    // If no event is passed, we return every handlers
+    if (!event) {
+      handlers = mapHandlers(this._handlersAll);
+
+      for (k in this._handlers)
+        handlers = handlers.concat(mapHandlers(this._handlers[k]));
+
+      // Retrieving handlers per children
+      for (i = 0, l = this._children.length; i < l; i++)
+        handlers = handlers.concat(this._children[i].listeners());
+    }
+
+    // Else we only retrieve the needed handlers
+    else {
+      handlers = mapHandlers(this._handlers[event]);
+
+      // Retrieving handlers per children
+      for (i = 0, l = this._children.length; i < l; i++)
+        handlers = handlers.concat(this._children[i].listeners(event));
+    }
+
+    return handlers;
+  };
+
+
+  /**
+   * This method will first dispatch a "emmett:kill" event, and then unbinds all
+   * listeners and make it impossible to ever rebind any listener to any event.
+   */
+  Emitter.prototype.kill = function() {
+    this.emit('emmett:kill');
+
+    this.unbindAll();
+    this._handlers = null;
+    this._handlersAll = null;
+    this._enabled = false;
+
+    if (this._children)
+      for (var i = 0, l = this._children.length; i < l; i++)
+        this._children[i].kill();
+
+    this._children = null;
+  };
+
+
+  /**
+   * This method disabled the emitter, which means its emit method will do
+   * nothing.
+   *
+   * @return {Emitter} Returns this.
+   */
+  Emitter.prototype.disable = function() {
+    this._enabled = false;
+
+    return this;
+  };
+
+
+  /**
+   * This method enables the emitter.
+   *
+   * @return {Emitter} Returns this.
+   */
+  Emitter.prototype.enable = function() {
+    this._enabled = true;
+
+    return this;
+  };
+
+
+  /**
+   * Version:
+   */
+  Emitter.version = '2.1.2';
+
+
+  // Export:
+  if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports)
+      exports = module.exports = Emitter;
+    exports.Emitter = Emitter;
+  } else if (typeof define === 'function' && define.amd)
+    define('emmett', [], function() {
+      return Emitter;
+    });
+  else
+    this.Emitter = Emitter;
+}).call(this);
+
+},{}],4:[function(require,module,exports){
+/**
+ * typology.js - A data validation library for Node.js and the browser,
+ *
+ * Version: 0.3.1
+ * Sources: http://github.com/jacomyal/typology
+ * Doc:     http://github.com/jacomyal/typology#readme
+ *
+ * License:
+ * --------
+ * Copyright © 2014 Alexis Jacomy (@jacomyal), Guillaume Plique (@Yomguithereal)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * The Software is provided "as is", without warranty of any kind, express or
+ * implied, including but not limited to the warranties of merchantability,
+ * fitness for a particular purpose and noninfringement. In no event shall the
+ * authors or copyright holders be liable for any claim, damages or other
+ * liability, whether in an action of contract, tort or otherwise, arising
+ * from, out of or in connection with the software or the use or other dealings
+ * in the Software.
+ */
+(function(global) {
+  'use strict';
+
+  /**
+   * Code conventions:
+   * *****************
+   *  - 80 characters max per line
+   *  - Write "__myVar" for any global private variable
+   *  - Write "_myVar" for any instance private variable
+   *  - Write "myVar" any local variable
+   */
+
+
+
+  /**
+   * PRIVATE GLOBALS:
+   * ****************
+   */
+
+  /**
+   * This object is a dictionnary that maps "[object Something]" strings to the
+   * typology form "something":
+   */
+  var __class2type = {};
+
+  /**
+   * This array is the list of every types considered native by typology:
+   */
+  var __nativeTypes = ['*'];
+
+  (function() {
+    var k,
+        className,
+        classes = [
+          'Arguments',
+          'Boolean',
+          'Number',
+          'String',
+          'Function',
+          'Array',
+          'Date',
+          'RegExp',
+          'Object'
+        ];
+
+    // Fill types
+    for (k in classes) {
+      className = classes[k];
+      __nativeTypes.push(className.toLowerCase());
+      __class2type['[object ' + className + ']'] = className.toLowerCase();
+    }
+  })();
+
+
+
+  /**
+   * CONSTRUCTOR:
+   * ************
+   */
+  function Typology(defs) {
+    /**
+     * INSTANCE PRIVATES:
+     * ******************
+     */
+
+    var _self = this;
+
+    /**
+     * This objects will contain every instance-specific custom types:
+     */
+    var _customTypes = {};
+
+    /**
+     * This function will recursively scan an object to check wether or not it
+     * matches a given type. It will return null if it matches, and an Error
+     * object else.
+     *
+     * Examples:
+     * *********
+     * 1. When the type matches:
+     *  > _scan('abc', 'string');
+     *  will return null.
+     *
+     * 2. When a top-level type does not match:
+     *  > _scan('abc', 'number');
+     *  will return an Error object with the following information:
+     *   - message: Expected a "number" but found a "string".
+     *
+     * 3. When a sub-object type does not its type:
+     *  > _scan({ a: 'abc' }, { a: 'number' });
+     *  will return an Error object with the following information:
+     *   - message: Expected a "number" but found a "string".
+     *   - path: [ 'a' ]
+     *
+     * 4. When a deep sub-object type does not its type:
+     *  > _scan({ a: [ 123, 'abc' ] }, { a: ['number'] });
+     *  will return an Error object with the following information:
+     *   - message: Expected a "number" but found a "string".
+     *   - path: [ 'a', 1 ]
+     *
+     * 5. When a required key is missing:
+     *  > _scan({}, { a: 'number' });
+     *  will return an Error object with the following information:
+     *   - message: Expected a "number" but found a "undefined".
+     *   - path: [ 'a' ]
+     *
+     * 6. When an unexpected key is present:
+     *  > _scan({ a: 123, b: 456 }, { a: 'number' });
+     *  will return an Error object with the following information:
+     *   - message: Unexpected key "b".
+     *
+     * @param  {*}      obj  The value to validate.
+     * @param  {type}   type The type.
+     * @return {?Error}      Returns null or an Error object.
+     */
+    function _scan(obj, type) {
+      var a,
+          i,
+          l,
+          k,
+          error,
+          subError,
+          hasStar,
+          hasTypeOf,
+          optional = false,
+          exclusive = false,
+          typeOf = _self.get(obj);
+
+      if (_self.get(type) === 'string') {
+        a = type.replace(/^[\?\!]/, '').split(/\|/);
+        l = a.length;
+        for (i = 0; i < l; i++)
+          if (__nativeTypes.indexOf(a[i]) < 0 && !(a[i] in _customTypes))
+            throw new Error('Invalid type.');
+
+        if (type.match(/^\?/))
+          optional = true;
+
+        if (type.replace(/^\?/, '').match(/^\!/))
+          exclusive = true;
+
+        if (exclusive && optional)
+          throw new Error('Invalid type.');
+
+        for (i in a)
+          if (_customTypes[a[i]])
+            if (
+              (typeof _customTypes[a[i]].type === 'function') ?
+                (_customTypes[a[i]].type.call(_self, obj) === true) :
+                !_scan(obj, _customTypes[a[i]].type)
+            ) {
+              if (exclusive) {
+                error = new Error();
+                error.message = 'Expected a "' + type + '" but found a ' +
+                                '"' + a[i] + '".';
+              error.expected = type;
+              error.type = a[i];
+              error.value = obj;
+                return error;
+              } else
+                return null;
+            }
+
+        if (obj === null || obj === undefined) {
+          if (!exclusive && !optional) {
+            error = new Error();
+            error.message = 'Expected a "' + type + '" but found a ' +
+                            '"' + typeOf + '".';
+            error.expected = type;
+            error.type = typeOf;
+            error.value = obj;
+            return error;
+          } else
+            return null;
+
+        } else {
+          hasStar = ~a.indexOf('*');
+          hasTypeOf = ~a.indexOf(typeOf);
+          if (exclusive && (hasStar || hasTypeOf)) {
+            error = new Error();
+            error.message = 'Expected a "' + type + '" but found a ' +
+                            '"' + (hasTypeOf ? typeOf : '*') + '".';
+            error.type = hasTypeOf ? typeOf : '*';
+            error.expected = type;
+            error.value = obj;
+            return error;
+
+          } else if (!exclusive && !(hasStar || hasTypeOf)) {
+            error = new Error();
+            error.message = 'Expected a "' + type + '" but found a ' +
+                            '"' + typeOf + '".';
+            error.expected = type;
+            error.type = typeOf;
+            error.value = obj;
+            return error;
+
+          } else
+            return null;
+        }
+
+      } else if (_self.get(type) === 'object') {
+        if (typeOf !== 'object') {
+          error = new Error();
+          error.message = 'Expected an object but found a "' + typeOf + '".';
+          error.expected = type;
+          error.type = typeOf;
+          error.value = obj;
+          return error;
+        }
+
+        for (k in type)
+          if ((subError = _scan(obj[k], type[k]))) {
+            error = subError;
+            error.path = error.path ?
+              [k].concat(error.path) :
+              [k];
+            return error;
+          }
+
+        for (k in obj)
+          if (type[k] === undefined) {
+            error = new Error();
+            error.message = 'Unexpected key "' + k + '".';
+            error.type = typeOf;
+            error.value = obj;
+            return error;
+          }
+
+        return null;
+
+      } else if (_self.get(type) === 'array') {
+        if (type.length !== 1)
+          throw new Error('Invalid type.');
+
+        if (typeOf !== 'array') {
+          error = new Error();
+          error.message = 'Expected an array but found a "' + typeOf + '".';
+          error.expected = type;
+          error.type = typeOf;
+          error.value = obj;
+          return error;
+        }
+
+        l = obj.length;
+        for (i = 0; i < l; i++)
+          if ((subError = _scan(obj[i], type[0]))) {
+            error = subError;
+            error.path = error.path ?
+              [i].concat(error.path) :
+              [i];
+            return error;
+          }
+
+        return null;
+      } else
+        throw new Error('Invalid type.');
+    }
+
+
+
+    /**
+     * INSTANCE METHODS:
+     * *****************
+     */
+
+    /**
+     * This method registers a custom type into the Typology instance. A type
+     * is registered under a unique name, and is described by an object (like
+     * classical C structures) or a function.
+     *
+     * Variant 1:
+     * **********
+     * > types.add('user', { id: 'string', name: '?string' });
+     *
+     * @param  {string}   id   The unique id of the type.
+     * @param  {object}   type The corresponding structure.
+     * @return {Typology}      Returns this.
+     *
+     * Variant 2:
+     * **********
+     * > types.add('integer', function(value) {
+     * >   return typeof value === 'number' && value === value | 0;
+     * > });
+     *
+     * @param  {string}   id   The unique id of the type.
+     * @param  {function} type The function validating the type.
+     * @return {Typology}      Returns this.
+     *
+     * Variant 3:
+     * **********
+     * > types.add({
+     * >   id: 'user',
+     * >   type: { id: 'string', name: '?string' }
+     * > });
+     *
+     * > types.add({
+     * >   id: 'integer',
+     * >   type: function(value) {
+     * >     return typeof value === 'number' && value === value | 0;
+     * >   }
+     * > });
+     *
+     * @param  {object}   specs An object describing fully the type.
+     * @return {Typology}       Returns this.
+     *
+     * Recognized parameters:
+     * **********************
+     * Here is the exhaustive list of every accepted parameters in the specs
+     * object:
+     *
+     *   {string}          id    The unique id of the type.
+     *   {function|object} type  The function or the structure object
+     *                           validating the type.
+     *   {?[string]}       proto Eventually an array of ids of types that are
+     *                           referenced in the structure but do not exist
+     *                           yet.
+     */
+    this.add = function(a1, a2) {
+      var o,
+          k,
+          a,
+          id,
+          tmp,
+          type;
+
+      // Polymorphism:
+      if (arguments.length === 1) {
+        if (this.get(a1) === 'object') {
+          o = a1;
+          id = o.id;
+          type = o.type;
+        } else
+          throw new Error('If types.add is called with one argument, ' +
+                          'this one has to be an object.');
+      } else if (arguments.length === 2) {
+        if (typeof a1 !== 'string' || !a1)
+          throw new Error('If types.add is called with more than one ' +
+                          'argument, the first one must be the string id.');
+        else
+          id = a1;
+
+        type = a2;
+      } else
+        throw new Error('types.add has to be called ' +
+                        'with one or two arguments.');
+
+      if (this.get(id) !== 'string' || id.length === 0)
+        throw new Error('A type requires an string id.');
+
+      if (_customTypes[id] !== undefined && _customTypes[id] !== 'proto')
+        throw new Error('The type "' + id + '" already exists.');
+
+      if (~__nativeTypes.indexOf(id))
+        throw new Error('"' + id + '" is a reserved type name.');
+
+      _customTypes[id] = 1;
+
+      // Check given prototypes:
+      a = (o || {}).proto || [];
+      a = Array.isArray(a) ? a : [a];
+      tmp = {};
+      for (k in a)
+        if (_customTypes[a[k]] === undefined) {
+          _customTypes[a[k]] = 1;
+          tmp[a[k]] = 1;
+        }
+
+      if ((this.get(type) !== 'function') && !this.isValid(type))
+        throw new Error('A type requires a valid definition. ' +
+                        'This one can be a preexistant type or else ' +
+                        'a function testing given objects.');
+
+      // Effectively add the type:
+      _customTypes[id] = (o === undefined) ?
+        {
+          id: id,
+          type: type
+        } :
+        {};
+
+      if (o !== undefined)
+        for (k in o)
+          _customTypes[id][k] = o[k];
+
+      // Delete prototypes:
+      for (k in tmp)
+        if (k !== id)
+          delete _customTypes[k];
+
+      return this;
+    };
+
+    /**
+     * This method returns true if a custom type is already registered in this
+     * instance under the given key.
+     *
+     * @param  {string}  key A type name.
+     * @return {boolean}     Returns true if the key is registered.
+     */
+    this.has = function(key) {
+      return !!_customTypes[key];
+    };
+
+    /**
+     * This method returns the native type of a given value.
+     *
+     * Examples:
+     * *********
+     * > types.get({ a: 1 }); // returns "object"
+     * > types.get('abcde');  // returns "string"
+     * > types.get(1234567);  // returns "number"
+     * > types.get([1, 2]);   // returns "array"
+     *
+     * @param  {*}      value Anything.
+     * @return {string}       Returns the native type of the value.
+     */
+    this.get = function(obj) {
+      return (obj === null || obj === undefined) ?
+        String(obj) :
+        __class2type[Object.prototype.toString.call(obj)] || 'object';
+    };
+
+    /**
+     * This method validates some value against a given type. If the flag throws
+     * has a truthy value, then the method will throw an error instead of
+     * returning false.
+     *
+     * To know more about the error thrown, you can read the documentation of
+     * the private method _scan.
+     *
+     * Examples:
+     * *********
+     * > types.check({ a: 1 }, 'object');                      // returns true
+     * > types.check({ a: 1 }, { a: 'string' });               // returns true
+     * > types.check({ a: 1 }, { a: 'string', b: '?number' }); // returns true
+     *
+     * > types.check({ a: 1 }, { a: 'string', b: 'number' }); // returns false
+     * > types.check({ a: 1 }, { a: 'number' });              // returns false
+     * > types.check({ a: 1 }, 'array');                      // returns false
+     *
+     * > types.check({ a: 1 }, 'array', true); // throws an Error
+     *
+     * @param  {*}        value  Anything.
+     * @param  {type}     type   A valid type.
+     * @param  {?boolean} throws If true, this method will throw an error
+     *                           instead of returning false.
+     * @return {boolean}         Returns true if the value matches the type, and
+     *                           not else.
+     */
+    this.check = function(obj, type, throws) {
+      var result = _scan(obj, type);
+      if (throws && result)
+        throw result;
+      else
+        return !result;
+    };
+
+    /**
+     * This method validates a type. If the type is not referenced or is not
+     * valid, it will return false.
+     *
+     * To know more about that function, don't hesitate to read the related
+     * unit tests.
+     *
+     * Examples:
+     * *********
+     * > types.isValid('string');        // returns true
+     * > types.isValid('?string');       // returns true
+     * > types.isValid('!string');       // returns true
+     * > types.isValid('string|number'); // returns true
+     * > types.isValid({ a: 'string' }); // returns true
+     * > types.isValid(['string']);      // returns true
+     *
+     * > types.isValid('!?string');                // returns false
+     * > types.isValid('myNotDefinedType');        // returns false
+     * > types.isValid(['myNotDefinedType']);      // returns false
+     * > types.isValid({ a: 'myNotDefinedType' }); // returns false
+     *
+     * > types.isValid('user');               // returns false
+     * > types.add('user', { id: 'string' }); // makes the type become valid
+     * > types.isValid('user');               // returns true
+     *
+     * @param  {*}       type The type to get checked.
+     * @return {boolean}      Returns true if the type is valid, and false else.
+     */
+    this.isValid = function(type) {
+      var a,
+          k,
+          i;
+
+      if (this.get(type) === 'string') {
+        a = type.replace(/^[\?\!]/, '').split(/\|/);
+        for (i in a)
+          if (__nativeTypes.indexOf(a[i]) < 0 && !(a[i] in _customTypes))
+            return false;
+        return true;
+
+      } else if (this.get(type) === 'object') {
+        for (k in type)
+          if (!this.isValid(type[k]))
+            return false;
+        return true;
+
+      } else if (this.get(type) === 'array')
+        return type.length === 1 ?
+          this.isValid(type[0]) :
+          false;
+      else
+        return false;
+    };
+
+
+
+    /**
+     * INSTANTIATION ROUTINE:
+     * **********************
+     */
+
+    // Add a type "type" to shortcut the #isValid method:
+    this.add('type', (function(v) {
+      return this.isValid(v);
+    }).bind(this));
+
+    // Add a type "primitive" to match every primitive types (including null):
+    this.add('primitive', function(v) {
+      return !v || !(v instanceof Object || typeof v === 'object');
+    });
+
+    // Adding custom types at instantiation:
+    defs = defs || {};
+    if (this.get(defs) !== 'object')
+      throw Error('Invalid argument.');
+
+    for (var k in defs)
+      this.add(k, defs[k]);
+  }
+
+
+
+  /**
+   * GLOBAL PUBLIC API:
+   * ******************
+   */
+
+  // Creating a "main" typology instance to export:
+  var types = Typology;
+  Typology.call(types);
+
+  // Version:
+  Object.defineProperty(types, 'version', {
+    value: '0.3.1'
+  });
+
+
+
+  /**
+   * EXPORT:
+   * *******
+   */
+  if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports)
+      exports = module.exports = types;
+    exports.types = types;
+  } else if (typeof define === 'function' && define.amd)
+    define('typology', [], function() {
+      return types;
+    });
+  else
+    this.types = types;
+})(this);
+
+},{}],5:[function(require,module,exports){
+/**
+ * Baobab Data Structure
+ * ======================
+ *
+ * A handy data tree with cursors.
+ */
+var Cursor = require('./cursor.js'),
+    EventEmitter = require('emmett'),
+    Typology = require('typology'),
+    helpers = require('./helpers.js'),
+    update = require('./update.js'),
+    merge = require('./merge.js'),
+    mixins = require('./mixins.js'),
+    defaults = require('../defaults.js'),
+    type = require('./type.js');
+
+function complexHash(type) {
+  return type + '$' +
+    (new Date()).getTime() + (''  + Math.random()).replace('0.', '');
 }
 
-module.exports = Object.assign || function (target, source) {
-	var from;
-	var keys;
-	var to = ToObject(target);
+/**
+ * Main Class
+ */
+function Baobab(initialData, opts) {
+  if (arguments.length < 1)
+    initialData = {};
 
-	for (var s = 1; s < arguments.length; s++) {
-		from = arguments[s];
-		keys = Object.keys(Object(from));
+  // New keyword optional
+  if (!(this instanceof Baobab))
+    return new Baobab(initialData, opts);
 
-		for (var i = 0; i < keys.length; i++) {
-			to[keys[i]] = from[keys[i]];
-		}
-	}
+  if (!type.Object(initialData) && !type.Array(initialData))
+    throw Error('Baobab: invalid data.');
 
-	return to;
+  // Extending
+  EventEmitter.call(this);
+
+  // Merging defaults
+  this.options = helpers.shallowMerge(defaults, opts);
+  this._cloner = this.options.cloningFunction || helpers.deepClone;
+
+  // Privates
+  this._transaction = {};
+  this._future = undefined;
+  this._history = [];
+  this._cursors = {};
+
+  // Internal typology
+  this.typology = this.options.typology ?
+    (this.options.typology instanceof Typology ?
+      this.options.typology :
+      new Typology(this.options.typology)) :
+    new Typology();
+
+  // Internal validation
+  this.validate = this.options.validate || null;
+
+  if (this.validate)
+    try {
+      this.typology.check(initialData, this.validate, true);
+    }
+    catch (e) {
+      e.message = '/' + e.path.join('/') + ': ' + e.message;
+      throw e;
+    }
+
+  // Properties
+  this.data = this._cloner(initialData);
+
+  // Mixin
+  this.mixin = mixins.baobab(this);
+}
+
+helpers.inherits(Baobab, EventEmitter);
+
+/**
+ * Private prototype
+ */
+Baobab.prototype._archive = function() {
+  if (this.options.maxHistory <= 0)
+    return;
+
+  var record = {
+    data: this._cloner(this.data)
+  };
+
+  // Replacing
+  if (this._history.length === this.options.maxHistory) {
+    this._history.pop();
+  }
+  this._history.unshift(record);
+
+  return record;
 };
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/prelude-ls/lib/Func.js":[function(require,module,exports){
+/**
+ * Prototype
+ */
+Baobab.prototype.commit = function(referenceRecord) {
+  var self = this,
+      log;
+
+  if (referenceRecord) {
+
+    // Override
+    this.data = referenceRecord.data;
+    log = referenceRecord.log;
+  }
+  else {
+
+    // Shifting root reference
+    if (this.options.shiftReferences)
+      this.data = helpers.shallowClone(this.data);
+
+    // Applying modification (mutation)
+    var record = this._archive();
+    log = update(this.data, this._transaction, this.options);
+
+    if (record)
+      record.log = log;
+  }
+
+  if (this.validate) {
+    var errors = [],
+        l = log.length,
+        d,
+        i;
+
+    for (i = 0; i < l; i++) {
+      d = helpers.getIn(this.validate, log[i]);
+
+      if (!d)
+        continue;
+
+      try {
+        this.typology.check(this.get(log[i]), d, true);
+      }
+      catch (e) {
+        e.path = log[i].concat((e.path || []));
+        errors.push(e);
+      }
+    }
+
+    if (errors.length)
+      this.emit('invalid', {errors: errors});
+  }
+
+  // Baobab-level update event
+  this.emit('update', {
+    log: log
+  });
+
+  // Resetting
+  this._transaction = {};
+
+  if (this._future)
+    this._future = clearTimeout(this._future);
+
+  return this;
+};
+
+Baobab.prototype.select = function(path) {
+  if (arguments.length > 1)
+    path = helpers.arrayOf(arguments);
+
+  if (!type.Path(path))
+    throw Error('Baobab.select: invalid path.');
+
+  // Casting to array
+  path = !type.Array(path) ? [path] : path;
+
+  // Complex path?
+  var complex = type.ComplexPath(path);
+
+  var solvedPath;
+
+  if (complex)
+    solvedPath = helpers.solvePath(this.data, path);
+
+  // Registering a new cursor or giving the already existing one for path
+  if (!this.options.cursorSingletons) {
+    return new Cursor(this, path);
+  }
+  else {
+    var hash = path.map(function(step) {
+      if (type.Function(step))
+        return complexHash('fn');
+      else if (type.Object(step))
+        return complexHash('ob');
+      else
+        return step;
+    }).join('λ');
+
+    if (!this._cursors[hash]) {
+      var cursor = new Cursor(this, path, solvedPath, hash);
+      this._cursors[hash] = cursor;
+      return cursor;
+    }
+    else {
+      return this._cursors[hash];
+    }
+  }
+};
+
+Baobab.prototype.root = function() {
+  return this.select();
+};
+
+Baobab.prototype.reference = function(path) {
+  var data;
+
+  if (arguments.length > 1)
+    path = helpers.arrayOf(arguments);
+
+  if (!type.Path(path))
+    throw Error('Baobab.get: invalid path.');
+
+  return helpers.getIn(
+    this.data, type.String(path) || type.Number(path) ? [path] : path
+  );
+};
+
+Baobab.prototype.get = function() {
+  var ref = this.reference.apply(this, arguments);
+
+  return this.options.clone ? this._cloner(ref) : ref;
+};
+
+Baobab.prototype.clone = function(path) {
+  return this._cloner(this.reference.apply(this, arguments));
+};
+
+Baobab.prototype.set = function(key, val) {
+
+  if (arguments.length < 2)
+    throw Error('Baobab.set: expects a key and a value.');
+
+  var spec = {};
+
+  if (type.Array(key)) {
+    var path = helpers.solvePath(this.data, key);
+
+    if (!path)
+      throw Error('Baobab.set: could not solve dynamic path.');
+
+    spec = helpers.pathObject(path, {$set: val});
+  }
+  else {
+    spec[key] = {$set: val};
+  }
+
+  return this.update(spec);
+};
+
+Baobab.prototype.unset = function(key) {
+  if (!key && key !== 0)
+    throw Error('Baobab.unset: expects a valid key to unset.');
+
+  var spec = {};
+  spec[key] = {$unset: true};
+
+  return this.update(spec);
+};
+
+Baobab.prototype.update = function(spec) {
+  var self = this;
+
+  if (!type.Object(spec))
+    throw Error('Baobab.update: wrong specification.');
+
+  this._transaction = merge(spec, this._transaction);
+
+  // Should we let the user commit?
+  if (!this.options.autoCommit)
+    return this;
+
+  // Should we update synchronously?
+  if (!this.options.asynchronous)
+    return this.commit();
+
+  // Updating asynchronously
+  if (!this._future)
+    this._future = setTimeout(self.commit.bind(self, null), 0);
+
+  return this;
+};
+
+Baobab.prototype.hasHistory = function() {
+  return !!this._history.length;
+};
+
+Baobab.prototype.getHistory = function() {
+  return this._history;
+};
+
+Baobab.prototype.undo = function() {
+  if (!this.hasHistory())
+    throw Error('Baobab.undo: no history recorded, cannot undo.');
+
+  var lastRecord = this._history.shift();
+  this.commit(lastRecord);
+};
+
+Baobab.prototype.release = function() {
+
+  delete this.data;
+  delete this._transaction;
+  delete this._history;
+
+  // Releasing cursors
+  for (var k in this._cursors)
+    this._cursors[k].release();
+  delete this._cursors;
+
+  // Killing event emitter
+  this.kill();
+};
+
+/**
+ * Output
+ */
+Baobab.prototype.toJSON = function() {
+  return this.reference();
+};
+
+/**
+ * Export
+ */
+module.exports = Baobab;
+
+},{"../defaults.js":1,"./cursor.js":7,"./helpers.js":8,"./merge.js":9,"./mixins.js":10,"./type.js":11,"./update.js":12,"emmett":3,"typology":4}],6:[function(require,module,exports){
+/**
+ * Baobab Cursor Combination
+ * ==========================
+ *
+ * A useful abstraction dealing with cursor's update logical combinations.
+ */
+var EventEmitter = require('emmett'),
+    helpers = require('./helpers.js'),
+    type = require('./type.js');
+
+/**
+ * Utilities
+ */
+function bindCursor(c, cursor) {
+  cursor.on('update', c.cursorListener);
+  c.tree.off('update', c.treeListener);
+  c.tree.on('update', c.treeListener);
+}
+
+/**
+ * Main Class
+ */
+function Combination(operator /*, &cursors */) {
+  var self = this;
+
+  // Safeguard
+  if (arguments.length < 2)
+    throw Error('baobab.Combination: not enough arguments.');
+
+  var first = arguments[1],
+      rest = helpers.arrayOf(arguments).slice(2);
+
+  if (first instanceof Array) {
+    rest = first.slice(1);
+    first = first[0];
+  }
+
+  if (!type.Cursor(first))
+    throw Error('baobab.Combination: argument should be a cursor.');
+
+  if (operator !== 'or' && operator !== 'and')
+    throw Error('baobab.Combination: invalid operator.');
+
+  // Extending event emitter
+  EventEmitter.call(this);
+
+  // Properties
+  this.cursors = [first];
+  this.operators = [];
+  this.tree = first.tree;
+
+  // State
+  this.updates = new Array(this.cursors.length);
+
+  // Listeners
+  this.cursorListener = function() {
+    self.updates[self.cursors.indexOf(this)] = true;
+  };
+
+  this.treeListener = function() {
+    var shouldFire = self.updates[0],
+        i,
+        l;
+
+    for (i = 1, l = self.cursors.length; i < l; i++) {
+      shouldFire = self.operators[i - 1] === 'or' ?
+        shouldFire || self.updates[i] :
+        shouldFire && self.updates[i];
+    }
+
+    if (shouldFire)
+      self.emit('update');
+
+    // Waiting for next update
+    self.updates = new Array(self.cursors.length);
+  };
+
+  // Lazy binding
+  this.bound = false;
+
+  var regularOn = this.on,
+      regularOnce = this.once;
+
+  var lazyBind = function() {
+    if (self.bound)
+      return;
+    self.bound = true;
+    self.cursors.forEach(function(cursor) {
+      bindCursor(self, cursor);
+    });
+  };
+
+  this.on = function() {
+    lazyBind();
+    return regularOn.apply(this, arguments);
+  };
+
+  this.once = function() {
+    lazyBind();
+    return regularOnce.apply(this, arguments);
+  };
+
+  // Attaching any other passed cursors
+  rest.forEach(function(cursor) {
+    this[operator](cursor);
+  }, this);
+}
+
+helpers.inherits(Combination, EventEmitter);
+
+/**
+ * Prototype
+ */
+function makeOperator(operator) {
+  Combination.prototype[operator] = function(cursor) {
+
+    // Safeguard
+    if (!type.Cursor(cursor)) {
+      this.release();
+      throw Error('baobab.Combination.' + operator + ': argument should be a cursor.');
+    }
+
+    if (~this.cursors.indexOf(cursor)) {
+      this.release();
+      throw Error('baobab.Combination.' + operator + ': cursor already in combination.');
+    }
+
+    this.cursors.push(cursor);
+    this.operators.push(operator);
+    this.updates.length++;
+
+    if (this.bound)
+      bindCursor(this, cursor);
+
+    return this;
+  };
+}
+
+makeOperator('or');
+makeOperator('and');
+
+Combination.prototype.release = function() {
+
+  // Dropping cursors listeners
+  this.cursors.forEach(function(cursor) {
+    cursor.off('update', this.cursorListener);
+  }, this);
+
+  // Dropping tree listener
+  this.tree.off('update', this.treeListener);
+
+  // Cleaning
+  this.cursors = null;
+  this.operators = null;
+  this.tree = null;
+  this.updates = null;
+
+  // Dropping own listeners
+  this.kill();
+};
+
+/**
+ * Exporting
+ */
+module.exports = Combination;
+
+},{"./helpers.js":8,"./type.js":11,"emmett":3}],7:[function(require,module,exports){
+/**
+ * Baobab Cursor Abstraction
+ * ==========================
+ *
+ * Nested selection into a baobab tree.
+ */
+var EventEmitter = require('emmett'),
+    Combination = require('./combination.js'),
+    mixins = require('./mixins.js'),
+    helpers = require('./helpers.js'),
+    type = require('./type.js');
+
+/**
+ * Main Class
+ */
+function Cursor(tree, path, solvedPath, hash) {
+  var self = this;
+
+  // Extending event emitter
+  EventEmitter.call(this);
+
+  // Enforcing array
+  path = path || [];
+
+  // Properties
+  this.tree = tree;
+  this.path = path;
+  this.hash = hash;
+  this.relevant = this.reference() !== undefined;
+
+  // Complex path?
+  this.complexPath = !!solvedPath;
+  this.solvedPath = this.complexPath ? solvedPath : this.path;
+
+  // Root listeners
+  this.updateHandler = function(e) {
+    var log = e.data.log,
+        shouldFire = false,
+        c, p, l, m, i, j;
+
+    // Solving path if needed
+    if (self.complexPath)
+      self.solvedPath = helpers.solvePath(self.tree.data, self.path);
+
+    // If selector listens at tree, we fire
+    if (!self.path.length)
+      return self.emit('update');
+
+    // Checking update log to see whether the cursor should update.
+    outer:
+    for (i = 0, l = log.length; i < l; i++) {
+      c = log[i];
+
+      for (j = 0, m = c.length; j < m; j++) {
+        p = c[j];
+
+        // If path is not relevant to us, we break
+        if (p !== '' + self.solvedPath[j])
+          break;
+
+        // If we reached last item and we are relevant, we fire
+        if (j + 1 === m || j + 1 === self.solvedPath.length) {
+          shouldFire = true;
+          break outer;
+        }
+      }
+    }
+
+    // Handling relevancy
+    var data = self.reference() !== undefined;
+
+    if (self.relevant) {
+      if (data && shouldFire) {
+        self.emit('update');
+      }
+      else if (!data) {
+        self.emit('irrelevant');
+        self.relevant = false;
+      }
+    }
+    else {
+      if (data && shouldFire) {
+        self.emit('relevant');
+        self.emit('update');
+        self.relevant = true;
+      }
+    }
+  };
+
+  // Making mixin
+  this.mixin = mixins.cursor(this);
+
+  // Lazy binding
+  var bound = false,
+      regularOn = this.on,
+      regularOnce = this.once;
+
+  var lazyBind = function() {
+    if (bound)
+      return;
+    bound = true;
+    self.tree.on('update', self.updateHandler);
+  };
+
+  this.on = function() {
+    lazyBind();
+    return regularOn.apply(this, arguments);
+  };
+
+  this.once = function() {
+    lazyBind();
+    return regularOnce.apply(this, arguments);
+  };
+}
+
+helpers.inherits(Cursor, EventEmitter);
+
+/**
+ * Predicates
+ */
+Cursor.prototype.isRoot = function() {
+  return !this.path.length;
+};
+
+Cursor.prototype.isLeaf = function() {
+  return type.Primitive(this.reference());
+};
+
+Cursor.prototype.isBranch = function() {
+  return !this.isLeaf() && !this.isRoot();
+};
+
+/**
+ * Traversal
+ */
+Cursor.prototype.root = function() {
+  return this.tree.root();
+};
+
+Cursor.prototype.select = function(path) {
+  if (arguments.length > 1)
+    path = helpers.arrayOf(arguments);
+
+  if (!type.Path(path))
+    throw Error('baobab.Cursor.select: invalid path.');
+  return this.tree.select(this.path.concat(path));
+};
+
+Cursor.prototype.up = function() {
+  if (this.solvedPath && this.solvedPath.length)
+    return this.tree.select(this.path.slice(0, -1));
+  else
+    return null;
+};
+
+Cursor.prototype.left = function() {
+  var last = +this.solvedPath[this.solvedPath.length - 1];
+
+  if (isNaN(last))
+    throw Error('baobab.Cursor.left: cannot go left on a non-list type.');
+
+  return last ?
+    this.tree.select(this.solvedPath.slice(0, -1).concat(last - 1)) :
+    null;
+};
+
+Cursor.prototype.leftmost = function() {
+  var last = +this.solvedPath[this.solvedPath.length - 1];
+
+  if (isNaN(last))
+    throw Error('baobab.Cursor.leftmost: cannot go left on a non-list type.');
+
+  return this.tree.select(this.solvedPath.slice(0, -1).concat(0));
+};
+
+Cursor.prototype.right = function() {
+  var last = +this.solvedPath[this.solvedPath.length - 1];
+
+  if (isNaN(last))
+    throw Error('baobab.Cursor.right: cannot go right on a non-list type.');
+
+  if (last + 1 === this.up().reference().length)
+    return null;
+
+  return this.tree.select(this.solvedPath.slice(0, -1).concat(last + 1));
+};
+
+Cursor.prototype.rightmost = function() {
+  var last = +this.solvedPath[this.solvedPath.length - 1];
+
+  if (isNaN(last))
+    throw Error('baobab.Cursor.right: cannot go right on a non-list type.');
+
+  var list = this.up().reference();
+
+  return this.tree.select(this.solvedPath.slice(0, -1).concat(list.length - 1));
+};
+
+Cursor.prototype.down = function() {
+  var last = +this.solvedPath[this.solvedPath.length - 1];
+
+  if (!(this.reference() instanceof Array))
+    return null;
+
+  return this.tree.select(this.solvedPath.concat(0));
+};
+
+/**
+ * Access
+ */
+Cursor.prototype.get = function(path) {
+  if (arguments.length > 1)
+    path = helpers.arrayOf(arguments);
+
+  if (type.Step(path))
+    return this.tree.get(this.solvedPath.concat(path));
+  else
+    return this.tree.get(this.solvedPath);
+};
+
+Cursor.prototype.reference = function(path) {
+  if (arguments.length > 1)
+    path = helpers.arrayOf(arguments);
+
+  if (type.Step(path))
+    return this.tree.reference(this.solvedPath.concat(path));
+  else
+    return this.tree.reference(this.solvedPath);
+};
+
+Cursor.prototype.clone = function(path) {
+  if (arguments.length > 1)
+    path = helpers.arrayOf(arguments);
+
+  if (type.Step(path))
+    return this.tree.clone(this.solvedPath.concat(path));
+  else
+    return this.tree.clone(this.solvedPath);
+};
+
+/**
+ * Update
+ */
+Cursor.prototype.set = function(key, val) {
+  if (arguments.length < 2)
+    throw Error('baobab.Cursor.set: expecting at least key/value.');
+
+  var data = this.reference();
+
+  if (typeof data !== 'object')
+    throw Error('baobab.Cursor.set: trying to set key to a non-object.');
+
+  var spec = {};
+
+  if (type.Array(key)) {
+    var path = helpers.solvePath(data, key);
+
+    if (!path)
+      throw Error('baobab.Cursor.set: could not solve dynamic path.');
+
+    spec = helpers.pathObject(path, {$set: val});
+  }
+  else {
+    spec[key] = {$set: val};
+  }
+
+  return this.update(spec);
+};
+
+Cursor.prototype.edit = function(val) {
+  return this.update({$set: val});
+};
+
+Cursor.prototype.unset = function(key) {
+  if (!key && key !== 0)
+    throw Error('baobab.Cursor.unset: expects a valid key to unset.');
+
+  if (typeof this.reference() !== 'object')
+    throw Error('baobab.Cursor.set: trying to set key to a non-object.');
+
+  var spec = {};
+  spec[key] = {$unset: true};
+  return this.update(spec);
+};
+
+Cursor.prototype.remove = function() {
+  if (this.isRoot())
+    throw Error('baobab.Cursor.remove: cannot remove root node.');
+
+  return this.update({$unset: true});
+};
+
+Cursor.prototype.apply = function(fn) {
+  if (typeof fn !== 'function')
+    throw Error('baobab.Cursor.apply: argument is not a function.');
+
+  return this.update({$apply: fn});
+};
+
+Cursor.prototype.chain = function(fn) {
+  if (typeof fn !== 'function')
+    throw Error('baobab.Cursor.chain: argument is not a function.');
+
+  return this.update({$chain: fn});
+};
+
+Cursor.prototype.push = function(value) {
+  if (!(this.reference() instanceof Array))
+    throw Error('baobab.Cursor.push: trying to push to non-array value.');
+
+  if (arguments.length > 1)
+    return this.update({$push: helpers.arrayOf(arguments)});
+  else
+    return this.update({$push: value});
+};
+
+Cursor.prototype.unshift = function(value) {
+  if (!(this.reference() instanceof Array))
+    throw Error('baobab.Cursor.push: trying to push to non-array value.');
+
+  if (arguments.length > 1)
+    return this.update({$unshift: helpers.arrayOf(arguments)});
+  else
+    return this.update({$unshift: value});
+};
+
+Cursor.prototype.merge = function(o) {
+  if (!type.Object(o))
+    throw Error('baobab.Cursor.merge: trying to merge a non-object.');
+
+  if (!type.Object(this.reference()))
+    throw Error('baobab.Cursor.merge: trying to merge into a non-object.');
+
+  this.update({$merge: o});
+};
+
+Cursor.prototype.update = function(spec) {
+  this.tree.update(helpers.pathObject(this.solvedPath, spec));
+  return this;
+};
+
+/**
+ * Combination
+ */
+Cursor.prototype.or = function(otherCursor) {
+  return new Combination('or', this, otherCursor);
+};
+
+Cursor.prototype.and = function(otherCursor) {
+  return new Combination('and', this, otherCursor);
+};
+
+/**
+ * Releasing
+ */
+Cursor.prototype.release = function() {
+
+  // Removing listener on parent
+  this.tree.off('update', this.updateHandler);
+
+  // If the cursor is hashed, we unsubscribe from the parent
+  if (this.hash)
+    delete this.tree._cursors[this.hash];
+
+  // Dereferencing
+  delete this.tree;
+  delete this.path;
+  delete this.solvePath;
+
+  // Killing emitter
+  this.kill();
+};
+
+/**
+ * Output
+ */
+Cursor.prototype.toJSON = function() {
+  return this.reference();
+};
+
+type.Cursor = function (value) {
+  return value instanceof Cursor;
+};
+
+/**
+ * Export
+ */
+module.exports = Cursor;
+
+},{"./combination.js":6,"./helpers.js":8,"./mixins.js":10,"./type.js":11,"emmett":3}],8:[function(require,module,exports){
+/**
+ * Baobab Helpers
+ * ===============
+ *
+ * Miscellaneous helper functions.
+ */
+var type = require('./type.js');
+
+// Make a real array of an array-like object
+function arrayOf(o) {
+  return Array.prototype.slice.call(o);
+}
+
+// Shallow merge
+function shallowMerge(o1, o2) {
+  var o = {},
+      k;
+
+  for (k in o1) o[k] = o1[k];
+  for (k in o2) o[k] = o2[k];
+
+  return o;
+}
+
+// Clone a regexp
+function cloneRegexp(re) {
+  var pattern = re.source,
+      flags = '';
+
+  if (re.global) flags += 'g';
+  if (re.multiline) flags += 'm';
+  if (re.ignoreCase) flags += 'i';
+  if (re.sticky) flags += 'y';
+  if (re.unicode) flags += 'u';
+
+  return new RegExp(pattern, flags);
+}
+
+// Cloning function
+function clone(deep, item) {
+  if (!item ||
+      typeof item !== 'object' ||
+      item instanceof Error ||
+      item instanceof ArrayBuffer)
+    return item;
+
+  // Array
+  if (type.Array(item)) {
+    if (deep) {
+      var i, l, a = [];
+      for (i = 0, l = item.length; i < l; i++)
+        a.push(deepClone(item[i]));
+      return a;
+    }
+    else {
+      return item.slice(0);
+    }
+  }
+
+  // Date
+  if (type.Date(item))
+    return new Date(item.getTime());
+
+  // RegExp
+  if (item instanceof RegExp)
+    return cloneRegexp(item);
+
+  // Object
+  if (type.Object(item)) {
+    var k, o = {};
+
+    if (item.constructor && item.constructor !== Object)
+      o = Object.create(item.constructor.prototype);
+
+    for (k in item)
+      if (item.hasOwnProperty(k))
+        o[k] = deep ? deepClone(item[k]) : item[k];
+    return o;
+  }
+
+  return item;
+}
+
+// Shallow & deep cloning functions
+var shallowClone = clone.bind(null, false),
+    deepClone = clone.bind(null, true);
+
+// Simplistic composition
+function compose(fn1, fn2) {
+  return function(arg) {
+    return fn2(fn1(arg));
+  };
+}
+
+// Get first item matching predicate in list
+function first(a, fn) {
+  var i, l;
+  for (i = 0, l = a.length; i < l; i++) {
+    if (fn(a[i]))
+      return a[i];
+  }
+  return;
+}
+
+function index(a, fn) {
+  var i, l;
+  for (i = 0, l = a.length; i < l; i++) {
+    if (fn(a[i]))
+      return i;
+  }
+  return -1;
+}
+
+// Compare object to spec
+function compare(object, spec) {
+  var ok = true,
+      k;
+
+  // If we reached here via a recursive call, object may be undefined because
+  // not all items in a collection will have the same deep nesting structure
+  if (!object) {
+    return false;
+  }
+
+  for (k in spec) {
+    if (type.Object(spec[k])) {
+      ok = ok && compare(object[k], spec[k]);
+    }
+    else if (type.Array(spec[k])) {
+      ok = ok && !!~spec[k].indexOf(object[k]);
+    }
+    else {
+      if (object[k] !== spec[k])
+        return false;
+    }
+  }
+
+  return ok;
+}
+
+function firstByComparison(object, spec) {
+  return first(object, function(e) {
+    return compare(e, spec);
+  });
+}
+
+function indexByComparison(object, spec) {
+  return index(object, function(e) {
+    return compare(e, spec);
+  });
+}
+
+// Retrieve nested objects
+function getIn(object, path) {
+  path = path || [];
+
+  var c = object,
+      i,
+      l;
+
+  for (i = 0, l = path.length; i < l; i++) {
+    if (!c)
+      return;
+
+    if (typeof path[i] === 'function') {
+      if (!type.Array(c))
+        return;
+
+      c = first(c, path[i]);
+    }
+    else if (typeof path[i] === 'object') {
+      if (!type.Array(c))
+        return;
+
+      c = firstByComparison(c, path[i]);
+    }
+    else {
+      c = c[path[i]];
+    }
+  }
+
+  return c;
+}
+
+// Solve a complex path
+function solvePath(object, path) {
+  var solvedPath = [],
+      c = object,
+      idx,
+      i,
+      l;
+
+  for (i = 0, l = path.length; i < l; i++) {
+    if (!c)
+      return null;
+
+    if (typeof path[i] === 'function') {
+      if (!type.Array(c))
+        return;
+
+      idx = index(c, path[i]);
+      solvedPath.push(idx);
+      c = c[idx];
+    }
+    else if (typeof path[i] === 'object') {
+      if (!type.Array(c))
+        return;
+
+      idx = indexByComparison(c, path[i]);
+      solvedPath.push(idx);
+      c = c[idx];
+    }
+    else {
+      solvedPath.push(path[i]);
+      c = c[path[i]] || {};
+    }
+  }
+
+  return solvedPath;
+}
+
+// Return a fake object relative to the given path
+function pathObject(path, spec) {
+  var l = path.length,
+      o = {},
+      c = o,
+      i;
+
+  if (!l)
+    o = spec;
+
+  for (i = 0; i < l; i++) {
+    c[path[i]] = (i + 1 === l) ? spec : {};
+    c = c[path[i]];
+  }
+
+  return o;
+}
+
+function inherits(ctor, superCtor) {
+  ctor.super_ = superCtor;
+  var TempCtor = function () {};
+  TempCtor.prototype = superCtor.prototype;
+  ctor.prototype = new TempCtor();
+  ctor.prototype.constructor = ctor;
+}
+
+module.exports = {
+  arrayOf: arrayOf,
+  deepClone: deepClone,
+  shallowClone: shallowClone,
+  shallowMerge: shallowMerge,
+  compose: compose,
+  getIn: getIn,
+  inherits: inherits,
+  pathObject: pathObject,
+  solvePath: solvePath
+};
+
+},{"./type.js":11}],9:[function(require,module,exports){
+/**
+ * Baobab Merge
+ * =============
+ *
+ * A function used to merge updates in the stack.
+ */
+var helpers = require('./helpers.js'),
+    type = require('./type.js');
+
+// Helpers
+function hasKey(o, key) {
+  return key in (o || {});
+}
+
+function conflict(a, b, key) {
+  return hasKey(a, key) && hasKey(b, key);
+}
+
+// Main function
+function merge() {
+  var res = {},
+      current,
+      next,
+      l = arguments.length,
+      i,
+      k;
+
+  for (i = l - 1; i >= 0; i--) {
+
+    // Upper $set/$apply... and conflicts
+    // When solving conflicts, here is the priority to apply:
+    // -- 0) $unset
+    // -- 1) $set
+    // -- 2) $merge
+    // -- 3) $apply
+    // -- 4) $chain
+    if (arguments[i].$unset) {
+      delete res.$set;
+      delete res.$apply;
+      delete res.$merge;
+      res.$unset = arguments[i].$unset;
+    }
+    else if (arguments[i].$set) {
+      delete res.$apply;
+      delete res.$merge;
+      delete res.$unset;
+      res.$set = arguments[i].$set;
+      continue;
+    }
+    else if (arguments[i].$merge) {
+      delete res.$set;
+      delete res.$apply;
+      delete res.$unset;
+      res.$merge = arguments[i].$merge;
+      continue;
+    }
+    else if (arguments[i].$apply){
+      delete res.$set;
+      delete res.$merge;
+      delete res.$unset;
+      res.$apply = arguments[i].$apply;
+      continue;
+    }
+    else if (arguments[i].$chain) {
+      delete res.$set;
+      delete res.$merge;
+      delete res.$unset;
+
+      if (res.$apply)
+        res.$apply = helpers.compose(res.$apply, arguments[i].$chain);
+      else
+        res.$apply = arguments[i].$chain;
+      continue;
+    }
+
+    for (k in arguments[i]) {
+      current = res[k];
+      next = arguments[i][k];
+
+      if (current && type.Object(next)) {
+
+        // $push conflict
+        if (conflict(current, next, '$push')) {
+          if (type.Array(current.$push))
+            current.$push = current.$push.concat(next.$push);
+          else
+            current.$push = [current.$push].concat(next.$push);
+        }
+
+        // $unshift conflict
+        else if (conflict(current, next, '$unshift')) {
+          if (type.Array(next.$unshift))
+            current.$unshift = next.$unshift.concat(current.$unshift);
+          else
+            current.$unshift = [next.$unshift].concat(current.$unshift);
+        }
+
+        // No conflict
+        else {
+          res[k] = merge(next, current);
+        }
+      }
+      else {
+        res[k] = next;
+      }
+    }
+  }
+
+  return res;
+}
+
+module.exports = merge;
+
+},{"./helpers.js":8,"./type.js":11}],10:[function(require,module,exports){
+/**
+ * Baobab React Mixins
+ * ====================
+ *
+ * Compilation of react mixins designed to deal with cursors integration.
+ */
+var Combination = require('./combination.js'),
+    type = require('./type.js');
+
+module.exports = {
+  baobab: function(baobab) {
+    return {
+
+      // Run Baobab mixin first to allow mixins to access cursors
+      mixins: [{
+        getInitialState: function() {
+
+          // Binding baobab to instance
+          this.tree = baobab;
+
+          // Is there any cursors to create?
+          if (!this.cursor && !this.cursors)
+            return {};
+
+          // Is there conflicting definitions?
+          if (this.cursor && this.cursors)
+            throw Error('baobab.mixin: you cannot have both ' +
+                        '`component.cursor` and `component.cursors`. Please ' +
+                        'make up your mind.');
+
+          // Type
+          this.__type = null;
+
+          // Making update handler
+          this.__updateHandler = (function() {
+            this.setState(this.__getCursorData());
+          }).bind(this);
+
+          if (this.cursor) {
+            if (!type.MixinCursor(this.cursor))
+              throw Error('baobab.mixin.cursor: invalid data (cursor, string or array).');
+
+            if (!type.Cursor(this.cursor))
+              this.cursor = baobab.select(this.cursor);
+
+            this.__getCursorData = (function() {
+              return {cursor: this.cursor.get()};
+            }).bind(this);
+            this.__type = 'single';
+          }
+          else if (this.cursors) {
+            if (['object', 'array'].indexOf(type(this.cursors)) === -1)
+              throw Error('baobab.mixin.cursor: invalid data (object or array).');
+
+            if (type.Array(this.cursors)) {
+              this.cursors = this.cursors.map(function(path) {
+                return type.Cursor(path) ? path : baobab.select(path);
+              });
+
+              this.__getCursorData = (function() {
+                return {cursors: this.cursors.map(function(cursor) {
+                  return cursor.get();
+                })};
+              }).bind(this);
+              this.__type = 'array';
+            }
+            else {
+              for (var k in this.cursors) {
+                if (!type.Cursor(this.cursors[k]))
+                  this.cursors[k] = baobab.select(this.cursors[k]);
+              }
+
+              this.__getCursorData = (function() {
+                var d = {};
+                for (k in this.cursors)
+                  d[k] = this.cursors[k].get();
+                return {cursors: d};
+              }).bind(this);
+              this.__type = 'object';
+            }
+          }
+
+          return this.__getCursorData();
+        },
+        componentDidMount: function() {
+          if (this.__type === 'single') {
+            this.__combination = new Combination('or', [this.cursor]);
+            this.__combination.on('update', this.__updateHandler);
+          }
+          else if (this.__type === 'array') {
+            this.__combination = new Combination('or', this.cursors);
+            this.__combination.on('update', this.__updateHandler);
+          }
+          else if (this.__type === 'object') {
+            this.__combination = new Combination(
+              'or',
+              Object.keys(this.cursors).map(function(k) {
+                return this.cursors[k];
+              }, this)
+            );
+            this.__combination.on('update', this.__updateHandler);
+          }
+        },
+        componentWillUnmount: function() {
+          if (this.__combination)
+            this.__combination.release();
+        }
+      }].concat(baobab.options.mixins)
+    };
+  },
+  cursor: function(cursor) {
+    return {
+
+      // Run cursor mixin first to allow mixins to access cursors
+      mixins: [{
+        getInitialState: function() {
+
+          // Binding cursor to instance
+          this.cursor = cursor;
+
+          // Making update handler
+          this.__updateHandler = (function() {
+            this.setState({cursor: this.cursor.get()});
+          }).bind(this);
+
+          return {cursor: this.cursor.get()};
+        },
+        componentDidMount: function() {
+
+          // Listening to updates
+          this.cursor.on('update', this.__updateHandler);
+        },
+        componentWillUnmount: function() {
+
+          // Unbinding handler
+          this.cursor.off('update', this.__updateHandler);
+        }
+      }].concat(cursor.tree.options.mixins)
+    };
+  }
+};
+
+},{"./combination.js":6,"./type.js":11}],11:[function(require,module,exports){
+/**
+ * Baobab Type Checking
+ * =====================
+ *
+ * Misc helpers functions used throughout the library to perform some type
+ * tests at runtime.
+ *
+ * @christianalfoni
+ */
+
+// Not reusing methods as it will just be an extra
+// call on the stack
+var type = function (value) {
+  if (Array.isArray(value)) {
+    return 'array';
+  } else if (typeof value === 'object' && value !== null) {
+    return 'object';
+  } else if (typeof value === 'string') {
+    return 'string';
+  } else if (typeof value === 'number') {
+    return 'number';
+  } else if (typeof value === 'boolean') {
+    return 'boolean';
+  } else if (typeof value === 'function') {
+    return 'function';
+  } else if (value === null) {
+    return 'null';
+  } else if (value === undefined) {
+    return 'undefined';
+  } else if (value instanceof Date) {
+    return 'date';
+  } else {
+    return 'invalid';
+  }
+};
+
+type.Array = function (value) {
+  return Array.isArray(value);
+};
+
+type.Object = function (value) {
+  return !Array.isArray(value) && typeof value === 'object' && value !== null;
+};
+
+type.String = function (value) {
+  return typeof value === 'string';
+};
+
+type.Number = function (value) {
+  return typeof value === 'number';
+};
+
+type.Boolean = function (value) {
+  return typeof value === 'boolean';
+};
+
+type.Function = function (value) {
+  return typeof value === 'function';
+};
+
+type.Primitive = function (value) {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
+};
+
+type.Date = function (value) {
+  return value instanceof Date;
+};
+
+type.Step = function (value) {
+  var valueType = type(value);
+  var notValid = ['null', 'undefined', 'invalid', 'date'];
+  return notValid.indexOf(valueType) === -1;
+};
+
+// Should undefined be allowed?
+type.Path = function (value) {
+  var types = ['object', 'string', 'number', 'function', 'undefined'];
+  if (type.Array(value)) {
+    for (var x = 0; x < value.length; x++) {
+      if (types.indexOf(type(value[x])) === -1) {
+        return false;
+      }
+    }
+  } else {
+    return types.indexOf(type(value)) >= 0;
+  }
+  return true;
+
+};
+
+// string|number|array|cursor
+type.MixinCursor = function (value) {
+  var allowedValues = ['string', 'number', 'array'];
+  return allowedValues.indexOf(type(value)) >= 0 || type.Cursor(value);
+};
+
+// Already know this is an array
+type.ComplexPath = function (value) {
+  var complexTypes = ['object', 'function'];
+  for (var x = 0; x < value.length; x++) {
+    if (complexTypes.indexOf(type(value[x])) >= 0) {
+      return true;
+    }
+  }
+  return false;
+};
+
+module.exports = type;
+
+},{}],12:[function(require,module,exports){
+/**
+ * Baobab Update
+ * ==============
+ *
+ * A handy method to mutate an atom according to the given specification.
+ * Mostly inspired by http://facebook.github.io/react/docs/update.html
+ */
+var helpers = require('./helpers.js'),
+    type = require('./type.js');
+
+var COMMANDS = {};
+[
+  '$set',
+  '$push',
+  '$unshift',
+  '$apply',
+  '$merge'
+].forEach(function(c) {
+  COMMANDS[c] = true;
+});
+
+// Helpers
+function makeError(path, message) {
+  var e = new Error('baobab.update: ' + message + ' at path /' +
+                    path.toString());
+
+  e.path = path;
+  return e;
+}
+
+// Core function
+function update(target, spec, opts) {
+  opts = opts || {shiftReferences: false};
+  var log = {};
+
+  // Closure mutating the internal object
+  (function mutator(o, spec, path, parent) {
+    path = path || [];
+
+    var hash = path.join('λ'),
+        fn,
+        h,
+        k,
+        v;
+
+    for (k in spec) {
+      if (COMMANDS[k]) {
+        v = spec[k];
+
+        // Logging update
+        log[hash] = true;
+
+        // TODO: this could be before in the recursion
+        // Applying
+        switch (k) {
+          case '$push':
+            if (!type.Array(o))
+              throw makeError(path, 'using command $push to a non array');
+
+            if (!type.Array(v))
+              o.push(v);
+            else
+              o.push.apply(o, v);
+            break;
+          case '$unshift':
+            if (!type.Array(o))
+              throw makeError(path, 'using command $unshift to a non array');
+
+            if (!type.Array(v))
+              o.unshift(v);
+            else
+              o.unshift.apply(o, v);
+            break;
+        }
+      }
+      else {
+        h = hash ? hash + 'λ' + k : k;
+
+        if ('$unset' in (spec[k] || {})) {
+
+          // Logging update
+          log[h] = true;
+
+          if (type.Array(o)) {
+            if (!opts.shiftReferences)
+              o.splice(k, 1);
+            else
+              parent[path[path.length - 1]] = o.slice(0, +k).concat(o.slice(+k + 1));
+          }
+          else {
+            delete o[k];
+          }
+        }
+        else if ('$set' in (spec[k] || {})) {
+          v = spec[k].$set;
+
+          // Logging update
+          log[h] = true;
+          o[k] = v;
+        }
+        else if ('$apply' in (spec[k] || {})) {
+          fn = spec[k].$apply;
+
+          if (typeof fn !== 'function')
+            throw makeError(path.concat(k), 'using command $apply with a non function');
+
+          // Logging update
+          log[h] = true;
+          o[k] = fn.call(null, o[k]);
+        }
+        else if ('$merge' in (spec[k] || {})) {
+          v = spec[k].$merge;
+
+          if (!type.Object(o[k]))
+            throw makeError(path.concat(k), 'using command $merge on a non-object');
+
+          // Logging update
+          log[h] = true;
+          o[k] = helpers.shallowMerge(o[k], v);
+        }
+        else if (opts.shiftReferences &&
+                 ('$push' in (spec[k] || {}) ||
+                  '$unshift' in (spec[k] || {}))) {
+          if ('$push' in (spec[k] || {})) {
+            v = spec[k].$push;
+
+            if (!type.Array(o[k]))
+              throw makeError(path.concat(k), 'using command $push to a non array');
+            o[k] = o[k].concat(v);
+          }
+          if ('$unshift' in (spec[k] || {})) {
+            v = spec[k].$unshift;
+
+            if (!type.Array(o[k]))
+              throw makeError(path.concat(k), 'using command $unshift to a non array');
+            o[k] = (v instanceof Array ? v : [v]).concat(o[k]);
+          }
+
+          // Logging update
+          log[h] = true;
+        }
+        else {
+
+          // If nested object does not exist, we create it
+          if (typeof o[k] === 'undefined')
+            o[k] = {};
+
+          // Shifting reference
+          if (opts.shiftReferences)
+            o[k] = helpers.shallowClone(o[k]);
+
+          // Recur
+          // TODO: fix this horrendous behaviour.
+          mutator(
+            o[k],
+            spec[k],
+            path.concat(k),
+            o
+          );
+        }
+      }
+    }
+  })(target, spec);
+
+  return Object.keys(log).map(function(hash) {
+    return hash.split('λ');
+  });
+}
+
+// Exporting
+module.exports = update;
+
+},{"./helpers.js":8,"./type.js":11}],13:[function(require,module,exports){
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var Base, BinaryTable, CompressedImage, DataUnit, Decompress, FITS, HDU, Header, HeaderVerify, Image, ImageUtils, Parser, Table, Tabular, _ref, _ref1,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __slice = [].slice;
+
+  if (this.astro == null) {
+    this.astro = {};
+  }
+
+  Base = (function() {
+    function Base() {}
+
+    Base.include = function(obj) {
+      var key, value;
+      for (key in obj) {
+        value = obj[key];
+        this.prototype[key] = value;
+      }
+      return this;
+    };
+
+    Base.extend = function(obj) {
+      var key, value;
+      for (key in obj) {
+        value = obj[key];
+        this[key] = value;
+      }
+      return this;
+    };
+
+    Base.prototype.proxy = function(func) {
+      var _this = this;
+      return function() {
+        return func.apply(_this, arguments);
+      };
+    };
+
+    Base.prototype.invoke = function(callback, opts, data) {
+      var context;
+      context = (opts != null ? opts.context : void 0) != null ? opts.context : this;
+      if (callback != null) {
+        return callback.call(context, data, opts);
+      }
+    };
+
+    return Base;
+
+  })();
+
+  Parser = (function(_super) {
+    __extends(Parser, _super);
+
+    Parser.prototype.LINEWIDTH = 80;
+
+    Parser.prototype.BLOCKLENGTH = 2880;
+
+    File.prototype.slice = File.prototype.slice || File.prototype.webkitSlice;
+
+    Blob.prototype.slice = Blob.prototype.slice || Blob.prototype.webkitSlice;
+
+    function Parser(arg, callback, opts) {
+      var xhr,
+        _this = this;
+      this.arg = arg;
+      this.callback = callback;
+      this.opts = opts;
+      this.hdus = [];
+      this.blockCount = 0;
+      this.begin = 0;
+      this.end = this.BLOCKLENGTH;
+      this.offset = 0;
+      this.headerStorage = new Uint8Array();
+      if (typeof this.arg === 'string') {
+        this.readNextBlock = this._readBlockFromBuffer;
+        xhr = new XMLHttpRequest();
+        xhr.open('GET', this.arg);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function() {
+          if (xhr.status !== 200) {
+            _this.invoke(_this.callback, _this.opts);
+            return;
+          }
+          _this.arg = xhr.response;
+          _this.length = _this.arg.byteLength;
+          return _this.readFromBuffer();
+        };
+        xhr.send();
+      } else {
+        this.length = this.arg.size;
+        this.readNextBlock = this._readBlockFromFile;
+        this.readFromFile();
+      }
+    }
+
+    Parser.prototype.readFromBuffer = function() {
+      var block;
+      block = this.arg.slice(this.begin + this.offset, this.end + this.offset);
+      return this.readBlock(block);
+    };
+
+    Parser.prototype.readFromFile = function() {
+      var block,
+        _this = this;
+      this.reader = new FileReader();
+      this.reader.onloadend = function(e) {
+        return _this.readBlock(e.target.result);
+      };
+      block = this.arg.slice(this.begin + this.offset, this.end + this.offset);
+      return this.reader.readAsArrayBuffer(block);
+    };
+
+    Parser.prototype.readBlock = function(block) {
+      var arr, dataLength, dataunit, header, rowIndex, rows, s, slice, tmp, value, _i, _len, _ref;
+      arr = new Uint8Array(block);
+      tmp = new Uint8Array(this.headerStorage);
+      this.headerStorage = new Uint8Array(this.end);
+      this.headerStorage.set(tmp, 0);
+      this.headerStorage.set(arr, this.begin);
+      rows = this.BLOCKLENGTH / this.LINEWIDTH;
+      while (rows--) {
+        rowIndex = rows * this.LINEWIDTH;
+        if (arr[rowIndex] === 32) {
+          continue;
+        }
+        if (arr[rowIndex] === 69 && arr[rowIndex + 1] === 78 && arr[rowIndex + 2] === 68 && arr[rowIndex + 3] === 32) {
+          s = '';
+          _ref = this.headerStorage;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            value = _ref[_i];
+            s += String.fromCharCode(value);
+          }
+          header = new Header(s);
+          this.start = this.end + this.offset;
+          dataLength = header.getDataLength();
+          slice = this.arg.slice(this.start, this.start + dataLength);
+          if (header.hasDataUnit()) {
+            dataunit = this.createDataUnit(header, slice);
+          }
+          this.hdus.push(new HDU(header, dataunit));
+          this.offset += this.end + dataLength + this.excessBytes(dataLength);
+          if (this.offset === this.length) {
+            this.headerStorage = null;
+            this.invoke(this.callback, this.opts, this);
+            return;
+          }
+          this.blockCount = 0;
+          this.begin = this.blockCount * this.BLOCKLENGTH;
+          this.end = this.begin + this.BLOCKLENGTH;
+          this.headerStorage = new Uint8Array();
+          block = this.arg.slice(this.begin + this.offset, this.end + this.offset);
+          this.readNextBlock(block);
+          return;
+        }
+        break;
+      }
+      this.blockCount += 1;
+      this.begin = this.blockCount * this.BLOCKLENGTH;
+      this.end = this.begin + this.BLOCKLENGTH;
+      block = this.arg.slice(this.begin + this.offset, this.end + this.offset);
+      this.readNextBlock(block);
+    };
+
+    Parser.prototype._readBlockFromBuffer = function(block) {
+      return this.readBlock(block);
+    };
+
+    Parser.prototype._readBlockFromFile = function(block) {
+      return this.reader.readAsArrayBuffer(block);
+    };
+
+    Parser.prototype.createDataUnit = function(header, blob) {
+      var type;
+      type = header.getDataType();
+      return new astro.FITS[type](header, blob);
+    };
+
+    Parser.prototype.excessBytes = function(length) {
+      return (this.BLOCKLENGTH - (length % this.BLOCKLENGTH)) % this.BLOCKLENGTH;
+    };
+
+    Parser.prototype.isEOF = function() {
+      if (this.offset === this.length) {
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+    return Parser;
+
+  })(Base);
+
+  FITS = (function(_super) {
+    __extends(FITS, _super);
+
+    function FITS(arg, callback, opts) {
+      var parser,
+        _this = this;
+      this.arg = arg;
+      parser = new Parser(this.arg, function(fits) {
+        _this.hdus = parser.hdus;
+        return _this.invoke(callback, opts, _this);
+      });
+    }
+
+    FITS.prototype.getHDU = function(index) {
+      var hdu, _i, _len, _ref;
+      if ((index != null) && (this.hdus[index] != null)) {
+        return this.hdus[index];
+      }
+      _ref = this.hdus;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        hdu = _ref[_i];
+        if (hdu.hasData()) {
+          return hdu;
+        }
+      }
+    };
+
+    FITS.prototype.getHeader = function(index) {
+      return this.getHDU(index).header;
+    };
+
+    FITS.prototype.getDataUnit = function(index) {
+      return this.getHDU(index).data;
+    };
+
+    return FITS;
+
+  })(Base);
+
+  FITS.version = '0.6.5';
+
+  this.astro.FITS = FITS;
+
+  DataUnit = (function(_super) {
+    __extends(DataUnit, _super);
+
+    DataUnit.swapEndian = {
+      B: function(value) {
+        return value;
+      },
+      I: function(value) {
+        return (value << 8) | (value >> 8);
+      },
+      J: function(value) {
+        return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF);
+      }
+    };
+
+    DataUnit.swapEndian[8] = DataUnit.swapEndian['B'];
+
+    DataUnit.swapEndian[16] = DataUnit.swapEndian['I'];
+
+    DataUnit.swapEndian[32] = DataUnit.swapEndian['J'];
+
+    function DataUnit(header, data) {
+      if (data instanceof ArrayBuffer) {
+        this.buffer = data;
+      } else {
+        this.blob = data;
+      }
+    }
+
+    return DataUnit;
+
+  })(Base);
+
+  this.astro.FITS.DataUnit = DataUnit;
+
+  HeaderVerify = {
+    verifyOrder: function(keyword, order) {
+      if (order !== this.cardIndex) {
+        return console.warn("" + keyword + " should appear at index " + this.cardIndex + " in the FITS header");
+      }
+    },
+    verifyBetween: function(keyword, value, lower, upper) {
+      if (!(value >= lower && value <= upper)) {
+        throw "The " + keyword + " value of " + value + " is not between " + lower + " and " + upper;
+      }
+    },
+    verifyBoolean: function(value) {
+      if (value === "T") {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    VerifyFns: {
+      SIMPLE: function() {
+        var args, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = arguments[0];
+        this.primary = true;
+        this.verifyOrder("SIMPLE", 0);
+        return this.verifyBoolean(value);
+      },
+      XTENSION: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        this.extension = true;
+        this.extensionType = arguments[0];
+        this.verifyOrder("XTENSION", 0);
+        return this.extensionType;
+      },
+      BITPIX: function() {
+        var args, key, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        key = "BITPIX";
+        value = parseInt(arguments[0]);
+        this.verifyOrder(key, 1);
+        if (value !== 8 && value !== 16 && value !== 32 && value !== (-32) && value !== (-64)) {
+          throw "" + key + " value " + value + " is not permitted";
+        }
+        return value;
+      },
+      NAXIS: function() {
+        var args, array, key, required, value, _ref;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        key = "NAXIS";
+        value = parseInt(arguments[0]);
+        array = arguments[1];
+        if (!array) {
+          this.verifyOrder(key, 2);
+          this.verifyBetween(key, value, 0, 999);
+          if (this.isExtension()) {
+            if ((_ref = this.extensionType) === "TABLE" || _ref === "BINTABLE") {
+              required = 2;
+              if (value !== required) {
+                throw "" + key + " must be " + required + " for TABLE and BINTABLE extensions";
+              }
+            }
+          }
+        }
+        return value;
+      },
+      PCOUNT: function() {
+        var args, key, order, required, value, _ref;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        key = "PCOUNT";
+        value = parseInt(arguments[0]);
+        order = 1 + 1 + 1 + this.get("NAXIS");
+        this.verifyOrder(key, order);
+        if (this.isExtension()) {
+          if ((_ref = this.extensionType) === "IMAGE" || _ref === "TABLE") {
+            required = 0;
+            if (value !== required) {
+              throw "" + key + " must be " + required + " for the " + this.extensionType + " extensions";
+            }
+          }
+        }
+        return value;
+      },
+      GCOUNT: function() {
+        var args, key, order, required, value, _ref;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        key = "GCOUNT";
+        value = parseInt(arguments[0]);
+        order = 1 + 1 + 1 + this.get("NAXIS") + 1;
+        this.verifyOrder(key, order);
+        if (this.isExtension()) {
+          if ((_ref = this.extensionType) === "IMAGE" || _ref === "TABLE" || _ref === "BINTABLE") {
+            required = 1;
+            if (value !== required) {
+              throw "" + key + " must be " + required + " for the " + this.extensionType + " extensions";
+            }
+          }
+        }
+        return value;
+      },
+      EXTEND: function() {
+        var args, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = arguments[0];
+        if (!this.isPrimary()) {
+          throw "EXTEND must only appear in the primary header";
+        }
+        return this.verifyBoolean(value);
+      },
+      BSCALE: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseFloat(arguments[0]);
+      },
+      BZERO: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseFloat(arguments[0]);
+      },
+      BLANK: function() {
+        var args, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = arguments[0];
+        if (!(this.get("BIXPIX") > 0)) {
+          console.warn("BLANK is not to be used for BITPIX = " + (this.get('BITPIX')));
+        }
+        return parseInt(value);
+      },
+      DATAMIN: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseFloat(arguments[0]);
+      },
+      DATAMAX: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseFloat(arguments[0]);
+      },
+      EXTVER: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseInt(arguments[0]);
+      },
+      EXTLEVEL: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseInt(arguments[0]);
+      },
+      TFIELDS: function() {
+        var args, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = parseInt(arguments[0]);
+        this.verifyBetween("TFIELDS", value, 0, 999);
+        return value;
+      },
+      TBCOL: function() {
+        var args, index, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = arguments[0];
+        index = arguments[2];
+        this.verifyBetween("TBCOL", index, 0, this.get("TFIELDS"));
+        return value;
+      },
+      ZIMAGE: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return this.verifyBoolean(arguments[0]);
+      },
+      ZCMPTYPE: function() {
+        var args, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = arguments[0];
+        if (value !== 'GZIP_1' && value !== 'RICE_1' && value !== 'PLIO_1' && value !== 'HCOMPRESS_1') {
+          throw "ZCMPTYPE value " + value + " is not permitted";
+        }
+        if (value !== 'RICE_1') {
+          throw "Compress type " + value + " is not yet implement";
+        }
+        return value;
+      },
+      ZBITPIX: function() {
+        var args, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = parseInt(arguments[0]);
+        if (value !== 8 && value !== 16 && value !== 32 && value !== 64 && value !== (-32) && value !== (-64)) {
+          throw "ZBITPIX value " + value + " is not permitted";
+        }
+        return value;
+      },
+      ZNAXIS: function() {
+        var args, array, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = parseInt(arguments[0]);
+        array = arguments[1];
+        value = value;
+        if (!array) {
+          this.verifyBetween("ZNAXIS", value, 0, 999);
+        }
+        return value;
+      },
+      ZTILE: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseInt(arguments[0]);
+      },
+      ZSIMPLE: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        if (arguments[0] === "T") {
+          return true;
+        } else {
+          return false;
+        }
+      },
+      ZPCOUNT: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseInt(arguments[0]);
+      },
+      ZGCOUNT: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseInt(arguments[0]);
+      },
+      ZDITHER0: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseInt(arguments[0]);
+      }
+    }
+  };
+
+  this.astro.FITS.HeaderVerify = HeaderVerify;
+
+  Header = (function(_super) {
+    __extends(Header, _super);
+
+    Header.include(HeaderVerify);
+
+    Header.prototype.arrayPattern = /(\D+)(\d+)/;
+
+    Header.prototype.maxLines = 600;
+
+    function Header(block) {
+      var method, name, _ref;
+      this.primary = false;
+      this.extension = false;
+      this.verifyCard = {};
+      _ref = this.VerifyFns;
+      for (name in _ref) {
+        method = _ref[name];
+        this.verifyCard[name] = this.proxy(method);
+      }
+      this.cards = {};
+      this.cards["COMMENT"] = [];
+      this.cards["HISTORY"] = [];
+      this.cardIndex = 0;
+      this.block = block;
+      this.readBlock(block);
+    }
+
+    Header.prototype.get = function(key) {
+      if (this.contains(key)) {
+        return this.cards[key].value;
+      } else {
+        return null;
+      }
+    };
+
+    Header.prototype.set = function(key, value, comment) {
+      comment = comment || '';
+      this.cards[key] = {
+        index: this.cardIndex,
+        value: value,
+        comment: comment
+      };
+      return this.cardIndex += 1;
+    };
+
+    Header.prototype.contains = function(key) {
+      return this.cards.hasOwnProperty(key);
+    };
+
+    Header.prototype.readLine = function(l) {
+      var blank, comment, firstByte, indicator, key, value, _ref;
+      key = l.slice(0, 8).trim();
+      blank = key === '';
+      if (blank) {
+        return;
+      }
+      indicator = l.slice(8, 10);
+      value = l.slice(10);
+      if (indicator !== "= ") {
+        if (key === 'COMMENT' || key === 'HISTORY') {
+          this.cards[key].push(value.trim());
+        }
+        return;
+      }
+      _ref = value.split(' /'), value = _ref[0], comment = _ref[1];
+      value = value.trim();
+      firstByte = value[0];
+      if (firstByte === "'") {
+        value = value.slice(1, -1).trim();
+      } else {
+        if (value !== 'T' && value !== 'F') {
+          value = parseFloat(value);
+        }
+      }
+      value = this.validate(key, value);
+      return this.set(key, value, comment);
+    };
+
+    Header.prototype.validate = function(key, value) {
+      var baseKey, index, isArray, match, _ref;
+      index = null;
+      baseKey = key;
+      isArray = this.arrayPattern.test(key);
+      if (isArray) {
+        match = this.arrayPattern.exec(key);
+        _ref = match.slice(1), baseKey = _ref[0], index = _ref[1];
+      }
+      if (baseKey in this.verifyCard) {
+        value = this.verifyCard[baseKey](value, isArray, index);
+      }
+      return value;
+    };
+
+    Header.prototype.readBlock = function(block) {
+      var i, line, lineWidth, nLines, _i, _ref, _results;
+      lineWidth = 80;
+      nLines = block.length / lineWidth;
+      nLines = nLines < this.maxLines ? nLines : this.maxLines;
+      _results = [];
+      for (i = _i = 0, _ref = nLines - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+        line = block.slice(i * lineWidth, (i + 1) * lineWidth);
+        _results.push(this.readLine(line));
+      }
+      return _results;
+    };
+
+    Header.prototype.hasDataUnit = function() {
+      if (this.get("NAXIS") === 0) {
+        return false;
+      } else {
+        return true;
+      }
+    };
+
+    Header.prototype.getDataLength = function() {
+      var i, length, naxis, _i, _ref;
+      if (!this.hasDataUnit()) {
+        return 0;
+      }
+      naxis = [];
+      for (i = _i = 1, _ref = this.get("NAXIS"); 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        naxis.push(this.get("NAXIS" + i));
+      }
+      length = naxis.reduce(function(a, b) {
+        return a * b;
+      }) * Math.abs(this.get("BITPIX")) / 8;
+      length += this.get("PCOUNT");
+      return length;
+    };
+
+    Header.prototype.getDataType = function() {
+      switch (this.extensionType) {
+        case 'BINTABLE':
+          if (this.contains('ZIMAGE')) {
+            return 'CompressedImage';
+          }
+          return 'BinaryTable';
+        case 'TABLE':
+          return 'Table';
+        default:
+          if (this.hasDataUnit()) {
+            return 'Image';
+          } else {
+            return null;
+          }
+      }
+    };
+
+    Header.prototype.isPrimary = function() {
+      return this.primary;
+    };
+
+    Header.prototype.isExtension = function() {
+      return this.extension;
+    };
+
+    return Header;
+
+  })(Base);
+
+  this.astro.FITS.Header = Header;
+
+  ImageUtils = {
+    getExtent: function(arr) {
+      var index, max, min, value;
+      index = arr.length;
+      while (index--) {
+        value = arr[index];
+        if (isNaN(value)) {
+          continue;
+        }
+        min = max = value;
+        break;
+      }
+      if (index === -1) {
+        return [NaN, NaN];
+      }
+      while (index--) {
+        value = arr[index];
+        if (isNaN(value)) {
+          continue;
+        }
+        if (value < min) {
+          min = value;
+        }
+        if (value > max) {
+          max = value;
+        }
+      }
+      return [min, max];
+    },
+    getPixel: function(arr, x, y) {
+      return arr[y * this.width + x];
+    }
+  };
+
+  this.astro.FITS.ImageUtils = ImageUtils;
+
+  Image = (function(_super) {
+    __extends(Image, _super);
+
+    Image.include(ImageUtils);
+
+    Image.prototype.allocationSize = 16777216;
+
+    function Image(header, data) {
+      var begin, frame, i, naxis, _i, _j, _ref;
+      Image.__super__.constructor.apply(this, arguments);
+      naxis = header.get("NAXIS");
+      this.bitpix = header.get("BITPIX");
+      this.naxis = [];
+      for (i = _i = 1; 1 <= naxis ? _i <= naxis : _i >= naxis; i = 1 <= naxis ? ++_i : --_i) {
+        this.naxis.push(header.get("NAXIS" + i));
+      }
+      this.width = header.get("NAXIS1");
+      this.height = header.get("NAXIS2") || 1;
+      this.depth = header.get("NAXIS3") || 1;
+      this.bzero = header.get("BZERO") || 0;
+      this.bscale = header.get("BSCALE") || 1;
+      this.bytes = Math.abs(this.bitpix) / 8;
+      this.length = this.naxis.reduce(function(a, b) {
+        return a * b;
+      }) * Math.abs(this.bitpix) / 8;
+      this.frame = 0;
+      this.frameOffsets = [];
+      this.frameLength = this.bytes * this.width * this.height;
+      this.nBuffers = this.buffer != null ? 1 : 2;
+      for (i = _j = 0, _ref = this.depth - 1; 0 <= _ref ? _j <= _ref : _j >= _ref; i = 0 <= _ref ? ++_j : --_j) {
+        begin = i * this.frameLength;
+        frame = {
+          begin: begin
+        };
+        if (this.buffer != null) {
+          frame.buffers = [this.buffer.slice(begin, begin + this.frameLength)];
+        }
+        this.frameOffsets.push(frame);
+      }
+    }
+
+    Image.prototype._getFrame = function(buffer, bitpix, bzero, bscale) {
+      var arr, bytes, dataType, i, nPixels, swapEndian, tmp, value;
+      bytes = Math.abs(bitpix) / 8;
+      nPixels = i = buffer.byteLength / bytes;
+      dataType = Math.abs(bitpix);
+      if (bitpix > 0) {
+        switch (bitpix) {
+          case 8:
+            tmp = new Uint8Array(buffer);
+            tmp = new Uint16Array(tmp);
+            swapEndian = function(value) {
+              return value;
+            };
+            break;
+          case 16:
+            tmp = new Int16Array(buffer);
+            swapEndian = function(value) {
+              return ((value & 0xFF) << 8) | ((value >> 8) & 0xFF);
+            };
+            break;
+          case 32:
+            tmp = new Int32Array(buffer);
+            swapEndian = function(value) {
+              return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF);
+            };
+        }
+        if (!(parseInt(bzero) === bzero && parseInt(bscale) === bscale)) {
+          arr = new Float32Array(tmp.length);
+        } else {
+          arr = tmp;
+        }
+        while (nPixels--) {
+          tmp[nPixels] = swapEndian(tmp[nPixels]);
+          arr[nPixels] = bzero + bscale * tmp[nPixels];
+        }
+      } else {
+        arr = new Uint32Array(buffer);
+        swapEndian = function(value) {
+          return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF);
+        };
+        while (i--) {
+          value = arr[i];
+          arr[i] = swapEndian(value);
+        }
+        arr = new Float32Array(buffer);
+        while (nPixels--) {
+          arr[nPixels] = bzero + bscale * arr[nPixels];
+        }
+      }
+      return arr;
+    };
+
+    Image.prototype._getFrameAsync = function(buffers, callback, opts) {
+      var URL, blobGetFrame, blobOnMessage, fn1, fn2, i, mime, msg, onmessage, pixels, start, urlGetFrame, urlOnMessage, worker,
+        _this = this;
+      onmessage = function(e) {
+        var arr, bitpix, bscale, buffer, bzero, data, url;
+        data = e.data;
+        buffer = data.buffer;
+        bitpix = data.bitpix;
+        bzero = data.bzero;
+        bscale = data.bscale;
+        url = data.url;
+        importScripts(url);
+        arr = _getFrame(buffer, bitpix, bzero, bscale);
+        return postMessage(arr);
+      };
+      fn1 = onmessage.toString().replace('return postMessage', 'postMessage');
+      fn1 = "onmessage = " + fn1;
+      fn2 = this._getFrame.toString();
+      fn2 = fn2.replace('function', 'function _getFrame');
+      mime = "application/javascript";
+      blobOnMessage = new Blob([fn1], {
+        type: mime
+      });
+      blobGetFrame = new Blob([fn2], {
+        type: mime
+      });
+      URL = window.URL || window.webkitURL;
+      urlOnMessage = URL.createObjectURL(blobOnMessage);
+      urlGetFrame = URL.createObjectURL(blobGetFrame);
+      worker = new Worker(urlOnMessage);
+      msg = {
+        buffer: buffers[0],
+        bitpix: this.bitpix,
+        bzero: this.bzero,
+        bscale: this.bscale,
+        url: urlGetFrame
+      };
+      i = 0;
+      pixels = null;
+      start = 0;
+      worker.onmessage = function(e) {
+        var arr;
+        arr = e.data;
+        if (pixels == null) {
+          pixels = new arr.constructor(_this.width * _this.height);
+        }
+        pixels.set(arr, start);
+        start += arr.length;
+        i += 1;
+        if (i === _this.nBuffers) {
+          _this.invoke(callback, opts, pixels);
+          URL.revokeObjectURL(urlOnMessage);
+          URL.revokeObjectURL(urlGetFrame);
+          return worker.terminate();
+        } else {
+          msg.buffer = buffers[i];
+          return worker.postMessage(msg, [buffers[i]]);
+        }
+      };
+      worker.postMessage(msg, [buffers[0]]);
+    };
+
+    Image.prototype.getFrame = function(frame, callback, opts) {
+      var begin, blobFrame, blobs, buffers, bytesPerBuffer, frameInfo, i, nRowsPerBuffer, reader, start, _i, _ref,
+        _this = this;
+      this.frame = frame || this.frame;
+      frameInfo = this.frameOffsets[this.frame];
+      buffers = frameInfo.buffers;
+      if ((buffers != null ? buffers.length : void 0) === this.nBuffers) {
+        return this._getFrameAsync(buffers, callback, opts);
+      } else {
+        this.frameOffsets[this.frame].buffers = [];
+        begin = frameInfo.begin;
+        blobFrame = this.blob.slice(begin, begin + this.frameLength);
+        blobs = [];
+        nRowsPerBuffer = Math.floor(this.height / this.nBuffers);
+        bytesPerBuffer = nRowsPerBuffer * this.bytes * this.width;
+        for (i = _i = 0, _ref = this.nBuffers - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+          start = i * bytesPerBuffer;
+          if (i === this.nBuffers - 1) {
+            blobs.push(blobFrame.slice(start));
+          } else {
+            blobs.push(blobFrame.slice(start, start + bytesPerBuffer));
+          }
+        }
+        buffers = [];
+        reader = new FileReader();
+        reader.frame = this.frame;
+        i = 0;
+        reader.onloadend = function(e) {
+          var buffer;
+          frame = e.target.frame;
+          buffer = e.target.result;
+          _this.frameOffsets[frame].buffers.push(buffer);
+          i += 1;
+          if (i === _this.nBuffers) {
+            return _this.getFrame(frame, callback, opts);
+          } else {
+            return reader.readAsArrayBuffer(blobs[i]);
+          }
+        };
+        return reader.readAsArrayBuffer(blobs[0]);
+      }
+    };
+
+    Image.prototype.getFrames = function(frame, number, callback, opts) {
+      var cb,
+        _this = this;
+      cb = function(arr, opts) {
+        _this.invoke(callback, opts, arr);
+        number -= 1;
+        frame += 1;
+        if (!number) {
+          return;
+        }
+        return _this.getFrame(frame, cb, opts);
+      };
+      return this.getFrame(frame, cb, opts);
+    };
+
+    Image.prototype.isDataCube = function() {
+      if (this.naxis.length > 2) {
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+    return Image;
+
+  })(DataUnit);
+
+  this.astro.FITS.Image = Image;
+
+  Tabular = (function(_super) {
+    __extends(Tabular, _super);
+
+    Tabular.prototype.maxMemory = 1048576;
+
+    function Tabular(header, data) {
+      Tabular.__super__.constructor.apply(this, arguments);
+      this.rowByteSize = header.get("NAXIS1");
+      this.rows = header.get("NAXIS2");
+      this.cols = header.get("TFIELDS");
+      this.length = this.rowByteSize * this.rows;
+      this.heapLength = header.get("PCOUNT");
+      this.columns = this.getColumns(header);
+      if (this.buffer != null) {
+        this.rowsInMemory = this._rowsInMemoryBuffer;
+        this.heap = this.buffer.slice(this.length, this.length + this.heapLength);
+      } else {
+        this.rowsInMemory = this._rowsInMemoryBlob;
+        this.firstRowInBuffer = this.lastRowInBuffer = 0;
+        this.nRowsInBuffer = Math.floor(this.maxMemory / this.rowByteSize);
+      }
+      this.accessors = [];
+      this.descriptors = [];
+      this.elementByteLengths = [];
+      this.setAccessors(header);
+    }
+
+    Tabular.prototype._rowsInMemoryBuffer = function() {
+      return true;
+    };
+
+    Tabular.prototype._rowsInMemoryBlob = function(firstRow, lastRow) {
+      if (firstRow < this.firstRowInBuffer) {
+        return false;
+      }
+      if (lastRow > this.lastRowInBuffer) {
+        return false;
+      }
+      return true;
+    };
+
+    Tabular.prototype.getColumns = function(header) {
+      var columns, i, key, _i, _ref;
+      columns = [];
+      for (i = _i = 1, _ref = this.cols; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        key = "TTYPE" + i;
+        if (!header.contains(key)) {
+          return null;
+        }
+        columns.push(header.get(key));
+      }
+      return columns;
+    };
+
+    Tabular.prototype.getColumn = function(name, callback, opts) {
+      var accessor, cb, column, descriptor, elementByteLength, elementByteOffset, factor, i, index, iterations, rowsPerIteration,
+        _this = this;
+      if (this.blob != null) {
+        index = this.columns.indexOf(name);
+        descriptor = this.descriptors[index];
+        accessor = this.accessors[index];
+        elementByteLength = this.elementByteLengths[index];
+        elementByteOffset = this.elementByteLengths.slice(0, index);
+        if (elementByteOffset.length === 0) {
+          elementByteOffset = 0;
+        } else {
+          elementByteOffset = elementByteOffset.reduce(function(a, b) {
+            return a + b;
+          });
+        }
+        column = this.typedArray[descriptor] != null ? new this.typedArray[descriptor](this.rows) : [];
+        rowsPerIteration = ~~(this.maxMemory / this.rowByteSize);
+        rowsPerIteration = Math.min(rowsPerIteration, this.rows);
+        factor = this.rows / rowsPerIteration;
+        iterations = Math.floor(factor) === factor ? factor : Math.floor(factor) + 1;
+        i = 0;
+        index = 0;
+        cb = function(buffer, opts) {
+          var nRows, offset, startRow, view;
+          nRows = buffer.byteLength / _this.rowByteSize;
+          view = new DataView(buffer);
+          offset = elementByteOffset;
+          while (nRows--) {
+            column[i] = accessor(view, offset)[0];
+            i += 1;
+            offset += _this.rowByteSize;
+          }
+          iterations -= 1;
+          index += 1;
+          if (iterations) {
+            startRow = index * rowsPerIteration;
+            return _this.getTableBuffer(startRow, rowsPerIteration, cb, opts);
+          } else {
+            _this.invoke(callback, opts, column);
+          }
+        };
+        return this.getTableBuffer(0, rowsPerIteration, cb, opts);
+      } else {
+        cb = function(rows, opts) {
+          column = rows.map(function(d) {
+            return d[name];
+          });
+          return _this.invoke(callback, opts, column);
+        };
+        return this.getRows(0, this.rows, cb, opts);
+      }
+    };
+
+    Tabular.prototype.getTableBuffer = function(row, number, callback, opts) {
+      var begin, blobRows, end, reader,
+        _this = this;
+      number = Math.min(this.rows - row, number);
+      begin = row * this.rowByteSize;
+      end = begin + number * this.rowByteSize;
+      blobRows = this.blob.slice(begin, end);
+      reader = new FileReader();
+      reader.row = row;
+      reader.number = number;
+      reader.onloadend = function(e) {
+        return _this.invoke(callback, opts, e.target.result);
+      };
+      return reader.readAsArrayBuffer(blobRows);
+    };
+
+    Tabular.prototype.getRows = function(row, number, callback, opts) {
+      var begin, blobRows, buffer, end, reader, rows,
+        _this = this;
+      if (this.rowsInMemory(row, row + number)) {
+        if (this.blob != null) {
+          buffer = this.buffer;
+        } else {
+          begin = row * this.rowByteSize;
+          end = begin + number * this.rowByteSize;
+          buffer = this.buffer.slice(begin, end);
+        }
+        rows = this._getRows(buffer, number);
+        this.invoke(callback, opts, rows);
+        return rows;
+      } else {
+        begin = row * this.rowByteSize;
+        end = begin + Math.max(this.nRowsInBuffer * this.rowByteSize, number * this.rowByteSize);
+        blobRows = this.blob.slice(begin, end);
+        reader = new FileReader();
+        reader.row = row;
+        reader.number = number;
+        reader.onloadend = function(e) {
+          var target;
+          target = e.target;
+          _this.buffer = target.result;
+          _this.firstRowInBuffer = _this.lastRowInBuffer = target.row;
+          _this.lastRowInBuffer += target.number;
+          return _this.getRows(row, number, callback, opts);
+        };
+        return reader.readAsArrayBuffer(blobRows);
+      }
+    };
+
+    return Tabular;
+
+  })(DataUnit);
+
+  this.astro.FITS.Tabular = Tabular;
+
+  Table = (function(_super) {
+    __extends(Table, _super);
+
+    function Table() {
+      _ref = Table.__super__.constructor.apply(this, arguments);
+      return _ref;
+    }
+
+    Table.prototype.dataAccessors = {
+      A: function(value) {
+        return value.trim();
+      },
+      I: function(value) {
+        return parseInt(value);
+      },
+      F: function(value) {
+        return parseFloat(value);
+      },
+      E: function(value) {
+        return parseFloat(value);
+      },
+      D: function(value) {
+        return parseFloat(value);
+      }
+    };
+
+    Table.prototype.setAccessors = function(header) {
+      var descriptor, form, i, match, pattern, type, _i, _ref1, _results,
+        _this = this;
+      pattern = /([AIFED])(\d+)\.*(\d+)*/;
+      _results = [];
+      for (i = _i = 1, _ref1 = this.cols; 1 <= _ref1 ? _i <= _ref1 : _i >= _ref1; i = 1 <= _ref1 ? ++_i : --_i) {
+        form = header.get("TFORM" + i);
+        type = header.get("TTYPE" + i);
+        match = pattern.exec(form);
+        descriptor = match[1];
+        _results.push((function(descriptor) {
+          var accessor;
+          accessor = function(value) {
+            return _this.dataAccessors[descriptor](value);
+          };
+          return _this.accessors.push(accessor);
+        })(descriptor));
+      }
+      return _results;
+    };
+
+    Table.prototype._getRows = function(buffer) {
+      var accessor, arr, begin, end, i, index, line, nRows, row, rows, subarray, value, _i, _j, _k, _len, _len1, _ref1, _ref2;
+      nRows = buffer.byteLength / this.rowByteSize;
+      arr = new Uint8Array(buffer);
+      rows = [];
+      for (i = _i = 0, _ref1 = nRows - 1; 0 <= _ref1 ? _i <= _ref1 : _i >= _ref1; i = 0 <= _ref1 ? ++_i : --_i) {
+        begin = i * this.rowByteSize;
+        end = begin + this.rowByteSize;
+        subarray = arr.subarray(begin, end);
+        line = '';
+        for (_j = 0, _len = subarray.length; _j < _len; _j++) {
+          value = subarray[_j];
+          line += String.fromCharCode(value);
+        }
+        line = line.trim().split(/\s+/);
+        row = {};
+        _ref2 = this.accessors;
+        for (index = _k = 0, _len1 = _ref2.length; _k < _len1; index = ++_k) {
+          accessor = _ref2[index];
+          value = line[index];
+          row[this.columns[index]] = accessor(value);
+        }
+        rows.push(row);
+      }
+      return rows;
+    };
+
+    return Table;
+
+  })(Tabular);
+
+  this.astro.FITS.Table = Table;
+
+  BinaryTable = (function(_super) {
+    __extends(BinaryTable, _super);
+
+    function BinaryTable() {
+      _ref1 = BinaryTable.__super__.constructor.apply(this, arguments);
+      return _ref1;
+    }
+
+    BinaryTable.prototype.typedArray = {
+      B: Uint8Array,
+      I: Uint16Array,
+      J: Uint32Array,
+      E: Float32Array,
+      D: Float64Array,
+      1: Uint8Array,
+      2: Uint16Array,
+      4: Uint32Array
+    };
+
+    BinaryTable.offsets = {
+      L: 1,
+      B: 1,
+      I: 2,
+      J: 4,
+      K: 8,
+      A: 1,
+      E: 4,
+      D: 8,
+      C: 8,
+      M: 16
+    };
+
+    BinaryTable.prototype.dataAccessors = {
+      L: function(view, offset) {
+        var val, x;
+        x = view.getInt8(offset);
+        offset += 1;
+        val = x === 84 ? true : false;
+        return [val, offset];
+      },
+      B: function(view, offset) {
+        var val;
+        val = view.getUint8(offset);
+        offset += 1;
+        return [val, offset];
+      },
+      I: function(view, offset) {
+        var val;
+        val = view.getInt16(offset);
+        offset += 2;
+        return [val, offset];
+      },
+      J: function(view, offset) {
+        var val;
+        val = view.getInt32(offset);
+        offset += 4;
+        return [val, offset];
+      },
+      K: function(view, offset) {
+        var factor, highByte, lowByte, mod, val;
+        highByte = Math.abs(view.getInt32(offset));
+        offset += 4;
+        lowByte = Math.abs(view.getInt32(offset));
+        offset += 4;
+        mod = highByte % 10;
+        factor = mod ? -1 : 1;
+        highByte -= mod;
+        val = factor * ((highByte << 32) | lowByte);
+        return [val, offset];
+      },
+      A: function(view, offset) {
+        var val;
+        val = view.getUint8(offset);
+        val = String.fromCharCode(val);
+        offset += 1;
+        return [val, offset];
+      },
+      E: function(view, offset) {
+        var val;
+        val = view.getFloat32(offset);
+        offset += 4;
+        return [val, offset];
+      },
+      D: function(view, offset) {
+        var val;
+        val = view.getFloat64(offset);
+        offset += 8;
+        return [val, offset];
+      },
+      C: function(view, offset) {
+        var val, val1, val2;
+        val1 = view.getFloat32(offset);
+        offset += 4;
+        val2 = view.getFloat32(offset);
+        offset += 4;
+        val = [val1, val2];
+        return [val, offset];
+      },
+      M: function(view, offset) {
+        var val, val1, val2;
+        val1 = view.getFloat64(offset);
+        offset += 8;
+        val2 = view.getFloat64(offset);
+        offset += 8;
+        val = [val1, val2];
+        return [val, offset];
+      }
+    };
+
+    BinaryTable.prototype.toBits = function(byte) {
+      var arr, i;
+      arr = [];
+      i = 128;
+      while (i >= 1) {
+        arr.push((byte & i ? 1 : 0));
+        i /= 2;
+      }
+      return arr;
+    };
+
+    BinaryTable.prototype.getFromHeap = function(view, offset, descriptor) {
+      var arr, heapOffset, heapSlice, i, length;
+      length = view.getInt32(offset);
+      offset += 4;
+      heapOffset = view.getInt32(offset);
+      offset += 4;
+      heapSlice = this.heap.slice(heapOffset, heapOffset + length);
+      arr = new this.typedArray[descriptor](heapSlice);
+      i = arr.length;
+      while (i--) {
+        arr[i] = this.constructor.swapEndian[descriptor](arr[i]);
+      }
+      return [arr, offset];
+    };
+
+    BinaryTable.prototype.setAccessors = function(header) {
+      var count, descriptor, form, i, isArray, match, pattern, type, _i, _ref2, _results,
+        _this = this;
+      pattern = /(\d*)([P|Q]*)([L|X|B|I|J|K|A|E|D|C|M]{1})/;
+      _results = [];
+      for (i = _i = 1, _ref2 = this.cols; 1 <= _ref2 ? _i <= _ref2 : _i >= _ref2; i = 1 <= _ref2 ? ++_i : --_i) {
+        form = header.get("TFORM" + i);
+        type = header.get("TTYPE" + i);
+        match = pattern.exec(form);
+        count = parseInt(match[1]) || 1;
+        isArray = match[2];
+        descriptor = match[3];
+        _results.push((function(descriptor, count) {
+          var accessor, nBytes;
+          _this.descriptors.push(descriptor);
+          _this.elementByteLengths.push(_this.constructor.offsets[descriptor] * count);
+          if (isArray) {
+            switch (type) {
+              case "COMPRESSED_DATA":
+                accessor = function(view, offset) {
+                  var arr, pixels, _ref3;
+                  _ref3 = _this.getFromHeap(view, offset, descriptor), arr = _ref3[0], offset = _ref3[1];
+                  pixels = new _this.typedArray[_this.algorithmParameters["BYTEPIX"]](_this.ztile[0]);
+                  Decompress.Rice(arr, _this.algorithmParameters["BLOCKSIZE"], _this.algorithmParameters["BYTEPIX"], pixels, _this.ztile[0], Decompress.RiceSetup);
+                  return [pixels, offset];
+                };
+                break;
+              case "GZIP_COMPRESSED_DATA":
+                accessor = function(view, offset) {
+                  var arr;
+                  arr = new Float32Array(_this.width);
+                  i = arr.length;
+                  while (i--) {
+                    arr[i] = NaN;
+                  }
+                  return [arr, offset];
+                };
+                break;
+              default:
+                accessor = function(view, offset) {
+                  return _this.getFromHeap(view, offset, descriptor);
+                };
+            }
+          } else {
+            if (count === 1) {
+              accessor = function(view, offset) {
+                var value, _ref3;
+                _ref3 = _this.dataAccessors[descriptor](view, offset), value = _ref3[0], offset = _ref3[1];
+                return [value, offset];
+              };
+            } else {
+              if (descriptor === 'X') {
+                nBytes = Math.log(count) / Math.log(2);
+                accessor = function(view, offset) {
+                  var arr, bits, buffer, byte, bytes, _j, _len;
+                  buffer = view.buffer.slice(offset, offset + nBytes);
+                  bytes = new Uint8Array(buffer);
+                  bits = [];
+                  for (_j = 0, _len = bytes.length; _j < _len; _j++) {
+                    byte = bytes[_j];
+                    arr = _this.toBits(byte);
+                    bits = bits.concat(arr);
+                  }
+                  offset += nBytes;
+                  return [bits.slice(0, +(count - 1) + 1 || 9e9), offset];
+                };
+              } else if (descriptor === 'A') {
+                accessor = function(view, offset) {
+                  var arr, buffer, s, value, _j, _len;
+                  buffer = view.buffer.slice(offset, offset + count);
+                  arr = new Uint8Array(buffer);
+                  s = '';
+                  for (_j = 0, _len = arr.length; _j < _len; _j++) {
+                    value = arr[_j];
+                    s += String.fromCharCode(value);
+                  }
+                  s = s.trim();
+                  offset += count;
+                  return [s, offset];
+                };
+              } else {
+                accessor = function(view, offset) {
+                  var data, value, _ref3;
+                  i = count;
+                  data = [];
+                  while (i--) {
+                    _ref3 = _this.dataAccessors[descriptor](view, offset), value = _ref3[0], offset = _ref3[1];
+                    data.push(value);
+                  }
+                  return [data, offset];
+                };
+              }
+            }
+          }
+          return _this.accessors.push(accessor);
+        })(descriptor, count));
+      }
+      return _results;
+    };
+
+    BinaryTable.prototype._getRows = function(buffer, nRows) {
+      var accessor, index, offset, row, rows, value, view, _i, _len, _ref2, _ref3;
+      view = new DataView(buffer);
+      offset = 0;
+      rows = [];
+      while (nRows--) {
+        row = {};
+        _ref2 = this.accessors;
+        for (index = _i = 0, _len = _ref2.length; _i < _len; index = ++_i) {
+          accessor = _ref2[index];
+          _ref3 = accessor(view, offset), value = _ref3[0], offset = _ref3[1];
+          row[this.columns[index]] = value;
+        }
+        rows.push(row);
+      }
+      return rows;
+    };
+
+    return BinaryTable;
+
+  })(Tabular);
+
+  this.astro.FITS.BinaryTable = BinaryTable;
+
+  Decompress = {
+    RiceSetup: {
+      1: function(array) {
+        var fsbits, fsmax, lastpix, pointer;
+        pointer = 1;
+        fsbits = 3;
+        fsmax = 6;
+        lastpix = array[0];
+        return [fsbits, fsmax, lastpix, pointer];
+      },
+      2: function(array) {
+        var bytevalue, fsbits, fsmax, lastpix, pointer;
+        pointer = 2;
+        fsbits = 4;
+        fsmax = 14;
+        lastpix = 0;
+        bytevalue = array[0];
+        lastpix = lastpix | (bytevalue << 8);
+        bytevalue = array[1];
+        lastpix = lastpix | bytevalue;
+        return [fsbits, fsmax, lastpix, pointer];
+      },
+      4: function(array) {
+        var bytevalue, fsbits, fsmax, lastpix, pointer;
+        pointer = 4;
+        fsbits = 5;
+        fsmax = 25;
+        lastpix = 0;
+        bytevalue = array[0];
+        lastpix = lastpix | (bytevalue << 24);
+        bytevalue = array[1];
+        lastpix = lastpix | (bytevalue << 16);
+        bytevalue = array[2];
+        lastpix = lastpix | (bytevalue << 8);
+        bytevalue = array[3];
+        lastpix = lastpix | bytevalue;
+        return [fsbits, fsmax, lastpix, pointer];
+      }
+    },
+    Rice: function(array, blocksize, bytepix, pixels, nx, setup) {
+      var b, bbits, diff, fs, fsbits, fsmax, i, imax, k, lastpix, nbits, nonzeroCount, nzero, pointer, _ref2, _ref3;
+      bbits = 1 << fsbits;
+      _ref2 = setup[bytepix](array), fsbits = _ref2[0], fsmax = _ref2[1], lastpix = _ref2[2], pointer = _ref2[3];
+      nonzeroCount = new Uint8Array(256);
+      nzero = 8;
+      _ref3 = [128, 255], k = _ref3[0], i = _ref3[1];
+      while (i >= 0) {
+        while (i >= k) {
+          nonzeroCount[i] = nzero;
+          i -= 1;
+        }
+        k = k / 2;
+        nzero -= 1;
+      }
+      nonzeroCount[0] = 0;
+      b = array[pointer++];
+      nbits = 8;
+      i = 0;
+      while (i < nx) {
+        nbits -= fsbits;
+        while (nbits < 0) {
+          b = (b << 8) | array[pointer++];
+          nbits += 8;
+        }
+        fs = (b >> nbits) - 1;
+        b &= (1 << nbits) - 1;
+        imax = i + blocksize;
+        if (imax > nx) {
+          imax = nx;
+        }
+        if (fs < 0) {
+          while (i < imax) {
+            pixels[i] = lastpix;
+            i += 1;
+          }
+        } else if (fs === fsmax) {
+          while (i < imax) {
+            k = bbits - nbits;
+            diff = b << k;
+            k -= 8;
+            while (k >= 0) {
+              b = array[pointer++];
+              diff |= b << k;
+              k -= 8;
+            }
+            if (nbits > 0) {
+              b = array[pointer++];
+              diff |= b >> (-k);
+              b &= (1 << nbits) - 1;
+            } else {
+              b = 0;
+            }
+            if ((diff & 1) === 0) {
+              diff = diff >> 1;
+            } else {
+              diff = ~(diff >> 1);
+            }
+            pixels[i] = diff + lastpix;
+            lastpix = pixels[i];
+            i++;
+          }
+        } else {
+          while (i < imax) {
+            while (b === 0) {
+              nbits += 8;
+              b = array[pointer++];
+            }
+            nzero = nbits - nonzeroCount[b];
+            nbits -= nzero + 1;
+            b ^= 1 << nbits;
+            nbits -= fs;
+            while (nbits < 0) {
+              b = (b << 8) | array[pointer++];
+              nbits += 8;
+            }
+            diff = (nzero << fs) | (b >> nbits);
+            b &= (1 << nbits) - 1;
+            if ((diff & 1) === 0) {
+              diff = diff >> 1;
+            } else {
+              diff = ~(diff >> 1);
+            }
+            pixels[i] = diff + lastpix;
+            lastpix = pixels[i];
+            i++;
+          }
+        }
+      }
+      return pixels;
+    }
+  };
+
+  this.astro.FITS.Decompress = Decompress;
+
+  CompressedImage = (function(_super) {
+    __extends(CompressedImage, _super);
+
+    CompressedImage.include(ImageUtils);
+
+    CompressedImage.extend(Decompress);
+
+    CompressedImage.randomGenerator = function() {
+      var a, i, m, random, seed, temp, _i;
+      a = 16807;
+      m = 2147483647;
+      seed = 1;
+      random = new Float32Array(10000);
+      for (i = _i = 0; _i <= 9999; i = ++_i) {
+        temp = a * seed;
+        seed = temp - m * parseInt(temp / m);
+        random[i] = seed / m;
+      }
+      return random;
+    };
+
+    CompressedImage.randomSequence = CompressedImage.randomGenerator();
+
+    function CompressedImage(header, data) {
+      var i, key, value, ztile, _i, _ref2;
+      CompressedImage.__super__.constructor.apply(this, arguments);
+      this.zcmptype = header.get("ZCMPTYPE");
+      this.zbitpix = header.get("ZBITPIX");
+      this.znaxis = header.get("ZNAXIS");
+      this.zblank = header.get("ZBLANK");
+      this.blank = header.get("BLANK");
+      this.zdither = header.get('ZDITHER0') || 0;
+      this.ztile = [];
+      for (i = _i = 1, _ref2 = this.znaxis; 1 <= _ref2 ? _i <= _ref2 : _i >= _ref2; i = 1 <= _ref2 ? ++_i : --_i) {
+        ztile = header.contains("ZTILE" + i) ? header.get("ZTILE" + i) : i === 1 ? header.get("ZNAXIS1") : 1;
+        this.ztile.push(ztile);
+      }
+      this.width = header.get("ZNAXIS1");
+      this.height = header.get("ZNAXIS2") || 1;
+      this.algorithmParameters = {};
+      if (this.zcmptype === 'RICE_1') {
+        this.algorithmParameters["BLOCKSIZE"] = 32;
+        this.algorithmParameters["BYTEPIX"] = 4;
+      }
+      i = 1;
+      while (true) {
+        key = "ZNAME" + i;
+        if (!header.contains(key)) {
+          break;
+        }
+        value = "ZVAL" + i;
+        this.algorithmParameters[header.get(key)] = header.get(value);
+        i += 1;
+      }
+      this.zmaskcmp = header.get("ZMASKCMP");
+      this.zquantiz = header.get("ZQUANTIZ") || "LINEAR_SCALING";
+      this.bzero = header.get("BZERO") || 0;
+      this.bscale = header.get("BSCALE") || 1;
+    }
+
+    CompressedImage.prototype._getRows = function(buffer, nRows) {
+      var accessor, arr, blank, data, i, index, nTile, offset, r, rIndex, row, scale, seed0, seed1, value, view, zero, _i, _j, _len, _len1, _ref2, _ref3;
+      view = new DataView(buffer);
+      offset = 0;
+      arr = new Float32Array(this.width * this.height);
+      while (nRows--) {
+        row = {};
+        _ref2 = this.accessors;
+        for (index = _i = 0, _len = _ref2.length; _i < _len; index = ++_i) {
+          accessor = _ref2[index];
+          _ref3 = accessor(view, offset), value = _ref3[0], offset = _ref3[1];
+          row[this.columns[index]] = value;
+        }
+        data = row['COMPRESSED_DATA'] || row['UNCOMPRESSED_DATA'] || row['GZIP_COMPRESSED_DATA'];
+        blank = row['ZBLANK'] || this.zblank;
+        scale = row['ZSCALE'] || this.bscale;
+        zero = row['ZZERO'] || this.bzero;
+        nTile = this.height - nRows;
+        seed0 = nTile + this.zdither - 1;
+        seed1 = (seed0 - 1) % 10000;
+        rIndex = parseInt(this.constructor.randomSequence[seed1] * 500);
+        for (index = _j = 0, _len1 = data.length; _j < _len1; index = ++_j) {
+          value = data[index];
+          i = (nTile - 1) * this.width + index;
+          if (value === -2147483647) {
+            arr[i] = NaN;
+          } else if (value === -2147483646) {
+            arr[i] = 0;
+          } else {
+            r = this.constructor.randomSequence[rIndex];
+            arr[i] = (value - r + 0.5) * scale + zero;
+          }
+          rIndex += 1;
+          if (rIndex === 10000) {
+            seed1 = (seed1 + 1) % 10000;
+            rIndex = parseInt(this.randomSequence[seed1] * 500);
+          }
+        }
+      }
+      return arr;
+    };
+
+    CompressedImage.prototype.getFrame = function(nFrame, callback, opts) {
+      var heapBlob, reader,
+        _this = this;
+      if (this.heap) {
+        this.frame = nFrame || this.frame;
+        return this.getRows(0, this.rows, callback, opts);
+      } else {
+        heapBlob = this.blob.slice(this.length, this.length + this.heapLength);
+        reader = new FileReader();
+        reader.onloadend = function(e) {
+          _this.heap = e.target.result;
+          return _this.getFrame(nFrame, callback, opts);
+        };
+        return reader.readAsArrayBuffer(heapBlob);
+      }
+    };
+
+    return CompressedImage;
+
+  })(BinaryTable);
+
+  this.astro.FITS.CompressedImage = CompressedImage;
+
+  HDU = (function() {
+    function HDU(header, data) {
+      this.header = header;
+      this.data = data;
+    }
+
+    HDU.prototype.hasData = function() {
+      if (this.data != null) {
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+    return HDU;
+
+  })();
+
+  this.astro.FITS.HDU = HDU;
+
+}).call(this);
+
+},{}],14:[function(require,module,exports){
 // Generated by LiveScript 1.2.0
 var apply, curry, flip, fix, over;
 apply = curry$(function(f, list){
@@ -391,7 +4652,7 @@ function curry$(f, bound){
   };
   return _curry();
 }
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/prelude-ls/lib/List.js":[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 // Generated by LiveScript 1.2.0
 var each, map, compact, filter, reject, partition, find, head, first, tail, last, initial, empty, reverse, unique, uniqueBy, fold, foldl, fold1, foldl1, foldr, foldr1, unfoldr, concat, concatMap, flatten, difference, intersection, union, countBy, groupBy, andList, orList, any, all, sort, sortWith, sortBy, sum, product, mean, average, maximum, minimum, maximumBy, minimumBy, scan, scanl, scan1, scanl1, scanr, scanr1, slice, take, drop, splitAt, takeWhile, dropWhile, span, breakList, zip, zipWith, zipAll, zipAllWith, at, elemIndex, elemIndices, findIndex, findIndices, toString$ = {}.toString, slice$ = [].slice;
 each = curry$(function(f, xs){
@@ -1069,7 +5330,7 @@ function in$(x, xs){
   return false;
 }
 function not$(x){ return !x; }
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/prelude-ls/lib/Num.js":[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 // Generated by LiveScript 1.2.0
 var max, min, negate, abs, signum, quot, rem, div, mod, recip, pi, tau, exp, sqrt, ln, pow, sin, tan, cos, asin, acos, atan, atan2, truncate, round, ceiling, floor, isItNaN, even, odd, gcd, lcm;
 max = curry$(function(x$, y$){
@@ -1200,7 +5461,7 @@ function curry$(f, bound){
   };
   return _curry();
 }
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/prelude-ls/lib/Obj.js":[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 // Generated by LiveScript 1.2.0
 var values, keys, pairsToObj, objToPairs, listsToObj, objToLists, empty, each, map, compact, filter, reject, partition, find;
 values = function(object){
@@ -1355,7 +5616,7 @@ function curry$(f, bound){
   };
   return _curry();
 }
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/prelude-ls/lib/Str.js":[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 // Generated by LiveScript 1.2.0
 var split, join, lines, unlines, words, unwords, chars, unchars, reverse, repeat, capitalize, camelize, dasherize;
 split = curry$(function(sep, str){
@@ -1448,7 +5709,7 @@ function curry$(f, bound){
   };
   return _curry();
 }
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/prelude-ls/lib/index.js":[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 // Generated by LiveScript 1.2.0
 var Func, List, Obj, Str, Num, id, isType, replicate, prelude, toString$ = {}.toString;
 Func = require('./Func.js');
@@ -1627,7 +5888,7 @@ function curry$(f, bound){
   };
   return _curry();
 }
-},{"./Func.js":"/Users/jonyardley/Development/AstroView/node_modules/prelude-ls/lib/Func.js","./List.js":"/Users/jonyardley/Development/AstroView/node_modules/prelude-ls/lib/List.js","./Num.js":"/Users/jonyardley/Development/AstroView/node_modules/prelude-ls/lib/Num.js","./Obj.js":"/Users/jonyardley/Development/AstroView/node_modules/prelude-ls/lib/Obj.js","./Str.js":"/Users/jonyardley/Development/AstroView/node_modules/prelude-ls/lib/Str.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/AutoFocusMixin.js":[function(require,module,exports){
+},{"./Func.js":14,"./List.js":15,"./Num.js":16,"./Obj.js":17,"./Str.js":18}],20:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -1654,7 +5915,7 @@ var AutoFocusMixin = {
 
 module.exports = AutoFocusMixin;
 
-},{"./focusNode":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/focusNode.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/BeforeInputEventPlugin.js":[function(require,module,exports){
+},{"./focusNode":130}],21:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  * All rights reserved.
@@ -1876,7 +6137,7 @@ var BeforeInputEventPlugin = {
 
 module.exports = BeforeInputEventPlugin;
 
-},{"./EventConstants":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventConstants.js","./EventPropagators":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPropagators.js","./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js","./SyntheticInputEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticInputEvent.js","./keyOf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyOf.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/CSSProperty.js":[function(require,module,exports){
+},{"./EventConstants":34,"./EventPropagators":39,"./ExecutionEnvironment":40,"./SyntheticInputEvent":108,"./keyOf":152}],22:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -1995,7 +6256,7 @@ var CSSProperty = {
 
 module.exports = CSSProperty;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/CSSPropertyOperations.js":[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -2130,7 +6391,7 @@ var CSSPropertyOperations = {
 module.exports = CSSPropertyOperations;
 
 }).call(this,require('_process'))
-},{"./CSSProperty":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/CSSProperty.js","./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js","./camelizeStyleName":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/camelizeStyleName.js","./dangerousStyleValue":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/dangerousStyleValue.js","./hyphenateStyleName":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/hyphenateStyleName.js","./memoizeStringOnly":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/memoizeStringOnly.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/CallbackQueue.js":[function(require,module,exports){
+},{"./CSSProperty":22,"./ExecutionEnvironment":40,"./camelizeStyleName":119,"./dangerousStyleValue":124,"./hyphenateStyleName":143,"./memoizeStringOnly":154,"./warning":164,"_process":166}],24:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -2230,7 +6491,7 @@ PooledClass.addPoolingTo(CallbackQueue);
 module.exports = CallbackQueue;
 
 }).call(this,require('_process'))
-},{"./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./PooledClass":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/PooledClass.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ChangeEventPlugin.js":[function(require,module,exports){
+},{"./Object.assign":45,"./PooledClass":46,"./invariant":145,"_process":166}],25:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -2612,7 +6873,7 @@ var ChangeEventPlugin = {
 
 module.exports = ChangeEventPlugin;
 
-},{"./EventConstants":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventConstants.js","./EventPluginHub":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPluginHub.js","./EventPropagators":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPropagators.js","./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js","./ReactUpdates":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactUpdates.js","./SyntheticEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticEvent.js","./isEventSupported":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/isEventSupported.js","./isTextInputElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/isTextInputElement.js","./keyOf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyOf.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ClientReactRootIndex.js":[function(require,module,exports){
+},{"./EventConstants":34,"./EventPluginHub":36,"./EventPropagators":39,"./ExecutionEnvironment":40,"./ReactUpdates":98,"./SyntheticEvent":106,"./isEventSupported":146,"./isTextInputElement":148,"./keyOf":152}],26:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -2637,7 +6898,7 @@ var ClientReactRootIndex = {
 
 module.exports = ClientReactRootIndex;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/CompositionEventPlugin.js":[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -2896,7 +7157,7 @@ var CompositionEventPlugin = {
 
 module.exports = CompositionEventPlugin;
 
-},{"./EventConstants":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventConstants.js","./EventPropagators":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPropagators.js","./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js","./ReactInputSelection":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactInputSelection.js","./SyntheticCompositionEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticCompositionEvent.js","./getTextContentAccessor":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getTextContentAccessor.js","./keyOf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyOf.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMChildrenOperations.js":[function(require,module,exports){
+},{"./EventConstants":34,"./EventPropagators":39,"./ExecutionEnvironment":40,"./ReactInputSelection":78,"./SyntheticCompositionEvent":104,"./getTextContentAccessor":140,"./keyOf":152}],28:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -3071,7 +7332,7 @@ var DOMChildrenOperations = {
 module.exports = DOMChildrenOperations;
 
 }).call(this,require('_process'))
-},{"./Danger":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Danger.js","./ReactMultiChildUpdateTypes":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMultiChildUpdateTypes.js","./getTextContentAccessor":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getTextContentAccessor.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMProperty.js":[function(require,module,exports){
+},{"./Danger":31,"./ReactMultiChildUpdateTypes":84,"./getTextContentAccessor":140,"./invariant":145,"_process":166}],29:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -3370,7 +7631,7 @@ var DOMProperty = {
 module.exports = DOMProperty;
 
 }).call(this,require('_process'))
-},{"./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMPropertyOperations.js":[function(require,module,exports){
+},{"./invariant":145,"_process":166}],30:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -3567,7 +7828,7 @@ var DOMPropertyOperations = {
 module.exports = DOMPropertyOperations;
 
 }).call(this,require('_process'))
-},{"./DOMProperty":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMProperty.js","./escapeTextForBrowser":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/escapeTextForBrowser.js","./memoizeStringOnly":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/memoizeStringOnly.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Danger.js":[function(require,module,exports){
+},{"./DOMProperty":29,"./escapeTextForBrowser":128,"./memoizeStringOnly":154,"./warning":164,"_process":166}],31:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -3753,7 +8014,7 @@ var Danger = {
 module.exports = Danger;
 
 }).call(this,require('_process'))
-},{"./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js","./createNodesFromMarkup":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/createNodesFromMarkup.js","./emptyFunction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/emptyFunction.js","./getMarkupWrap":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getMarkupWrap.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DefaultEventPluginOrder.js":[function(require,module,exports){
+},{"./ExecutionEnvironment":40,"./createNodesFromMarkup":123,"./emptyFunction":126,"./getMarkupWrap":137,"./invariant":145,"_process":166}],32:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -3793,7 +8054,7 @@ var DefaultEventPluginOrder = [
 
 module.exports = DefaultEventPluginOrder;
 
-},{"./keyOf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyOf.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EnterLeaveEventPlugin.js":[function(require,module,exports){
+},{"./keyOf":152}],33:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -3933,7 +8194,7 @@ var EnterLeaveEventPlugin = {
 
 module.exports = EnterLeaveEventPlugin;
 
-},{"./EventConstants":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventConstants.js","./EventPropagators":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPropagators.js","./ReactMount":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMount.js","./SyntheticMouseEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticMouseEvent.js","./keyOf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyOf.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventConstants.js":[function(require,module,exports){
+},{"./EventConstants":34,"./EventPropagators":39,"./ReactMount":82,"./SyntheticMouseEvent":110,"./keyOf":152}],34:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -4005,7 +8266,7 @@ var EventConstants = {
 
 module.exports = EventConstants;
 
-},{"./keyMirror":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyMirror.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventListener.js":[function(require,module,exports){
+},{"./keyMirror":151}],35:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014 Facebook, Inc.
@@ -4095,7 +8356,7 @@ var EventListener = {
 module.exports = EventListener;
 
 }).call(this,require('_process'))
-},{"./emptyFunction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/emptyFunction.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPluginHub.js":[function(require,module,exports){
+},{"./emptyFunction":126,"_process":166}],36:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -4371,7 +8632,7 @@ var EventPluginHub = {
 module.exports = EventPluginHub;
 
 }).call(this,require('_process'))
-},{"./EventPluginRegistry":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPluginRegistry.js","./EventPluginUtils":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPluginUtils.js","./accumulateInto":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/accumulateInto.js","./forEachAccumulated":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/forEachAccumulated.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPluginRegistry.js":[function(require,module,exports){
+},{"./EventPluginRegistry":37,"./EventPluginUtils":38,"./accumulateInto":116,"./forEachAccumulated":131,"./invariant":145,"_process":166}],37:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -4651,7 +8912,7 @@ var EventPluginRegistry = {
 module.exports = EventPluginRegistry;
 
 }).call(this,require('_process'))
-},{"./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPluginUtils.js":[function(require,module,exports){
+},{"./invariant":145,"_process":166}],38:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -4872,7 +9133,7 @@ var EventPluginUtils = {
 module.exports = EventPluginUtils;
 
 }).call(this,require('_process'))
-},{"./EventConstants":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventConstants.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPropagators.js":[function(require,module,exports){
+},{"./EventConstants":34,"./invariant":145,"_process":166}],39:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -5014,7 +9275,7 @@ var EventPropagators = {
 module.exports = EventPropagators;
 
 }).call(this,require('_process'))
-},{"./EventConstants":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventConstants.js","./EventPluginHub":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPluginHub.js","./accumulateInto":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/accumulateInto.js","./forEachAccumulated":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/forEachAccumulated.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js":[function(require,module,exports){
+},{"./EventConstants":34,"./EventPluginHub":36,"./accumulateInto":116,"./forEachAccumulated":131,"_process":166}],40:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -5059,7 +9320,7 @@ var ExecutionEnvironment = {
 
 module.exports = ExecutionEnvironment;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/HTMLDOMPropertyConfig.js":[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -5251,7 +9512,7 @@ var HTMLDOMPropertyConfig = {
 
 module.exports = HTMLDOMPropertyConfig;
 
-},{"./DOMProperty":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMProperty.js","./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/LinkedValueUtils.js":[function(require,module,exports){
+},{"./DOMProperty":29,"./ExecutionEnvironment":40}],42:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -5407,7 +9668,7 @@ var LinkedValueUtils = {
 module.exports = LinkedValueUtils;
 
 }).call(this,require('_process'))
-},{"./ReactPropTypes":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPropTypes.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/LocalEventTrapMixin.js":[function(require,module,exports){
+},{"./ReactPropTypes":91,"./invariant":145,"_process":166}],43:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014, Facebook, Inc.
@@ -5457,7 +9718,7 @@ var LocalEventTrapMixin = {
 module.exports = LocalEventTrapMixin;
 
 }).call(this,require('_process'))
-},{"./ReactBrowserEventEmitter":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserEventEmitter.js","./accumulateInto":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/accumulateInto.js","./forEachAccumulated":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/forEachAccumulated.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/MobileSafariClickEventPlugin.js":[function(require,module,exports){
+},{"./ReactBrowserEventEmitter":49,"./accumulateInto":116,"./forEachAccumulated":131,"./invariant":145,"_process":166}],44:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -5515,7 +9776,7 @@ var MobileSafariClickEventPlugin = {
 
 module.exports = MobileSafariClickEventPlugin;
 
-},{"./EventConstants":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventConstants.js","./emptyFunction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/emptyFunction.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js":[function(require,module,exports){
+},{"./EventConstants":34,"./emptyFunction":126}],45:[function(require,module,exports){
 /**
  * Copyright 2014, Facebook, Inc.
  * All rights reserved.
@@ -5562,7 +9823,7 @@ function assign(target, sources) {
 
 module.exports = assign;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/PooledClass.js":[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -5678,7 +9939,7 @@ var PooledClass = {
 module.exports = PooledClass;
 
 }).call(this,require('_process'))
-},{"./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/React.js":[function(require,module,exports){
+},{"./invariant":145,"_process":166}],47:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -5866,7 +10127,7 @@ React.version = '0.12.2';
 module.exports = React;
 
 }).call(this,require('_process'))
-},{"./DOMPropertyOperations":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMPropertyOperations.js","./EventPluginUtils":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPluginUtils.js","./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js","./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./ReactChildren":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactChildren.js","./ReactComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactComponent.js","./ReactCompositeComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCompositeComponent.js","./ReactContext":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactContext.js","./ReactCurrentOwner":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCurrentOwner.js","./ReactDOM":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOM.js","./ReactDOMComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMComponent.js","./ReactDefaultInjection":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDefaultInjection.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./ReactElementValidator":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElementValidator.js","./ReactInstanceHandles":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactInstanceHandles.js","./ReactLegacyElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactLegacyElement.js","./ReactMount":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMount.js","./ReactMultiChild":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMultiChild.js","./ReactPerf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPerf.js","./ReactPropTypes":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPropTypes.js","./ReactServerRendering":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactServerRendering.js","./ReactTextComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactTextComponent.js","./deprecated":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/deprecated.js","./onlyChild":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/onlyChild.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserComponentMixin.js":[function(require,module,exports){
+},{"./DOMPropertyOperations":30,"./EventPluginUtils":38,"./ExecutionEnvironment":40,"./Object.assign":45,"./ReactChildren":50,"./ReactComponent":51,"./ReactCompositeComponent":53,"./ReactContext":54,"./ReactCurrentOwner":55,"./ReactDOM":56,"./ReactDOMComponent":58,"./ReactDefaultInjection":68,"./ReactElement":71,"./ReactElementValidator":72,"./ReactInstanceHandles":79,"./ReactLegacyElement":80,"./ReactMount":82,"./ReactMultiChild":83,"./ReactPerf":87,"./ReactPropTypes":91,"./ReactServerRendering":95,"./ReactTextComponent":97,"./deprecated":125,"./onlyChild":156,"_process":166}],48:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -5909,7 +10170,7 @@ var ReactBrowserComponentMixin = {
 module.exports = ReactBrowserComponentMixin;
 
 }).call(this,require('_process'))
-},{"./ReactEmptyComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactEmptyComponent.js","./ReactMount":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMount.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserEventEmitter.js":[function(require,module,exports){
+},{"./ReactEmptyComponent":73,"./ReactMount":82,"./invariant":145,"_process":166}],49:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -6264,7 +10525,7 @@ var ReactBrowserEventEmitter = assign({}, ReactEventEmitterMixin, {
 
 module.exports = ReactBrowserEventEmitter;
 
-},{"./EventConstants":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventConstants.js","./EventPluginHub":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPluginHub.js","./EventPluginRegistry":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPluginRegistry.js","./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./ReactEventEmitterMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactEventEmitterMixin.js","./ViewportMetrics":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ViewportMetrics.js","./isEventSupported":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/isEventSupported.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactChildren.js":[function(require,module,exports){
+},{"./EventConstants":34,"./EventPluginHub":36,"./EventPluginRegistry":37,"./Object.assign":45,"./ReactEventEmitterMixin":75,"./ViewportMetrics":115,"./isEventSupported":146}],50:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -6414,7 +10675,7 @@ var ReactChildren = {
 module.exports = ReactChildren;
 
 }).call(this,require('_process'))
-},{"./PooledClass":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/PooledClass.js","./traverseAllChildren":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/traverseAllChildren.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactComponent.js":[function(require,module,exports){
+},{"./PooledClass":46,"./traverseAllChildren":163,"./warning":164,"_process":166}],51:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -6857,7 +11118,7 @@ var ReactComponent = {
 module.exports = ReactComponent;
 
 }).call(this,require('_process'))
-},{"./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./ReactOwner":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactOwner.js","./ReactUpdates":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactUpdates.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","./keyMirror":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyMirror.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactComponentBrowserEnvironment.js":[function(require,module,exports){
+},{"./Object.assign":45,"./ReactElement":71,"./ReactOwner":86,"./ReactUpdates":98,"./invariant":145,"./keyMirror":151,"_process":166}],52:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -6979,7 +11240,7 @@ var ReactComponentBrowserEnvironment = {
 module.exports = ReactComponentBrowserEnvironment;
 
 }).call(this,require('_process'))
-},{"./ReactDOMIDOperations":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMIDOperations.js","./ReactMarkupChecksum":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMarkupChecksum.js","./ReactMount":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMount.js","./ReactPerf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPerf.js","./ReactReconcileTransaction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactReconcileTransaction.js","./getReactRootElementInContainer":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getReactRootElementInContainer.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","./setInnerHTML":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/setInnerHTML.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCompositeComponent.js":[function(require,module,exports){
+},{"./ReactDOMIDOperations":60,"./ReactMarkupChecksum":81,"./ReactMount":82,"./ReactPerf":87,"./ReactReconcileTransaction":93,"./getReactRootElementInContainer":139,"./invariant":145,"./setInnerHTML":159,"_process":166}],53:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -8419,7 +12680,7 @@ var ReactCompositeComponent = {
 module.exports = ReactCompositeComponent;
 
 }).call(this,require('_process'))
-},{"./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./ReactComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactComponent.js","./ReactContext":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactContext.js","./ReactCurrentOwner":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCurrentOwner.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./ReactElementValidator":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElementValidator.js","./ReactEmptyComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactEmptyComponent.js","./ReactErrorUtils":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactErrorUtils.js","./ReactLegacyElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactLegacyElement.js","./ReactOwner":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactOwner.js","./ReactPerf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPerf.js","./ReactPropTransferer":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPropTransferer.js","./ReactPropTypeLocationNames":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPropTypeLocationNames.js","./ReactPropTypeLocations":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPropTypeLocations.js","./ReactUpdates":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactUpdates.js","./instantiateReactComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/instantiateReactComponent.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","./keyMirror":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyMirror.js","./keyOf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyOf.js","./mapObject":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/mapObject.js","./monitorCodeUse":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/monitorCodeUse.js","./shouldUpdateReactComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/shouldUpdateReactComponent.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactContext.js":[function(require,module,exports){
+},{"./Object.assign":45,"./ReactComponent":51,"./ReactContext":54,"./ReactCurrentOwner":55,"./ReactElement":71,"./ReactElementValidator":72,"./ReactEmptyComponent":73,"./ReactErrorUtils":74,"./ReactLegacyElement":80,"./ReactOwner":86,"./ReactPerf":87,"./ReactPropTransferer":88,"./ReactPropTypeLocationNames":89,"./ReactPropTypeLocations":90,"./ReactUpdates":98,"./instantiateReactComponent":144,"./invariant":145,"./keyMirror":151,"./keyOf":152,"./mapObject":153,"./monitorCodeUse":155,"./shouldUpdateReactComponent":161,"./warning":164,"_process":166}],54:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -8481,7 +12742,7 @@ var ReactContext = {
 
 module.exports = ReactContext;
 
-},{"./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCurrentOwner.js":[function(require,module,exports){
+},{"./Object.assign":45}],55:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -8515,7 +12776,7 @@ var ReactCurrentOwner = {
 
 module.exports = ReactCurrentOwner;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOM.js":[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -8698,7 +12959,7 @@ var ReactDOM = mapObject({
 module.exports = ReactDOM;
 
 }).call(this,require('_process'))
-},{"./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./ReactElementValidator":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElementValidator.js","./ReactLegacyElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactLegacyElement.js","./mapObject":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/mapObject.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMButton.js":[function(require,module,exports){
+},{"./ReactElement":71,"./ReactElementValidator":72,"./ReactLegacyElement":80,"./mapObject":153,"_process":166}],57:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -8763,7 +13024,7 @@ var ReactDOMButton = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMButton;
 
-},{"./AutoFocusMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/AutoFocusMixin.js","./ReactBrowserComponentMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserComponentMixin.js","./ReactCompositeComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCompositeComponent.js","./ReactDOM":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOM.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./keyMirror":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyMirror.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMComponent.js":[function(require,module,exports){
+},{"./AutoFocusMixin":20,"./ReactBrowserComponentMixin":48,"./ReactCompositeComponent":53,"./ReactDOM":56,"./ReactElement":71,"./keyMirror":151}],58:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -9250,7 +13511,7 @@ assign(
 module.exports = ReactDOMComponent;
 
 }).call(this,require('_process'))
-},{"./CSSPropertyOperations":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/CSSPropertyOperations.js","./DOMProperty":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMProperty.js","./DOMPropertyOperations":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMPropertyOperations.js","./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./ReactBrowserComponentMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserComponentMixin.js","./ReactBrowserEventEmitter":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserEventEmitter.js","./ReactComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactComponent.js","./ReactMount":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMount.js","./ReactMultiChild":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMultiChild.js","./ReactPerf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPerf.js","./escapeTextForBrowser":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/escapeTextForBrowser.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","./isEventSupported":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/isEventSupported.js","./keyOf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyOf.js","./monitorCodeUse":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/monitorCodeUse.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMForm.js":[function(require,module,exports){
+},{"./CSSPropertyOperations":23,"./DOMProperty":29,"./DOMPropertyOperations":30,"./Object.assign":45,"./ReactBrowserComponentMixin":48,"./ReactBrowserEventEmitter":49,"./ReactComponent":51,"./ReactMount":82,"./ReactMultiChild":83,"./ReactPerf":87,"./escapeTextForBrowser":128,"./invariant":145,"./isEventSupported":146,"./keyOf":152,"./monitorCodeUse":155,"_process":166}],59:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -9300,7 +13561,7 @@ var ReactDOMForm = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMForm;
 
-},{"./EventConstants":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventConstants.js","./LocalEventTrapMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/LocalEventTrapMixin.js","./ReactBrowserComponentMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserComponentMixin.js","./ReactCompositeComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCompositeComponent.js","./ReactDOM":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOM.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMIDOperations.js":[function(require,module,exports){
+},{"./EventConstants":34,"./LocalEventTrapMixin":43,"./ReactBrowserComponentMixin":48,"./ReactCompositeComponent":53,"./ReactDOM":56,"./ReactElement":71}],60:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -9486,7 +13747,7 @@ var ReactDOMIDOperations = {
 module.exports = ReactDOMIDOperations;
 
 }).call(this,require('_process'))
-},{"./CSSPropertyOperations":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/CSSPropertyOperations.js","./DOMChildrenOperations":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMChildrenOperations.js","./DOMPropertyOperations":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMPropertyOperations.js","./ReactMount":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMount.js","./ReactPerf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPerf.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","./setInnerHTML":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/setInnerHTML.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMImg.js":[function(require,module,exports){
+},{"./CSSPropertyOperations":23,"./DOMChildrenOperations":28,"./DOMPropertyOperations":30,"./ReactMount":82,"./ReactPerf":87,"./invariant":145,"./setInnerHTML":159,"_process":166}],61:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -9534,7 +13795,7 @@ var ReactDOMImg = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMImg;
 
-},{"./EventConstants":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventConstants.js","./LocalEventTrapMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/LocalEventTrapMixin.js","./ReactBrowserComponentMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserComponentMixin.js","./ReactCompositeComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCompositeComponent.js","./ReactDOM":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOM.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMInput.js":[function(require,module,exports){
+},{"./EventConstants":34,"./LocalEventTrapMixin":43,"./ReactBrowserComponentMixin":48,"./ReactCompositeComponent":53,"./ReactDOM":56,"./ReactElement":71}],62:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -9712,7 +13973,7 @@ var ReactDOMInput = ReactCompositeComponent.createClass({
 module.exports = ReactDOMInput;
 
 }).call(this,require('_process'))
-},{"./AutoFocusMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/AutoFocusMixin.js","./DOMPropertyOperations":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMPropertyOperations.js","./LinkedValueUtils":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/LinkedValueUtils.js","./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./ReactBrowserComponentMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserComponentMixin.js","./ReactCompositeComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCompositeComponent.js","./ReactDOM":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOM.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./ReactMount":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMount.js","./ReactUpdates":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactUpdates.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMOption.js":[function(require,module,exports){
+},{"./AutoFocusMixin":20,"./DOMPropertyOperations":30,"./LinkedValueUtils":42,"./Object.assign":45,"./ReactBrowserComponentMixin":48,"./ReactCompositeComponent":53,"./ReactDOM":56,"./ReactElement":71,"./ReactMount":82,"./ReactUpdates":98,"./invariant":145,"_process":166}],63:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -9765,7 +14026,7 @@ var ReactDOMOption = ReactCompositeComponent.createClass({
 module.exports = ReactDOMOption;
 
 }).call(this,require('_process'))
-},{"./ReactBrowserComponentMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserComponentMixin.js","./ReactCompositeComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCompositeComponent.js","./ReactDOM":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOM.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMSelect.js":[function(require,module,exports){
+},{"./ReactBrowserComponentMixin":48,"./ReactCompositeComponent":53,"./ReactDOM":56,"./ReactElement":71,"./warning":164,"_process":166}],64:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -9949,7 +14210,7 @@ var ReactDOMSelect = ReactCompositeComponent.createClass({
 
 module.exports = ReactDOMSelect;
 
-},{"./AutoFocusMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/AutoFocusMixin.js","./LinkedValueUtils":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/LinkedValueUtils.js","./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./ReactBrowserComponentMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserComponentMixin.js","./ReactCompositeComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCompositeComponent.js","./ReactDOM":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOM.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./ReactUpdates":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactUpdates.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMSelection.js":[function(require,module,exports){
+},{"./AutoFocusMixin":20,"./LinkedValueUtils":42,"./Object.assign":45,"./ReactBrowserComponentMixin":48,"./ReactCompositeComponent":53,"./ReactDOM":56,"./ReactElement":71,"./ReactUpdates":98}],65:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -10158,7 +14419,7 @@ var ReactDOMSelection = {
 
 module.exports = ReactDOMSelection;
 
-},{"./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js","./getNodeForCharacterOffset":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getNodeForCharacterOffset.js","./getTextContentAccessor":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getTextContentAccessor.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMTextarea.js":[function(require,module,exports){
+},{"./ExecutionEnvironment":40,"./getNodeForCharacterOffset":138,"./getTextContentAccessor":140}],66:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -10299,7 +14560,7 @@ var ReactDOMTextarea = ReactCompositeComponent.createClass({
 module.exports = ReactDOMTextarea;
 
 }).call(this,require('_process'))
-},{"./AutoFocusMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/AutoFocusMixin.js","./DOMPropertyOperations":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMPropertyOperations.js","./LinkedValueUtils":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/LinkedValueUtils.js","./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./ReactBrowserComponentMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserComponentMixin.js","./ReactCompositeComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCompositeComponent.js","./ReactDOM":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOM.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./ReactUpdates":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactUpdates.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDefaultBatchingStrategy.js":[function(require,module,exports){
+},{"./AutoFocusMixin":20,"./DOMPropertyOperations":30,"./LinkedValueUtils":42,"./Object.assign":45,"./ReactBrowserComponentMixin":48,"./ReactCompositeComponent":53,"./ReactDOM":56,"./ReactElement":71,"./ReactUpdates":98,"./invariant":145,"./warning":164,"_process":166}],67:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -10372,7 +14633,7 @@ var ReactDefaultBatchingStrategy = {
 
 module.exports = ReactDefaultBatchingStrategy;
 
-},{"./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./ReactUpdates":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactUpdates.js","./Transaction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Transaction.js","./emptyFunction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/emptyFunction.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDefaultInjection.js":[function(require,module,exports){
+},{"./Object.assign":45,"./ReactUpdates":98,"./Transaction":114,"./emptyFunction":126}],68:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -10501,7 +14762,7 @@ module.exports = {
 };
 
 }).call(this,require('_process'))
-},{"./BeforeInputEventPlugin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/BeforeInputEventPlugin.js","./ChangeEventPlugin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ChangeEventPlugin.js","./ClientReactRootIndex":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ClientReactRootIndex.js","./CompositionEventPlugin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/CompositionEventPlugin.js","./DefaultEventPluginOrder":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DefaultEventPluginOrder.js","./EnterLeaveEventPlugin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EnterLeaveEventPlugin.js","./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js","./HTMLDOMPropertyConfig":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/HTMLDOMPropertyConfig.js","./MobileSafariClickEventPlugin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/MobileSafariClickEventPlugin.js","./ReactBrowserComponentMixin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserComponentMixin.js","./ReactComponentBrowserEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactComponentBrowserEnvironment.js","./ReactDOMButton":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMButton.js","./ReactDOMComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMComponent.js","./ReactDOMForm":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMForm.js","./ReactDOMImg":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMImg.js","./ReactDOMInput":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMInput.js","./ReactDOMOption":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMOption.js","./ReactDOMSelect":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMSelect.js","./ReactDOMTextarea":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMTextarea.js","./ReactDefaultBatchingStrategy":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDefaultBatchingStrategy.js","./ReactDefaultPerf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDefaultPerf.js","./ReactEventListener":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactEventListener.js","./ReactInjection":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactInjection.js","./ReactInstanceHandles":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactInstanceHandles.js","./ReactMount":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMount.js","./SVGDOMPropertyConfig":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SVGDOMPropertyConfig.js","./SelectEventPlugin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SelectEventPlugin.js","./ServerReactRootIndex":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ServerReactRootIndex.js","./SimpleEventPlugin":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SimpleEventPlugin.js","./createFullPageComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/createFullPageComponent.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDefaultPerf.js":[function(require,module,exports){
+},{"./BeforeInputEventPlugin":21,"./ChangeEventPlugin":25,"./ClientReactRootIndex":26,"./CompositionEventPlugin":27,"./DefaultEventPluginOrder":32,"./EnterLeaveEventPlugin":33,"./ExecutionEnvironment":40,"./HTMLDOMPropertyConfig":41,"./MobileSafariClickEventPlugin":44,"./ReactBrowserComponentMixin":48,"./ReactComponentBrowserEnvironment":52,"./ReactDOMButton":57,"./ReactDOMComponent":58,"./ReactDOMForm":59,"./ReactDOMImg":61,"./ReactDOMInput":62,"./ReactDOMOption":63,"./ReactDOMSelect":64,"./ReactDOMTextarea":66,"./ReactDefaultBatchingStrategy":67,"./ReactDefaultPerf":69,"./ReactEventListener":76,"./ReactInjection":77,"./ReactInstanceHandles":79,"./ReactMount":82,"./SVGDOMPropertyConfig":99,"./SelectEventPlugin":100,"./ServerReactRootIndex":101,"./SimpleEventPlugin":102,"./createFullPageComponent":122,"_process":166}],69:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -10761,7 +15022,7 @@ var ReactDefaultPerf = {
 
 module.exports = ReactDefaultPerf;
 
-},{"./DOMProperty":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMProperty.js","./ReactDefaultPerfAnalysis":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDefaultPerfAnalysis.js","./ReactMount":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMount.js","./ReactPerf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPerf.js","./performanceNow":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/performanceNow.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDefaultPerfAnalysis.js":[function(require,module,exports){
+},{"./DOMProperty":29,"./ReactDefaultPerfAnalysis":70,"./ReactMount":82,"./ReactPerf":87,"./performanceNow":158}],70:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -10967,7 +15228,7 @@ var ReactDefaultPerfAnalysis = {
 
 module.exports = ReactDefaultPerfAnalysis;
 
-},{"./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js":[function(require,module,exports){
+},{"./Object.assign":45}],71:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014, Facebook, Inc.
@@ -11213,7 +15474,7 @@ ReactElement.isValidElement = function(object) {
 module.exports = ReactElement;
 
 }).call(this,require('_process'))
-},{"./ReactContext":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactContext.js","./ReactCurrentOwner":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCurrentOwner.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElementValidator.js":[function(require,module,exports){
+},{"./ReactContext":54,"./ReactCurrentOwner":55,"./warning":164,"_process":166}],72:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014, Facebook, Inc.
@@ -11495,7 +15756,7 @@ var ReactElementValidator = {
 module.exports = ReactElementValidator;
 
 }).call(this,require('_process'))
-},{"./ReactCurrentOwner":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCurrentOwner.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./ReactPropTypeLocations":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPropTypeLocations.js","./monitorCodeUse":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/monitorCodeUse.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactEmptyComponent.js":[function(require,module,exports){
+},{"./ReactCurrentOwner":55,"./ReactElement":71,"./ReactPropTypeLocations":90,"./monitorCodeUse":155,"./warning":164,"_process":166}],73:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014, Facebook, Inc.
@@ -11572,7 +15833,7 @@ var ReactEmptyComponent = {
 module.exports = ReactEmptyComponent;
 
 }).call(this,require('_process'))
-},{"./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactErrorUtils.js":[function(require,module,exports){
+},{"./ReactElement":71,"./invariant":145,"_process":166}],74:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -11604,7 +15865,7 @@ var ReactErrorUtils = {
 
 module.exports = ReactErrorUtils;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactEventEmitterMixin.js":[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -11654,7 +15915,7 @@ var ReactEventEmitterMixin = {
 
 module.exports = ReactEventEmitterMixin;
 
-},{"./EventPluginHub":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPluginHub.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactEventListener.js":[function(require,module,exports){
+},{"./EventPluginHub":36}],76:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -11838,7 +16099,7 @@ var ReactEventListener = {
 
 module.exports = ReactEventListener;
 
-},{"./EventListener":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventListener.js","./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js","./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./PooledClass":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/PooledClass.js","./ReactInstanceHandles":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactInstanceHandles.js","./ReactMount":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMount.js","./ReactUpdates":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactUpdates.js","./getEventTarget":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventTarget.js","./getUnboundedScrollPosition":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getUnboundedScrollPosition.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactInjection.js":[function(require,module,exports){
+},{"./EventListener":35,"./ExecutionEnvironment":40,"./Object.assign":45,"./PooledClass":46,"./ReactInstanceHandles":79,"./ReactMount":82,"./ReactUpdates":98,"./getEventTarget":136,"./getUnboundedScrollPosition":141}],77:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -11878,7 +16139,7 @@ var ReactInjection = {
 
 module.exports = ReactInjection;
 
-},{"./DOMProperty":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMProperty.js","./EventPluginHub":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPluginHub.js","./ReactBrowserEventEmitter":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserEventEmitter.js","./ReactComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactComponent.js","./ReactCompositeComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCompositeComponent.js","./ReactEmptyComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactEmptyComponent.js","./ReactNativeComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactNativeComponent.js","./ReactPerf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPerf.js","./ReactRootIndex":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactRootIndex.js","./ReactUpdates":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactUpdates.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactInputSelection.js":[function(require,module,exports){
+},{"./DOMProperty":29,"./EventPluginHub":36,"./ReactBrowserEventEmitter":49,"./ReactComponent":51,"./ReactCompositeComponent":53,"./ReactEmptyComponent":73,"./ReactNativeComponent":85,"./ReactPerf":87,"./ReactRootIndex":94,"./ReactUpdates":98}],78:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -12014,7 +16275,7 @@ var ReactInputSelection = {
 
 module.exports = ReactInputSelection;
 
-},{"./ReactDOMSelection":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactDOMSelection.js","./containsNode":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/containsNode.js","./focusNode":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/focusNode.js","./getActiveElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getActiveElement.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactInstanceHandles.js":[function(require,module,exports){
+},{"./ReactDOMSelection":65,"./containsNode":120,"./focusNode":130,"./getActiveElement":132}],79:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -12349,7 +16610,7 @@ var ReactInstanceHandles = {
 module.exports = ReactInstanceHandles;
 
 }).call(this,require('_process'))
-},{"./ReactRootIndex":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactRootIndex.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactLegacyElement.js":[function(require,module,exports){
+},{"./ReactRootIndex":94,"./invariant":145,"_process":166}],80:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014, Facebook, Inc.
@@ -12596,7 +16857,7 @@ ReactLegacyElementFactory._isLegacyCallWarningEnabled = true;
 module.exports = ReactLegacyElementFactory;
 
 }).call(this,require('_process'))
-},{"./ReactCurrentOwner":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCurrentOwner.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","./monitorCodeUse":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/monitorCodeUse.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMarkupChecksum.js":[function(require,module,exports){
+},{"./ReactCurrentOwner":55,"./invariant":145,"./monitorCodeUse":155,"./warning":164,"_process":166}],81:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -12644,7 +16905,7 @@ var ReactMarkupChecksum = {
 
 module.exports = ReactMarkupChecksum;
 
-},{"./adler32":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/adler32.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMount.js":[function(require,module,exports){
+},{"./adler32":117}],82:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -13342,7 +17603,7 @@ ReactMount.renderComponent = deprecated(
 module.exports = ReactMount;
 
 }).call(this,require('_process'))
-},{"./DOMProperty":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMProperty.js","./ReactBrowserEventEmitter":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserEventEmitter.js","./ReactCurrentOwner":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCurrentOwner.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./ReactInstanceHandles":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactInstanceHandles.js","./ReactLegacyElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactLegacyElement.js","./ReactPerf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPerf.js","./containsNode":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/containsNode.js","./deprecated":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/deprecated.js","./getReactRootElementInContainer":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getReactRootElementInContainer.js","./instantiateReactComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/instantiateReactComponent.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","./shouldUpdateReactComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/shouldUpdateReactComponent.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMultiChild.js":[function(require,module,exports){
+},{"./DOMProperty":29,"./ReactBrowserEventEmitter":49,"./ReactCurrentOwner":55,"./ReactElement":71,"./ReactInstanceHandles":79,"./ReactLegacyElement":80,"./ReactPerf":87,"./containsNode":120,"./deprecated":125,"./getReactRootElementInContainer":139,"./instantiateReactComponent":144,"./invariant":145,"./shouldUpdateReactComponent":161,"./warning":164,"_process":166}],83:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -13770,7 +18031,7 @@ var ReactMultiChild = {
 
 module.exports = ReactMultiChild;
 
-},{"./ReactComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactComponent.js","./ReactMultiChildUpdateTypes":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMultiChildUpdateTypes.js","./flattenChildren":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/flattenChildren.js","./instantiateReactComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/instantiateReactComponent.js","./shouldUpdateReactComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/shouldUpdateReactComponent.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMultiChildUpdateTypes.js":[function(require,module,exports){
+},{"./ReactComponent":51,"./ReactMultiChildUpdateTypes":84,"./flattenChildren":129,"./instantiateReactComponent":144,"./shouldUpdateReactComponent":161}],84:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -13803,7 +18064,7 @@ var ReactMultiChildUpdateTypes = keyMirror({
 
 module.exports = ReactMultiChildUpdateTypes;
 
-},{"./keyMirror":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyMirror.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactNativeComponent.js":[function(require,module,exports){
+},{"./keyMirror":151}],85:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014, Facebook, Inc.
@@ -13876,7 +18137,7 @@ var ReactNativeComponent = {
 module.exports = ReactNativeComponent;
 
 }).call(this,require('_process'))
-},{"./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactOwner.js":[function(require,module,exports){
+},{"./Object.assign":45,"./invariant":145,"_process":166}],86:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -14032,7 +18293,7 @@ var ReactOwner = {
 module.exports = ReactOwner;
 
 }).call(this,require('_process'))
-},{"./emptyObject":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/emptyObject.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPerf.js":[function(require,module,exports){
+},{"./emptyObject":127,"./invariant":145,"_process":166}],87:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -14116,7 +18377,7 @@ function _noMeasure(objName, fnName, func) {
 module.exports = ReactPerf;
 
 }).call(this,require('_process'))
-},{"_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPropTransferer.js":[function(require,module,exports){
+},{"_process":166}],88:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -14283,7 +18544,7 @@ var ReactPropTransferer = {
 module.exports = ReactPropTransferer;
 
 }).call(this,require('_process'))
-},{"./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./emptyFunction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/emptyFunction.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","./joinClasses":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/joinClasses.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPropTypeLocationNames.js":[function(require,module,exports){
+},{"./Object.assign":45,"./emptyFunction":126,"./invariant":145,"./joinClasses":150,"./warning":164,"_process":166}],89:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -14311,7 +18572,7 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = ReactPropTypeLocationNames;
 
 }).call(this,require('_process'))
-},{"_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPropTypeLocations.js":[function(require,module,exports){
+},{"_process":166}],90:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -14335,7 +18596,7 @@ var ReactPropTypeLocations = keyMirror({
 
 module.exports = ReactPropTypeLocations;
 
-},{"./keyMirror":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyMirror.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPropTypes.js":[function(require,module,exports){
+},{"./keyMirror":151}],91:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -14689,7 +18950,7 @@ function getPreciseType(propValue) {
 
 module.exports = ReactPropTypes;
 
-},{"./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./ReactPropTypeLocationNames":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPropTypeLocationNames.js","./deprecated":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/deprecated.js","./emptyFunction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/emptyFunction.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPutListenerQueue.js":[function(require,module,exports){
+},{"./ReactElement":71,"./ReactPropTypeLocationNames":89,"./deprecated":125,"./emptyFunction":126}],92:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -14745,7 +19006,7 @@ PooledClass.addPoolingTo(ReactPutListenerQueue);
 
 module.exports = ReactPutListenerQueue;
 
-},{"./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./PooledClass":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/PooledClass.js","./ReactBrowserEventEmitter":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserEventEmitter.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactReconcileTransaction.js":[function(require,module,exports){
+},{"./Object.assign":45,"./PooledClass":46,"./ReactBrowserEventEmitter":49}],93:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -14921,7 +19182,7 @@ PooledClass.addPoolingTo(ReactReconcileTransaction);
 
 module.exports = ReactReconcileTransaction;
 
-},{"./CallbackQueue":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/CallbackQueue.js","./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./PooledClass":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/PooledClass.js","./ReactBrowserEventEmitter":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactBrowserEventEmitter.js","./ReactInputSelection":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactInputSelection.js","./ReactPutListenerQueue":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPutListenerQueue.js","./Transaction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Transaction.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactRootIndex.js":[function(require,module,exports){
+},{"./CallbackQueue":24,"./Object.assign":45,"./PooledClass":46,"./ReactBrowserEventEmitter":49,"./ReactInputSelection":78,"./ReactPutListenerQueue":92,"./Transaction":114}],94:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -14952,7 +19213,7 @@ var ReactRootIndex = {
 
 module.exports = ReactRootIndex;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactServerRendering.js":[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -15032,7 +19293,7 @@ module.exports = {
 };
 
 }).call(this,require('_process'))
-},{"./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./ReactInstanceHandles":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactInstanceHandles.js","./ReactMarkupChecksum":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactMarkupChecksum.js","./ReactServerRenderingTransaction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactServerRenderingTransaction.js","./instantiateReactComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/instantiateReactComponent.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactServerRenderingTransaction.js":[function(require,module,exports){
+},{"./ReactElement":71,"./ReactInstanceHandles":79,"./ReactMarkupChecksum":81,"./ReactServerRenderingTransaction":96,"./instantiateReactComponent":144,"./invariant":145,"_process":166}],96:[function(require,module,exports){
 /**
  * Copyright 2014, Facebook, Inc.
  * All rights reserved.
@@ -15145,7 +19406,7 @@ PooledClass.addPoolingTo(ReactServerRenderingTransaction);
 
 module.exports = ReactServerRenderingTransaction;
 
-},{"./CallbackQueue":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/CallbackQueue.js","./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./PooledClass":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/PooledClass.js","./ReactPutListenerQueue":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPutListenerQueue.js","./Transaction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Transaction.js","./emptyFunction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/emptyFunction.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactTextComponent.js":[function(require,module,exports){
+},{"./CallbackQueue":24,"./Object.assign":45,"./PooledClass":46,"./ReactPutListenerQueue":92,"./Transaction":114,"./emptyFunction":126}],97:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -15251,7 +19512,7 @@ ReactTextComponentFactory.type = ReactTextComponent;
 
 module.exports = ReactTextComponentFactory;
 
-},{"./DOMPropertyOperations":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMPropertyOperations.js","./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./ReactComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactComponent.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./escapeTextForBrowser":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/escapeTextForBrowser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactUpdates.js":[function(require,module,exports){
+},{"./DOMPropertyOperations":30,"./Object.assign":45,"./ReactComponent":51,"./ReactElement":71,"./escapeTextForBrowser":128}],98:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -15541,7 +19802,7 @@ var ReactUpdates = {
 module.exports = ReactUpdates;
 
 }).call(this,require('_process'))
-},{"./CallbackQueue":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/CallbackQueue.js","./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./PooledClass":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/PooledClass.js","./ReactCurrentOwner":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCurrentOwner.js","./ReactPerf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactPerf.js","./Transaction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Transaction.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SVGDOMPropertyConfig.js":[function(require,module,exports){
+},{"./CallbackQueue":24,"./Object.assign":45,"./PooledClass":46,"./ReactCurrentOwner":55,"./ReactPerf":87,"./Transaction":114,"./invariant":145,"./warning":164,"_process":166}],99:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -15633,7 +19894,7 @@ var SVGDOMPropertyConfig = {
 
 module.exports = SVGDOMPropertyConfig;
 
-},{"./DOMProperty":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/DOMProperty.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SelectEventPlugin.js":[function(require,module,exports){
+},{"./DOMProperty":29}],100:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -15828,7 +20089,7 @@ var SelectEventPlugin = {
 
 module.exports = SelectEventPlugin;
 
-},{"./EventConstants":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventConstants.js","./EventPropagators":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPropagators.js","./ReactInputSelection":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactInputSelection.js","./SyntheticEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticEvent.js","./getActiveElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getActiveElement.js","./isTextInputElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/isTextInputElement.js","./keyOf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyOf.js","./shallowEqual":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/shallowEqual.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ServerReactRootIndex.js":[function(require,module,exports){
+},{"./EventConstants":34,"./EventPropagators":39,"./ReactInputSelection":78,"./SyntheticEvent":106,"./getActiveElement":132,"./isTextInputElement":148,"./keyOf":152,"./shallowEqual":160}],101:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -15859,7 +20120,7 @@ var ServerReactRootIndex = {
 
 module.exports = ServerReactRootIndex;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SimpleEventPlugin.js":[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -16287,7 +20548,7 @@ var SimpleEventPlugin = {
 module.exports = SimpleEventPlugin;
 
 }).call(this,require('_process'))
-},{"./EventConstants":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventConstants.js","./EventPluginUtils":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPluginUtils.js","./EventPropagators":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/EventPropagators.js","./SyntheticClipboardEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticClipboardEvent.js","./SyntheticDragEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticDragEvent.js","./SyntheticEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticEvent.js","./SyntheticFocusEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticFocusEvent.js","./SyntheticKeyboardEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticKeyboardEvent.js","./SyntheticMouseEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticMouseEvent.js","./SyntheticTouchEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticTouchEvent.js","./SyntheticUIEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticUIEvent.js","./SyntheticWheelEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticWheelEvent.js","./getEventCharCode":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventCharCode.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","./keyOf":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyOf.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticClipboardEvent.js":[function(require,module,exports){
+},{"./EventConstants":34,"./EventPluginUtils":38,"./EventPropagators":39,"./SyntheticClipboardEvent":103,"./SyntheticDragEvent":105,"./SyntheticEvent":106,"./SyntheticFocusEvent":107,"./SyntheticKeyboardEvent":109,"./SyntheticMouseEvent":110,"./SyntheticTouchEvent":111,"./SyntheticUIEvent":112,"./SyntheticWheelEvent":113,"./getEventCharCode":133,"./invariant":145,"./keyOf":152,"./warning":164,"_process":166}],103:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -16333,7 +20594,7 @@ SyntheticEvent.augmentClass(SyntheticClipboardEvent, ClipboardEventInterface);
 module.exports = SyntheticClipboardEvent;
 
 
-},{"./SyntheticEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticEvent.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticCompositionEvent.js":[function(require,module,exports){
+},{"./SyntheticEvent":106}],104:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -16379,7 +20640,7 @@ SyntheticEvent.augmentClass(
 module.exports = SyntheticCompositionEvent;
 
 
-},{"./SyntheticEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticEvent.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticDragEvent.js":[function(require,module,exports){
+},{"./SyntheticEvent":106}],105:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -16418,7 +20679,7 @@ SyntheticMouseEvent.augmentClass(SyntheticDragEvent, DragEventInterface);
 
 module.exports = SyntheticDragEvent;
 
-},{"./SyntheticMouseEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticMouseEvent.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticEvent.js":[function(require,module,exports){
+},{"./SyntheticMouseEvent":110}],106:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -16576,7 +20837,7 @@ PooledClass.addPoolingTo(SyntheticEvent, PooledClass.threeArgumentPooler);
 
 module.exports = SyntheticEvent;
 
-},{"./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./PooledClass":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/PooledClass.js","./emptyFunction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/emptyFunction.js","./getEventTarget":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventTarget.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticFocusEvent.js":[function(require,module,exports){
+},{"./Object.assign":45,"./PooledClass":46,"./emptyFunction":126,"./getEventTarget":136}],107:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -16615,7 +20876,7 @@ SyntheticUIEvent.augmentClass(SyntheticFocusEvent, FocusEventInterface);
 
 module.exports = SyntheticFocusEvent;
 
-},{"./SyntheticUIEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticUIEvent.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticInputEvent.js":[function(require,module,exports){
+},{"./SyntheticUIEvent":112}],108:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  * All rights reserved.
@@ -16662,7 +20923,7 @@ SyntheticEvent.augmentClass(
 module.exports = SyntheticInputEvent;
 
 
-},{"./SyntheticEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticEvent.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticKeyboardEvent.js":[function(require,module,exports){
+},{"./SyntheticEvent":106}],109:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -16749,7 +21010,7 @@ SyntheticUIEvent.augmentClass(SyntheticKeyboardEvent, KeyboardEventInterface);
 
 module.exports = SyntheticKeyboardEvent;
 
-},{"./SyntheticUIEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticUIEvent.js","./getEventCharCode":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventCharCode.js","./getEventKey":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventKey.js","./getEventModifierState":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventModifierState.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticMouseEvent.js":[function(require,module,exports){
+},{"./SyntheticUIEvent":112,"./getEventCharCode":133,"./getEventKey":134,"./getEventModifierState":135}],110:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -16832,7 +21093,7 @@ SyntheticUIEvent.augmentClass(SyntheticMouseEvent, MouseEventInterface);
 
 module.exports = SyntheticMouseEvent;
 
-},{"./SyntheticUIEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticUIEvent.js","./ViewportMetrics":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ViewportMetrics.js","./getEventModifierState":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventModifierState.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticTouchEvent.js":[function(require,module,exports){
+},{"./SyntheticUIEvent":112,"./ViewportMetrics":115,"./getEventModifierState":135}],111:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -16880,7 +21141,7 @@ SyntheticUIEvent.augmentClass(SyntheticTouchEvent, TouchEventInterface);
 
 module.exports = SyntheticTouchEvent;
 
-},{"./SyntheticUIEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticUIEvent.js","./getEventModifierState":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventModifierState.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticUIEvent.js":[function(require,module,exports){
+},{"./SyntheticUIEvent":112,"./getEventModifierState":135}],112:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -16942,7 +21203,7 @@ SyntheticEvent.augmentClass(SyntheticUIEvent, UIEventInterface);
 
 module.exports = SyntheticUIEvent;
 
-},{"./SyntheticEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticEvent.js","./getEventTarget":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventTarget.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticWheelEvent.js":[function(require,module,exports){
+},{"./SyntheticEvent":106,"./getEventTarget":136}],113:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -17003,7 +21264,7 @@ SyntheticMouseEvent.augmentClass(SyntheticWheelEvent, WheelEventInterface);
 
 module.exports = SyntheticWheelEvent;
 
-},{"./SyntheticMouseEvent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/SyntheticMouseEvent.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Transaction.js":[function(require,module,exports){
+},{"./SyntheticMouseEvent":110}],114:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -17244,7 +21505,7 @@ var Transaction = {
 module.exports = Transaction;
 
 }).call(this,require('_process'))
-},{"./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ViewportMetrics.js":[function(require,module,exports){
+},{"./invariant":145,"_process":166}],115:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -17276,7 +21537,7 @@ var ViewportMetrics = {
 
 module.exports = ViewportMetrics;
 
-},{"./getUnboundedScrollPosition":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getUnboundedScrollPosition.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/accumulateInto.js":[function(require,module,exports){
+},{"./getUnboundedScrollPosition":141}],116:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014, Facebook, Inc.
@@ -17342,7 +21603,7 @@ function accumulateInto(current, next) {
 module.exports = accumulateInto;
 
 }).call(this,require('_process'))
-},{"./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/adler32.js":[function(require,module,exports){
+},{"./invariant":145,"_process":166}],117:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -17376,7 +21637,7 @@ function adler32(data) {
 
 module.exports = adler32;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/camelize.js":[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -17408,7 +21669,7 @@ function camelize(string) {
 
 module.exports = camelize;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/camelizeStyleName.js":[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 /**
  * Copyright 2014, Facebook, Inc.
  * All rights reserved.
@@ -17450,7 +21711,7 @@ function camelizeStyleName(string) {
 
 module.exports = camelizeStyleName;
 
-},{"./camelize":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/camelize.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/containsNode.js":[function(require,module,exports){
+},{"./camelize":118}],120:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -17494,7 +21755,7 @@ function containsNode(outerNode, innerNode) {
 
 module.exports = containsNode;
 
-},{"./isTextNode":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/isTextNode.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/createArrayFrom.js":[function(require,module,exports){
+},{"./isTextNode":149}],121:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -17580,7 +21841,7 @@ function createArrayFrom(obj) {
 
 module.exports = createArrayFrom;
 
-},{"./toArray":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/toArray.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/createFullPageComponent.js":[function(require,module,exports){
+},{"./toArray":162}],122:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -17641,7 +21902,7 @@ function createFullPageComponent(tag) {
 module.exports = createFullPageComponent;
 
 }).call(this,require('_process'))
-},{"./ReactCompositeComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactCompositeComponent.js","./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/createNodesFromMarkup.js":[function(require,module,exports){
+},{"./ReactCompositeComponent":53,"./ReactElement":71,"./invariant":145,"_process":166}],123:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -17731,7 +21992,7 @@ function createNodesFromMarkup(markup, handleScript) {
 module.exports = createNodesFromMarkup;
 
 }).call(this,require('_process'))
-},{"./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js","./createArrayFrom":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/createArrayFrom.js","./getMarkupWrap":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getMarkupWrap.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/dangerousStyleValue.js":[function(require,module,exports){
+},{"./ExecutionEnvironment":40,"./createArrayFrom":121,"./getMarkupWrap":137,"./invariant":145,"_process":166}],124:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -17789,7 +22050,7 @@ function dangerousStyleValue(name, value) {
 
 module.exports = dangerousStyleValue;
 
-},{"./CSSProperty":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/CSSProperty.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/deprecated.js":[function(require,module,exports){
+},{"./CSSProperty":22}],125:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -17840,7 +22101,7 @@ function deprecated(namespace, oldName, newName, ctx, fn) {
 module.exports = deprecated;
 
 }).call(this,require('_process'))
-},{"./Object.assign":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/Object.assign.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/emptyFunction.js":[function(require,module,exports){
+},{"./Object.assign":45,"./warning":164,"_process":166}],126:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -17874,7 +22135,7 @@ emptyFunction.thatReturnsArgument = function(arg) { return arg; };
 
 module.exports = emptyFunction;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/emptyObject.js":[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -17898,7 +22159,7 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = emptyObject;
 
 }).call(this,require('_process'))
-},{"_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/escapeTextForBrowser.js":[function(require,module,exports){
+},{"_process":166}],128:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -17939,7 +22200,7 @@ function escapeTextForBrowser(text) {
 
 module.exports = escapeTextForBrowser;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/flattenChildren.js":[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -18008,7 +22269,7 @@ function flattenChildren(children) {
 module.exports = flattenChildren;
 
 }).call(this,require('_process'))
-},{"./ReactTextComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactTextComponent.js","./traverseAllChildren":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/traverseAllChildren.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/focusNode.js":[function(require,module,exports){
+},{"./ReactTextComponent":97,"./traverseAllChildren":163,"./warning":164,"_process":166}],130:[function(require,module,exports){
 /**
  * Copyright 2014, Facebook, Inc.
  * All rights reserved.
@@ -18037,7 +22298,7 @@ function focusNode(node) {
 
 module.exports = focusNode;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/forEachAccumulated.js":[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -18068,7 +22329,7 @@ var forEachAccumulated = function(arr, cb, scope) {
 
 module.exports = forEachAccumulated;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getActiveElement.js":[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -18097,7 +22358,7 @@ function getActiveElement() /*?DOMElement*/ {
 
 module.exports = getActiveElement;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventCharCode.js":[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -18149,7 +22410,7 @@ function getEventCharCode(nativeEvent) {
 
 module.exports = getEventCharCode;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventKey.js":[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -18254,7 +22515,7 @@ function getEventKey(nativeEvent) {
 
 module.exports = getEventKey;
 
-},{"./getEventCharCode":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventCharCode.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventModifierState.js":[function(require,module,exports){
+},{"./getEventCharCode":133}],135:[function(require,module,exports){
 /**
  * Copyright 2013 Facebook, Inc.
  * All rights reserved.
@@ -18301,7 +22562,7 @@ function getEventModifierState(nativeEvent) {
 
 module.exports = getEventModifierState;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getEventTarget.js":[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -18332,7 +22593,7 @@ function getEventTarget(nativeEvent) {
 
 module.exports = getEventTarget;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getMarkupWrap.js":[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -18449,7 +22710,7 @@ function getMarkupWrap(nodeName) {
 module.exports = getMarkupWrap;
 
 }).call(this,require('_process'))
-},{"./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getNodeForCharacterOffset.js":[function(require,module,exports){
+},{"./ExecutionEnvironment":40,"./invariant":145,"_process":166}],138:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -18524,7 +22785,7 @@ function getNodeForCharacterOffset(root, offset) {
 
 module.exports = getNodeForCharacterOffset;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getReactRootElementInContainer.js":[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -18559,7 +22820,7 @@ function getReactRootElementInContainer(container) {
 
 module.exports = getReactRootElementInContainer;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getTextContentAccessor.js":[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -18596,7 +22857,7 @@ function getTextContentAccessor() {
 
 module.exports = getTextContentAccessor;
 
-},{"./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/getUnboundedScrollPosition.js":[function(require,module,exports){
+},{"./ExecutionEnvironment":40}],141:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -18636,7 +22897,7 @@ function getUnboundedScrollPosition(scrollable) {
 
 module.exports = getUnboundedScrollPosition;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/hyphenate.js":[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -18669,7 +22930,7 @@ function hyphenate(string) {
 
 module.exports = hyphenate;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/hyphenateStyleName.js":[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -18710,7 +22971,7 @@ function hyphenateStyleName(string) {
 
 module.exports = hyphenateStyleName;
 
-},{"./hyphenate":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/hyphenate.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/instantiateReactComponent.js":[function(require,module,exports){
+},{"./hyphenate":142}],144:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -18824,7 +23085,7 @@ function instantiateReactComponent(element, parentCompositeType) {
 module.exports = instantiateReactComponent;
 
 }).call(this,require('_process'))
-},{"./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./ReactEmptyComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactEmptyComponent.js","./ReactLegacyElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactLegacyElement.js","./ReactNativeComponent":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactNativeComponent.js","./warning":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js":[function(require,module,exports){
+},{"./ReactElement":71,"./ReactEmptyComponent":73,"./ReactLegacyElement":80,"./ReactNativeComponent":85,"./warning":164,"_process":166}],145:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -18881,7 +23142,7 @@ var invariant = function(condition, format, a, b, c, d, e, f) {
 module.exports = invariant;
 
 }).call(this,require('_process'))
-},{"_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/isEventSupported.js":[function(require,module,exports){
+},{"_process":166}],146:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -18946,7 +23207,7 @@ function isEventSupported(eventNameSuffix, capture) {
 
 module.exports = isEventSupported;
 
-},{"./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/isNode.js":[function(require,module,exports){
+},{"./ExecutionEnvironment":40}],147:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -18974,7 +23235,7 @@ function isNode(object) {
 
 module.exports = isNode;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/isTextInputElement.js":[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -19018,7 +23279,7 @@ function isTextInputElement(elem) {
 
 module.exports = isTextInputElement;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/isTextNode.js":[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -19043,7 +23304,7 @@ function isTextNode(object) {
 
 module.exports = isTextNode;
 
-},{"./isNode":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/isNode.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/joinClasses.js":[function(require,module,exports){
+},{"./isNode":147}],150:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -19084,7 +23345,7 @@ function joinClasses(className/*, ... */) {
 
 module.exports = joinClasses;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyMirror.js":[function(require,module,exports){
+},{}],151:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -19139,7 +23400,7 @@ var keyMirror = function(obj) {
 module.exports = keyMirror;
 
 }).call(this,require('_process'))
-},{"./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/keyOf.js":[function(require,module,exports){
+},{"./invariant":145,"_process":166}],152:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -19175,7 +23436,7 @@ var keyOf = function(oneKeyObj) {
 
 module.exports = keyOf;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/mapObject.js":[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -19228,7 +23489,7 @@ function mapObject(object, callback, context) {
 
 module.exports = mapObject;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/memoizeStringOnly.js":[function(require,module,exports){
+},{}],154:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -19262,7 +23523,7 @@ function memoizeStringOnly(callback) {
 
 module.exports = memoizeStringOnly;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/monitorCodeUse.js":[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014, Facebook, Inc.
@@ -19296,7 +23557,7 @@ function monitorCodeUse(eventName, data) {
 module.exports = monitorCodeUse;
 
 }).call(this,require('_process'))
-},{"./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/onlyChild.js":[function(require,module,exports){
+},{"./invariant":145,"_process":166}],156:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -19336,7 +23597,7 @@ function onlyChild(children) {
 module.exports = onlyChild;
 
 }).call(this,require('_process'))
-},{"./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/performance.js":[function(require,module,exports){
+},{"./ReactElement":71,"./invariant":145,"_process":166}],157:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -19364,7 +23625,7 @@ if (ExecutionEnvironment.canUseDOM) {
 
 module.exports = performance || {};
 
-},{"./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/performanceNow.js":[function(require,module,exports){
+},{"./ExecutionEnvironment":40}],158:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -19392,7 +23653,7 @@ var performanceNow = performance.now.bind(performance);
 
 module.exports = performanceNow;
 
-},{"./performance":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/performance.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/setInnerHTML.js":[function(require,module,exports){
+},{"./performance":157}],159:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -19470,7 +23731,7 @@ if (ExecutionEnvironment.canUseDOM) {
 
 module.exports = setInnerHTML;
 
-},{"./ExecutionEnvironment":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ExecutionEnvironment.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/shallowEqual.js":[function(require,module,exports){
+},{"./ExecutionEnvironment":40}],160:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -19514,7 +23775,7 @@ function shallowEqual(objA, objB) {
 
 module.exports = shallowEqual;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/shouldUpdateReactComponent.js":[function(require,module,exports){
+},{}],161:[function(require,module,exports){
 /**
  * Copyright 2013-2014, Facebook, Inc.
  * All rights reserved.
@@ -19552,7 +23813,7 @@ function shouldUpdateReactComponent(prevElement, nextElement) {
 
 module.exports = shouldUpdateReactComponent;
 
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/toArray.js":[function(require,module,exports){
+},{}],162:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014, Facebook, Inc.
@@ -19624,7 +23885,7 @@ function toArray(obj) {
 module.exports = toArray;
 
 }).call(this,require('_process'))
-},{"./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/traverseAllChildren.js":[function(require,module,exports){
+},{"./invariant":145,"_process":166}],163:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2014, Facebook, Inc.
@@ -19807,7 +24068,7 @@ function traverseAllChildren(children, callback, traverseContext) {
 module.exports = traverseAllChildren;
 
 }).call(this,require('_process'))
-},{"./ReactElement":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactElement.js","./ReactInstanceHandles":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/ReactInstanceHandles.js","./invariant":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/invariant.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/lib/warning.js":[function(require,module,exports){
+},{"./ReactElement":71,"./ReactInstanceHandles":79,"./invariant":145,"_process":166}],164:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014, Facebook, Inc.
@@ -19852,313 +24113,10 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = warning;
 
 }).call(this,require('_process'))
-},{"./emptyFunction":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/emptyFunction.js","_process":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js"}],"/Users/jonyardley/Development/AstroView/node_modules/react/react.js":[function(require,module,exports){
+},{"./emptyFunction":126,"_process":166}],165:[function(require,module,exports){
 module.exports = require('./lib/React');
 
-},{"./lib/React":"/Users/jonyardley/Development/AstroView/node_modules/react/lib/React.js"}],"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/events/events.js":[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-function EventEmitter() {
-  this._events = this._events || {};
-  this._maxListeners = this._maxListeners || undefined;
-}
-module.exports = EventEmitter;
-
-// Backwards-compat with node 0.10.x
-EventEmitter.EventEmitter = EventEmitter;
-
-EventEmitter.prototype._events = undefined;
-EventEmitter.prototype._maxListeners = undefined;
-
-// By default EventEmitters will print a warning if more than 10 listeners are
-// added to it. This is a useful default which helps finding memory leaks.
-EventEmitter.defaultMaxListeners = 10;
-
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!isNumber(n) || n < 0 || isNaN(n))
-    throw TypeError('n must be a positive number');
-  this._maxListeners = n;
-  return this;
-};
-
-EventEmitter.prototype.emit = function(type) {
-  var er, handler, len, args, i, listeners;
-
-  if (!this._events)
-    this._events = {};
-
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events.error ||
-        (isObject(this._events.error) && !this._events.error.length)) {
-      er = arguments[1];
-      if (er instanceof Error) {
-        throw er; // Unhandled 'error' event
-      }
-      throw TypeError('Uncaught, unspecified "error" event.');
-    }
-  }
-
-  handler = this._events[type];
-
-  if (isUndefined(handler))
-    return false;
-
-  if (isFunction(handler)) {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        len = arguments.length;
-        args = new Array(len - 1);
-        for (i = 1; i < len; i++)
-          args[i - 1] = arguments[i];
-        handler.apply(this, args);
-    }
-  } else if (isObject(handler)) {
-    len = arguments.length;
-    args = new Array(len - 1);
-    for (i = 1; i < len; i++)
-      args[i - 1] = arguments[i];
-
-    listeners = handler.slice();
-    len = listeners.length;
-    for (i = 0; i < len; i++)
-      listeners[i].apply(this, args);
-  }
-
-  return true;
-};
-
-EventEmitter.prototype.addListener = function(type, listener) {
-  var m;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events)
-    this._events = {};
-
-  // To avoid recursion in the case that type === "newListener"! Before
-  // adding it to the listeners, first emit "newListener".
-  if (this._events.newListener)
-    this.emit('newListener', type,
-              isFunction(listener.listener) ?
-              listener.listener : listener);
-
-  if (!this._events[type])
-    // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  else if (isObject(this._events[type]))
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  else
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-
-  // Check for listener leak
-  if (isObject(this._events[type]) && !this._events[type].warned) {
-    var m;
-    if (!isUndefined(this._maxListeners)) {
-      m = this._maxListeners;
-    } else {
-      m = EventEmitter.defaultMaxListeners;
-    }
-
-    if (m && m > 0 && this._events[type].length > m) {
-      this._events[type].warned = true;
-      console.error('(node) warning: possible EventEmitter memory ' +
-                    'leak detected. %d listeners added. ' +
-                    'Use emitter.setMaxListeners() to increase limit.',
-                    this._events[type].length);
-      if (typeof console.trace === 'function') {
-        // not supported in IE 10
-        console.trace();
-      }
-    }
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.once = function(type, listener) {
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  var fired = false;
-
-  function g() {
-    this.removeListener(type, g);
-
-    if (!fired) {
-      fired = true;
-      listener.apply(this, arguments);
-    }
-  }
-
-  g.listener = listener;
-  this.on(type, g);
-
-  return this;
-};
-
-// emits a 'removeListener' event iff the listener was removed
-EventEmitter.prototype.removeListener = function(type, listener) {
-  var list, position, length, i;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events || !this._events[type])
-    return this;
-
-  list = this._events[type];
-  length = list.length;
-  position = -1;
-
-  if (list === listener ||
-      (isFunction(list.listener) && list.listener === listener)) {
-    delete this._events[type];
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-
-  } else if (isObject(list)) {
-    for (i = length; i-- > 0;) {
-      if (list[i] === listener ||
-          (list[i].listener && list[i].listener === listener)) {
-        position = i;
-        break;
-      }
-    }
-
-    if (position < 0)
-      return this;
-
-    if (list.length === 1) {
-      list.length = 0;
-      delete this._events[type];
-    } else {
-      list.splice(position, 1);
-    }
-
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.removeAllListeners = function(type) {
-  var key, listeners;
-
-  if (!this._events)
-    return this;
-
-  // not listening for removeListener, no need to emit
-  if (!this._events.removeListener) {
-    if (arguments.length === 0)
-      this._events = {};
-    else if (this._events[type])
-      delete this._events[type];
-    return this;
-  }
-
-  // emit removeListener for all listeners on all events
-  if (arguments.length === 0) {
-    for (key in this._events) {
-      if (key === 'removeListener') continue;
-      this.removeAllListeners(key);
-    }
-    this.removeAllListeners('removeListener');
-    this._events = {};
-    return this;
-  }
-
-  listeners = this._events[type];
-
-  if (isFunction(listeners)) {
-    this.removeListener(type, listeners);
-  } else {
-    // LIFO order
-    while (listeners.length)
-      this.removeListener(type, listeners[listeners.length - 1]);
-  }
-  delete this._events[type];
-
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  var ret;
-  if (!this._events || !this._events[type])
-    ret = [];
-  else if (isFunction(this._events[type]))
-    ret = [this._events[type]];
-  else
-    ret = this._events[type].slice();
-  return ret;
-};
-
-EventEmitter.listenerCount = function(emitter, type) {
-  var ret;
-  if (!emitter._events || !emitter._events[type])
-    ret = 0;
-  else if (isFunction(emitter._events[type]))
-    ret = 1;
-  else
-    ret = emitter._events[type].length;
-  return ret;
-};
-
-function isFunction(arg) {
-  return typeof arg === 'function';
-}
-
-function isNumber(arg) {
-  return typeof arg === 'number';
-}
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
-
-},{}],"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/process/browser.js":[function(require,module,exports){
+},{"./lib/React":47}],166:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -20218,340 +24176,159 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],"/Users/jonyardley/Development/AstroView/src/actions/ImageActions.ls":[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 // Generated by LiveScript 1.3.1
-var constants, AppDispatcher, ImageActions;
-constants = require('../constants/constants.ls');
-AppDispatcher = require('../dispatcher/AppDispatcher.ls');
-ImageActions = {
-  createImage: function(data){
-    return AppDispatcher.dispatch({
-      actionType: constants.IMAGE_CREATE,
-      data: data
+var state, fitsjs, FITS, cursor, _id, getId, loadImage, imageActions;
+state = require('../state.ls');
+fitsjs = require('fitsjs');
+window.astro = fitsjs.astro;
+FITS = fitsjs.astro.FITS;
+cursor = state.select('images');
+_id = 0;
+/**
+ * Get a new ID
+ * @type {Int}
+ */
+getId = function(){
+  var id;
+  id = _id;
+  _id += 1;
+  return id;
+};
+loadImage = function(){};
+/**
+ * Actions which can be used in the application
+ * @type {Object}
+ */
+imageActions = {
+  addImage: function(opts){
+    return cursor.push({
+      id: getId(),
+      file: opts.file,
+      isLoaded: false,
+      img: {},
+      isDirty: true
     });
   },
-  deleteImage: function(index){
-    return AppDispatcher.dispatch({
-      actionType: constants.IMAGE_DELETE,
-      data: index
-    });
+  removeImage: function(image){
+    return console.log('remove image', cursor);
   },
   updateImage: function(image){
-    return AppDispatcher.dispatch({
-      actionType: constants.IMAGE_UPDATE,
-      data: image
-    });
+    return console.log('update image', cursor);
   }
 };
-module.exports = ImageActions;
-},{"../constants/constants.ls":"/Users/jonyardley/Development/AstroView/src/constants/constants.ls","../dispatcher/AppDispatcher.ls":"/Users/jonyardley/Development/AstroView/src/dispatcher/AppDispatcher.ls"}],"/Users/jonyardley/Development/AstroView/src/common/globalEvents.ls":[function(require,module,exports){
+module.exports = imageActions;
+},{"../state.ls":173,"fitsjs":13}],168:[function(require,module,exports){
 // Generated by LiveScript 1.3.1
-var EventEmitter, GlobalEvents;
-EventEmitter = require('events').EventEmitter;
-GlobalEvents = new EventEmitter();
-module.exports = GlobalEvents;
-},{"events":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/events/events.js"}],"/Users/jonyardley/Development/AstroView/src/common/styles.ls":[function(require,module,exports){
-// Generated by LiveScript 1.3.1
-var assign, vars, styles;
-assign = require('object-assign');
-vars = {
-  headerHeight: 40,
-  sidebarWidth: 60
+var react, imageActions, d, addImage, sidebar;
+react = require('react');
+imageActions = require('../../actions/image-actions.ls');
+d = react.DOM;
+addImage = function(){
+  return imageActions.addImage();
 };
-styles = {
-  m: function(){
-    var output, i$, len$, arg;
-    output = {};
-    for (i$ = 0, len$ = arguments.length; i$ < len$; ++i$) {
-      arg = arguments[i$];
-      if (arg) {
-        assign(output, arg);
-      }
-    }
-    return output;
-  },
-  vars: vars,
-  sidebar: {
-    top: vars.headerHeight,
-    width: 100,
-    bottom: 0,
-    left: 0,
-    position: 'absolute'
-  }
-};
-module.exports = styles;
-},{"object-assign":"/Users/jonyardley/Development/AstroView/node_modules/object-assign/index.js"}],"/Users/jonyardley/Development/AstroView/src/components/app.ls":[function(require,module,exports){
-// Generated by LiveScript 1.3.1
-var React, ImageStore, ImageActions, sidebar, header, imagePreview, globalEvents, d, App;
-React = require('react');
-ImageStore = require('../stores/ImageStore.ls');
-ImageActions = require('../actions/ImageActions.ls');
-sidebar = require('../components/sidebar.ls');
-header = require('../components/header.ls');
-imagePreview = require('../components/imagePreview.ls');
-globalEvents = require('../common/globalEvents.ls');
-d = React.DOM;
-App = React.createClass({
-  displayName: 'App',
+sidebar = react.createFactory(react.createClass({
+  displayName: 'add-image',
   render: function(){
-    setTimeout(function(){
-      return globalEvents.emit('showPreview', 'TESTING!');
-    }, 2000);
     return d.div({
-      id: 'main-inner'
-    }, header(), sidebar(), imagePreview());
+      className: this.props.type + '__add-image sidebar__block'
+    }, d.button({
+      onClick: addImage,
+      className: 'gi gi-plus'
+    }, this.props.label));
+  }
+}));
+module.exports = sidebar;
+},{"../../actions/image-actions.ls":167,"react":165}],169:[function(require,module,exports){
+// Generated by LiveScript 1.3.1
+var react, sidebar, d, app;
+react = require('react');
+sidebar = require('../sidebar/sidebar.ls');
+d = react.DOM;
+app = react.createClass({
+  displayName: 'app',
+  render: function(){
+    return d.div({
+      className: 'main-inner'
+    }, sidebar());
   }
 });
-module.exports = App;
-},{"../actions/ImageActions.ls":"/Users/jonyardley/Development/AstroView/src/actions/ImageActions.ls","../common/globalEvents.ls":"/Users/jonyardley/Development/AstroView/src/common/globalEvents.ls","../components/header.ls":"/Users/jonyardley/Development/AstroView/src/components/header.ls","../components/imagePreview.ls":"/Users/jonyardley/Development/AstroView/src/components/imagePreview.ls","../components/sidebar.ls":"/Users/jonyardley/Development/AstroView/src/components/sidebar.ls","../stores/ImageStore.ls":"/Users/jonyardley/Development/AstroView/src/stores/ImageStore.ls","react":"/Users/jonyardley/Development/AstroView/node_modules/react/react.js"}],"/Users/jonyardley/Development/AstroView/src/components/header.ls":[function(require,module,exports){
+module.exports = app;
+},{"../sidebar/sidebar.ls":171,"react":165}],170:[function(require,module,exports){
 // Generated by LiveScript 1.3.1
-var React, d, Header;
-React = require('react');
-d = React.DOM;
-Header = React.createFactory(React.createClass({
-  displayName: 'Header',
-  render: function(){
-    return d.nav({
-      className: 'navbar navbar-default'
-    }, d.div({
-      className: 'container-fluid'
-    }, d.div({
-      className: 'navbar-header'
-    }), d.a({
-      className: 'navbar-brand',
-      href: '#'
-    }, 'AV')));
-  }
-}));
-/**
-
-<ul class="nav navbar-nav">
-        <li class="active"><a href="#">Link <span class="sr-only">(current)</span></a></li>
-        <li><a href="#">Link</a></li>
-
-**/
-module.exports = Header;
-},{"react":"/Users/jonyardley/Development/AstroView/node_modules/react/react.js"}],"/Users/jonyardley/Development/AstroView/src/components/imagePreview.ls":[function(require,module,exports){
-// Generated by LiveScript 1.3.1
-var React, globalEvents, d, previewStyle, ImagePreview;
-React = require('react');
-globalEvents = require('../common/globalEvents.ls');
-console.log(globalEvents);
-d = React.DOM;
-previewStyle = {
-  position: 'absolute',
-  top: 0,
-  bottom: 0,
-  right: 0,
-  left: 0,
-  background: '#000',
-  color: '#FFF'
-};
-ImagePreview = React.createFactory(React.createClass({
-  displayName: 'ImagePreview',
-  getInitialState: function(){
-    return {
-      visible: false
-    };
-  },
-  componentDidMount: function(){
-    globalEvents.on('showPreview', this.showPreview);
-    return globalEvents.on('hidePreview', this.hidePreview);
-  },
-  componentWillUnmount: function(){
-    globalEvents.off('showPreview', this.showPreview);
-    return globalEvents.off('hidePreview', this.hidePreview);
-  },
-  showPreview: function(){
-    return this.setState({
-      visible: true
-    });
-  },
-  hidePreview: function(){
-    return this.setState({
-      visible: false
-    });
-  },
-  render: function(){
-    return d.div(null, this.state.visible ? d.div({
-      style: previewStyle,
-      onClick: this.hidePreview
-    }, d.h2(null, 'PREVIEW')) : void 8);
-  }
-}));
-module.exports = ImagePreview;
-},{"../common/globalEvents.ls":"/Users/jonyardley/Development/AstroView/src/common/globalEvents.ls","react":"/Users/jonyardley/Development/AstroView/node_modules/react/react.js"}],"/Users/jonyardley/Development/AstroView/src/components/imageThumb.ls":[function(require,module,exports){
-// Generated by LiveScript 1.3.1
-var React, ImageActions, d, ImageThumb;
-React = require('react');
-ImageActions = require('../actions/ImageActions.ls');
-d = React.DOM;
-ImageThumb = React.createFactory(React.createClass({
+var react, d, imageThumb;
+react = require('react');
+d = react.DOM;
+imageThumb = react.createFactory(react.createClass({
   displayName: 'thumb',
-  removeImage: function(){
-    return ImageActions.deleteImage(this.props.image);
-  },
-  render: function(){
-    return d.div(null, d.span(null, this.props.image.id + ': ' + (this.props.image.isRendered ? 'is rendered' : 'loading...')), d.button({
-      onClick: this.removeImage
-    }, 'REMOVE'));
-  }
-}));
-module.exports = ImageThumb;
-},{"../actions/ImageActions.ls":"/Users/jonyardley/Development/AstroView/src/actions/ImageActions.ls","react":"/Users/jonyardley/Development/AstroView/node_modules/react/react.js"}],"/Users/jonyardley/Development/AstroView/src/components/sidebar.ls":[function(require,module,exports){
-// Generated by LiveScript 1.3.1
-var React, ImageStore, ImageActions, imageThumb, styles, d, sidebarStyle, getState, createImage, Sidebar;
-React = require('react');
-ImageStore = require('../stores/ImageStore.ls');
-ImageActions = require('../actions/ImageActions.ls');
-imageThumb = require('../components/imageThumb.ls');
-styles = require('../common/styles.ls');
-d = React.DOM;
-sidebarStyle = {
-  position: 'absolute',
-  background: '#000',
-  width: styles.vars.sidebarWidth,
-  top: styles.vars.headerHeight,
-  left: 0,
-  bottom: 0
-};
-getState = function(){
-  return {
-    images: ImageStore.getAll()
-  };
-};
-createImage = function(){
-  ImageActions.createImage({
-    test: 'testing'
-  });
-};
-Sidebar = React.createFactory(React.createClass({
-  displayName: 'Sidebar',
-  getInitialState: function(){
-    return getState();
-  },
-  onChange: function(){
-    return this.setState(getState());
-  },
-  componentDidMount: function(){
-    return ImageStore.addChangeListener(this.onChange);
-  },
-  componentWillUnmount: function(){
-    return ImageStore.removeChangeListener(this.onChange);
-  },
   render: function(){
     return d.div({
-      id: 'sidebar',
-      style: sidebarStyle
-    }, d.h2(null, 'sidebar'), d.button({
-      onClick: createImage
-    }, 'ADD IMAGE'), d.ul(null, map(function(img){
-      return d.li({
-        key: img.id
-      }, imageThumb({
-        image: img
-      }));
-    })(
-    this.state.images)));
+      className: 'thumb'
+    }, d.span({
+      className: 'thumb__image'
+    }, this.props.image.id));
   }
 }));
-module.exports = Sidebar;
-},{"../actions/ImageActions.ls":"/Users/jonyardley/Development/AstroView/src/actions/ImageActions.ls","../common/styles.ls":"/Users/jonyardley/Development/AstroView/src/common/styles.ls","../components/imageThumb.ls":"/Users/jonyardley/Development/AstroView/src/components/imageThumb.ls","../stores/ImageStore.ls":"/Users/jonyardley/Development/AstroView/src/stores/ImageStore.ls","react":"/Users/jonyardley/Development/AstroView/node_modules/react/react.js"}],"/Users/jonyardley/Development/AstroView/src/constants/constants.ls":[function(require,module,exports){
+module.exports = imageThumb;
+},{"react":165}],171:[function(require,module,exports){
 // Generated by LiveScript 1.3.1
-var constants;
-constants = {
-  'IMAGE_CREATE': 'IMAGE_CREATE',
-  'IMAGE_DELETE': 'IMAGE_DELETE',
-  'IMAGE_UPDATE': 'IMAGE_UPDATE',
-  'IMAGE_RENDER': 'IMAGE_RENDER'
-};
-module.exports = constants;
-},{}],"/Users/jonyardley/Development/AstroView/src/dispatcher/AppDispatcher.ls":[function(require,module,exports){
-// Generated by LiveScript 1.3.1
-var flux;
-flux = require('flux');
-module.exports = new flux.Dispatcher();
-},{"flux":"/Users/jonyardley/Development/AstroView/node_modules/flux/index.js"}],"/Users/jonyardley/Development/AstroView/src/main.ls":[function(require,module,exports){
+var react, state, addImage, imageThumb, d, sidebar;
+react = require('react');
+state = require('../../state.ls');
+addImage = require('../add-image/add-image.ls');
+imageThumb = require('../image-thumb/image-thumb.ls');
+d = react.DOM;
+sidebar = react.createFactory(react.createClass({
+  displayName: 'sidebar',
+  mixins: [state.mixin],
+  cursors: {
+    images: 'images',
+    maxImages: 'max-images'
+  },
+  render: function(){
+    var images, maxImages;
+    images = this.cursors.images.get();
+    maxImages = this.cursors.maxImages.get();
+    return d.div({
+      className: 'sidebar'
+    }, d.div({
+      className: 'sidebar__logo'
+    }), images.map(function(img){
+      return imageThumb({
+        image: img,
+        key: img.id
+      });
+    }), images.length < maxImages ? addImage({
+      type: 'sidebar',
+      label: ''
+    }) : void 8);
+  }
+}));
+module.exports = sidebar;
+},{"../../state.ls":173,"../add-image/add-image.ls":168,"../image-thumb/image-thumb.ls":170,"react":165}],172:[function(require,module,exports){
 (function (global){
 // Generated by LiveScript 1.3.1
-var React, app, d;
+var react, app, d;
 import$(global, require('prelude-ls'));
-React = require('react');
-app = require('./components/app.ls');
-d = React.DOM;
-React.render(React.createElement(app), document.getElementById('main'));
+react = require('react');
+app = require('./components/app/app.ls');
+d = react.DOM;
+react.render(react.createElement(app), document.getElementById('main'));
 function import$(obj, src){
   var own = {}.hasOwnProperty;
   for (var key in src) if (own.call(src, key)) obj[key] = src[key];
   return obj;
 }
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./components/app.ls":"/Users/jonyardley/Development/AstroView/src/components/app.ls","prelude-ls":"/Users/jonyardley/Development/AstroView/node_modules/prelude-ls/lib/index.js","react":"/Users/jonyardley/Development/AstroView/node_modules/react/react.js"}],"/Users/jonyardley/Development/AstroView/src/stores/ImageStore.ls":[function(require,module,exports){
+},{"./components/app/app.ls":169,"prelude-ls":19,"react":165}],173:[function(require,module,exports){
 // Generated by LiveScript 1.3.1
-var EventEmitter, assign, AppDispatcher, constants, ImageActions, idKeep, Images, createImage, deleteImage, renderImage, ImageStore;
-EventEmitter = require('events').EventEmitter;
-assign = require('object-assign');
-AppDispatcher = require('../dispatcher/AppDispatcher.ls');
-constants = require('../constants/constants.ls');
-ImageActions = require('../actions/ImageActions.ls');
-idKeep = 0;
-Images = [];
-createImage = function(opts){
-  var newImage;
-  idKeep++;
-  newImage = {
-    id: idKeep,
-    isRendered: false
-  };
-  Images.push(newImage);
-  renderImage(newImage);
-  return newImage;
-};
-deleteImage = function(image){
-  var index;
-  index = Images.indexOf(image);
-  return Images.splice(index, 1);
-};
-renderImage = function(image){
-  console.log('RENDER IMAGE');
-  return setTimeout(function(){
-    image.isRendered = true;
-    console.log('IMAGE IS RENDERED!');
-    return ImageStore.emitChange();
-  }, 1000);
-};
-ImageStore = assign({}, EventEmitter.prototype, {
-  emitChange: function(){
-    return this.emit('change');
-  },
-  addChangeListener: function(cb){
-    return this.on('change', cb);
-  },
-  removeChangeListener: function(cb){
-    return this.on('change', cb);
-  },
-  getAll: function(){
-    return Images;
-  },
-  getById: function(){
-    return find(function(it){
-      return it.id;
-    }, Images);
-  },
-  dispatcherIndex: AppDispatcher.register(function(payload){
-    var newImage;
-    switch (payload.actionType) {
-    case constants.IMAGE_CREATE:
-      newImage = createImage(payload.data);
-      return ImageStore.emitChange();
-    case constants.IMAGE_DELETE:
-      deleteImage(payload.data);
-      return ImageStore.emitChange();
-    case constants.IMAGE_UPDATE:
-      console.log('UPDATE THIS IMAGE', payload);
-      return ImageStore.emitChange();
-    }
-  })
+var baobab, state;
+baobab = require('baobab');
+state = new baobab({
+  mode: 'view',
+  'max-images': 8,
+  isPreviewVisible: false,
+  images: []
 });
-module.exports = ImageStore;
-},{"../actions/ImageActions.ls":"/Users/jonyardley/Development/AstroView/src/actions/ImageActions.ls","../constants/constants.ls":"/Users/jonyardley/Development/AstroView/src/constants/constants.ls","../dispatcher/AppDispatcher.ls":"/Users/jonyardley/Development/AstroView/src/dispatcher/AppDispatcher.ls","events":"/Users/jonyardley/Development/AstroView/node_modules/watchify/node_modules/browserify/node_modules/events/events.js","object-assign":"/Users/jonyardley/Development/AstroView/node_modules/object-assign/index.js"}]},{},["/Users/jonyardley/Development/AstroView/src/main.ls"]);
+module.exports = state;
+},{"baobab":2}]},{},[172]);

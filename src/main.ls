@@ -2,11 +2,13 @@
 global import require 'prelude-ls'
 
 # Core Modules
-require! react:React
-require! './components/app.ls'
+require! <[
+  react
+  ./components/app/app.ls
+]>
 
-d = React.DOM
+d = react.DOM
 
-React.render do
-	React.createElement app
-	document.getElementById 'main'
+react.render do
+	react.create-element app
+	document.get-element-by-id 'main'
