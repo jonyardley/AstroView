@@ -1,14 +1,11 @@
 require! <[
   ../state.ls
-  fitsjs
+  ../utils/load-image.ls
+  ../utils/render-image.ls
 ]>
 
-window.astro = fitsjs.astro     # Hack to stop fitsjs breaking with commonjs
-
-FITS    = fitsjs.astro.FITS
 cursor  = state.select 'images'  # Image Cursor
 _id     = 0                      # Keep track of last ID that was used
-
 
 /**
  * Get a new ID
@@ -20,9 +17,25 @@ get-id = ->
   return id
 
 
-load-image = ->
+# Default Image Class
+class Image
+   ->
+    @id = get-id!
+    @is-loaded = false
+    @is-dirty = true
 
 
+image-loaded = (data) ->
+  image = cursor.select id: @id
+  image.merge data
+  new render-image image.get!, 1, image-rendered.bind @
+
+
+image-rendered = (data) ->
+  image = cursor.select id: @id
+  image.merge do
+    img-raw: data
+    is-dirty: false
 
 
 /**
@@ -30,19 +43,25 @@ load-image = ->
  * @type {Object}
  */
 image-actions =
-  
-  add-image: (opts) ->
-    cursor.push do
-      id: get-id!
-      file: opts.file
-      is-loaded: false
-      img: {}
-      is-dirty: true
+
+  add-image: (file) ->
+    new-image = new Image
+    cursor.push new-image
+
+    load-image file, image-loaded.bind new-image
+
 
   remove-image: (image) ->
     console.log 'remove image', cursor
 
+
   update-image: (image) ->
     console.log 'update image', cursor
 
+
+
 module.exports = image-actions
+
+# dev
+image-path = '/fits/656nmos.fits'
+image-actions.add-image image-path

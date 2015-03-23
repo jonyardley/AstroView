@@ -1,9 +1,20 @@
-require! <[ baobab ]>
+require! <[
+  baobab
+  react
+]>
 
-state = new baobab do
+state =
   mode: 'view'
   'max-images': 8
-  isPreviewVisible: false
+  'is-preview-visible': false
   images: []
+
+options =
+  asynchronous: false
+  shift-references: true
+  mixins: [react.Pure-render-mixin]
+
+
+state = new baobab state, options
 
 module.exports = state

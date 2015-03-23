@@ -10,5 +10,5 @@ require! <[
 d = react.DOM
 
 react.render do
-	react.create-element app
-	document.get-element-by-id 'main'
+  react.create-element app
+  document.get-element-by-id 'main'

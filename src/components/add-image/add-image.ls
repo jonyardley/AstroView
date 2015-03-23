@@ -5,8 +5,9 @@ require! <[
 
 d = react.DOM
 
-add-image = ->
-  image-actions.add-image!
+attempt-file-load = (event) ->
+  files = event.target.files
+  image-actions.add-image files[0]
 
 sidebar = react.create-factory react.create-class do
 
@@ -14,8 +15,10 @@ sidebar = react.create-factory react.create-class do
 
   render: ->
 
-    d.div class-name: @props.type + '__add-image sidebar__block',
-      d.button on-click: add-image, class-name: 'gi gi-plus', @props.label
+    d.div class-name: 'add-image add-image--' + @props.type,
+      d.button class-name: 'add-image__button gi gi-plus',
+        d.input class-name: 'add-image__input', type: 'file', onChange: attempt-file-load
+        d.span class-name: 'add-image__label', @props.label
 
 
 module.exports = sidebar
