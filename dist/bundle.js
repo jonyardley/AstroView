@@ -1,5 +1,5172 @@
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 /**
+ * Baobab Default Options
+ * =======================
+ *
+ */
+module.exports = {
+
+  // Should the tree handle its transactions on its own?
+  autoCommit: true,
+
+  // Should the transactions be handled asynchronously?
+  asynchronous: true,
+
+  // Should the tree clone data when giving it back to the user?
+  clone: false,
+
+  // Which cloning function should the tree use?
+  cloningFunction: null,
+
+  // Should cursors be singletons?
+  cursorSingletons: true,
+
+  // Maximum records in the tree's history
+  maxHistory: 0,
+
+  // Collection of react mixins to merge with the tree's ones
+  mixins: [],
+
+  // Should the tree shift its internal reference when applying mutations?
+  shiftReferences: false,
+
+  // Custom typology object to use along with the validation utilities
+  typology: null,
+
+  // Validation specifications
+  validate: null
+};
+
+},{}],2:[function(require,module,exports){
+/**
+ * Baobab Public Interface
+ * ========================
+ *
+ * Exposes the main library classes.
+ */
+var Baobab = require('./src/baobab.js'),
+    helpers = require('./src/helpers.js');
+
+// Non-writable version
+Object.defineProperty(Baobab, 'version', {
+  value: '0.4.3'
+});
+
+// Exposing helpers
+Baobab.getIn = helpers.getIn;
+
+// Exporting
+module.exports = Baobab;
+
+},{"./src/baobab.js":5,"./src/helpers.js":8}],3:[function(require,module,exports){
+(function() {
+  'use strict';
+
+  /**
+   * Here is the list of every allowed parameter when using Emitter#on:
+   * @type {Object}
+   */
+  var __allowedOptions = {
+    once: 'boolean',
+    scope: 'object'
+  };
+
+
+  /**
+   * The emitter's constructor. It initializes the handlers-per-events store and
+   * the global handlers store.
+   *
+   * Emitters are useful for non-DOM events communication. Read its methods
+   * documentation for more information about how it works.
+   *
+   * @return {Emitter}         The fresh new instance.
+   */
+  var Emitter = function() {
+    this._enabled = true;
+    this._children = [];
+    this._handlers = {};
+    this._handlersAll = [];
+  };
+
+
+  /**
+   * This method binds one or more functions to the emitter, handled to one or a
+   * suite of events. So, these functions will be executed anytime one related
+   * event is emitted.
+   *
+   * It is also possible to bind a function to any emitted event by not
+   * specifying any event to bind the function to.
+   *
+   * Recognized options:
+   * *******************
+   *  - {?boolean} once   If true, the handlers will be unbound after the first
+   *                      execution. Default value: false.
+   *  - {?object}  scope  If a scope is given, then the listeners will be called
+   *                      with this scope as "this".
+   *
+   * Variant 1:
+   * **********
+   * > myEmitter.on('myEvent', function(e) { console.log(e); });
+   * > // Or:
+   * > myEmitter.on('myEvent', function(e) { console.log(e); }, { once: true });
+   *
+   * @param  {string}   event   The event to listen to.
+   * @param  {function} handler The function to bind.
+   * @param  {?object}  options Eventually some options.
+   * @return {Emitter}          Returns this.
+   *
+   * Variant 2:
+   * **********
+   * > myEmitter.on(
+   * >   ['myEvent1', 'myEvent2'],
+   * >   function(e) { console.log(e); }
+   * >);
+   * > // Or:
+   * > myEmitter.on(
+   * >   ['myEvent1', 'myEvent2'],
+   * >   function(e) { console.log(e); }
+   * >   { once: true }}
+   * >);
+   *
+   * @param  {array}    events  The events to listen to.
+   * @param  {function} handler The function to bind.
+   * @param  {?object}  options Eventually some options.
+   * @return {Emitter}          Returns this.
+   *
+   * Variant 3:
+   * **********
+   * > myEmitter.on({
+   * >   myEvent1: function(e) { console.log(e); },
+   * >   myEvent2: function(e) { console.log(e); }
+   * > });
+   * > // Or:
+   * > myEmitter.on({
+   * >   myEvent1: function(e) { console.log(e); },
+   * >   myEvent2: function(e) { console.log(e); }
+   * > }, { once: true });
+   *
+   * @param  {object}  bindings An object containing pairs event / function.
+   * @param  {?object}  options Eventually some options.
+   * @return {Emitter}          Returns this.
+   *
+   * Variant 4:
+   * **********
+   * > myEmitter.on(function(e) { console.log(e); });
+   * > // Or:
+   * > myEmitter.on(function(e) { console.log(e); }, { once: true});
+   *
+   * @param  {function} handler The function to bind to every events.
+   * @param  {?object}  options Eventually some options.
+   * @return {Emitter}          Returns this.
+   */
+  Emitter.prototype.on = function(a, b, c) {
+    var i,
+        l,
+        k,
+        event,
+        eArray,
+        bindingObject;
+
+    // Variant 1 and 2:
+    if (typeof b === 'function') {
+      eArray = typeof a === 'string' ?
+        [a] :
+        a;
+
+      for (i = 0, l = eArray.length; i !== l; i += 1) {
+        event = eArray[i];
+
+        // Check that event is not '':
+        if (!event)
+          continue;
+
+        if (!this._handlers[event])
+          this._handlers[event] = [];
+
+        bindingObject = {
+          handler: b
+        };
+
+        for (k in c || {})
+          if (__allowedOptions[k])
+            bindingObject[k] = c[k];
+          else
+            throw new Error(
+              'The option "' + k + '" is not recognized by Emmett.'
+            );
+
+        this._handlers[event].push(bindingObject);
+      }
+
+    // Variant 3:
+    } else if (a && typeof a === 'object' && !Array.isArray(a))
+      for (event in a)
+        Emitter.prototype.on.call(this, event, a[event], b);
+
+    // Variant 4:
+    else if (typeof a === 'function') {
+      bindingObject = {
+        handler: a
+      };
+
+      for (k in c || {})
+        if (__allowedOptions[k])
+          bindingObject[k] = c[k];
+        else
+          throw new Error(
+            'The option "' + k + '" is not recognized by Emmett.'
+          );
+
+      this._handlersAll.push(bindingObject);
+    }
+
+    // No matching variant:
+    else
+      throw new Error('Wrong arguments.');
+
+    return this;
+  };
+
+
+  /**
+   * This method works exactly as the previous #on, but will add an options
+   * object if none is given, and set the option "once" to true.
+   *
+   * The polymorphism works exactly as with the #on method.
+   */
+  Emitter.prototype.once = function(a, b, c) {
+    // Variant 1 and 2:
+    if (typeof b === 'function') {
+      c = c || {};
+      c.once = true;
+      this.on(a, b, c);
+
+    // Variants 3 and 4:
+    } else if (
+      // Variant 3:
+      (a && typeof a === 'object' && !Array.isArray(a)) ||
+      // Variant 4:
+      (typeof a === 'function')
+    ) {
+      b = b || {};
+      b.once = true;
+      this.on(a, b);
+
+    // No matching variant:
+    } else
+      throw new Error('Wrong arguments.');
+
+    return this;
+  };
+
+
+  /**
+   * This method unbinds one or more functions from events of the emitter. So,
+   * these functions will no more be executed when the related events are
+   * emitted. If the functions were not bound to the events, nothing will
+   * happen, and no error will be thrown.
+   *
+   * Variant 1:
+   * **********
+   * > myEmitter.off('myEvent', myHandler);
+   *
+   * @param  {string}   event   The event to unbind the handler from.
+   * @param  {function} handler The function to unbind.
+   * @return {Emitter}          Returns this.
+   *
+   * Variant 2:
+   * **********
+   * > myEmitter.off(['myEvent1', 'myEvent2'], myHandler);
+   *
+   * @param  {array}    events  The events to unbind the handler from.
+   * @param  {function} handler The function to unbind.
+   * @return {Emitter}          Returns this.
+   *
+   * Variant 3:
+   * **********
+   * > myEmitter.off({
+   * >   myEvent1: myHandler1,
+   * >   myEvent2: myHandler2
+   * > });
+   *
+   * @param  {object} bindings An object containing pairs event / function.
+   * @return {Emitter}         Returns this.
+   *
+   * Variant 4:
+   * **********
+   * > myEmitter.off(myHandler);
+   *
+   * @param  {function} handler The function to unbind from every events.
+   * @return {Emitter}          Returns this.
+   */
+  Emitter.prototype.off = function(events, handler) {
+    var i,
+        n,
+        j,
+        m,
+        k,
+        a,
+        event,
+        eArray = typeof events === 'string' ?
+          [events] :
+          events;
+
+    if (arguments.length === 1 && typeof eArray === 'function') {
+      handler = arguments[0];
+
+      // Handlers bound to events:
+      for (k in this._handlers) {
+        a = [];
+        for (i = 0, n = this._handlers[k].length; i !== n; i += 1)
+          if (this._handlers[k][i].handler !== handler)
+            a.push(this._handlers[k][i]);
+        this._handlers[k] = a;
+      }
+
+      a = [];
+      for (i = 0, n = this._handlersAll.length; i !== n; i += 1)
+        if (this._handlersAll[i].handler !== handler)
+          a.push(this._handlersAll[i]);
+      this._handlersAll = a;
+    }
+
+    else if (arguments.length === 2) {
+      for (i = 0, n = eArray.length; i !== n; i += 1) {
+        event = eArray[i];
+        if (this._handlers[event]) {
+          a = [];
+          for (j = 0, m = this._handlers[event].length; j !== m; j += 1)
+            if (this._handlers[event][j].handler !== handler)
+              a.push(this._handlers[event][j]);
+
+          this._handlers[event] = a;
+        }
+
+        if (this._handlers[event] && this._handlers[event].length === 0)
+          delete this._handlers[event];
+      }
+    }
+
+    return this;
+  };
+
+
+  /**
+   * This method unbinds every handlers attached to every or any events. So,
+   * these functions will no more be executed when the related events are
+   * emitted. If the functions were not bound to the events, nothing will
+   * happen, and no error will be thrown.
+   *
+   * Usage:
+   * ******
+   * > myEmitter.unbindAll();
+   *
+   * @return {Emitter}      Returns this.
+   */
+  Emitter.prototype.unbindAll = function() {
+    var k;
+
+    this._handlersAll = [];
+    for (k in this._handlers)
+      delete this._handlers[k];
+
+    return this;
+  };
+
+
+  /**
+   * This method emits the specified event(s), and executes every handlers bound
+   * to the event(s).
+   *
+   * Use cases:
+   * **********
+   * > myEmitter.emit('myEvent');
+   * > myEmitter.emit('myEvent', myData);
+   * > myEmitter.emit(['myEvent1', 'myEvent2']);
+   * > myEmitter.emit(['myEvent1', 'myEvent2'], myData);
+   *
+   * @param  {string|array} events The event(s) to emit.
+   * @param  {object?}      data   The data.
+   * @return {Emitter}             Returns this.
+   */
+  Emitter.prototype.emit = function(events, data) {
+    var i,
+        n,
+        j,
+        m,
+        z,
+        a,
+        event,
+        child,
+        handlers,
+        eventName,
+        self = this,
+        eArray = typeof events === 'string' ?
+          [events] :
+          events;
+
+    // Check that the emitter is enabled:
+    if (!this._enabled)
+      return this;
+
+    data = data === undefined ? {} : data;
+
+    for (i = 0, n = eArray.length; i !== n; i += 1) {
+      eventName = eArray[i];
+      handlers = (this._handlers[eventName] || []).concat(this._handlersAll);
+
+      if (handlers.length) {
+        event = {
+          type: eventName,
+          data: data || {},
+          target: this
+        };
+        a = [];
+
+        for (j = 0, m = handlers.length; j !== m; j += 1) {
+
+          // We have to verify that the handler still exists in the array,
+          // as it might have been mutated already
+          if (
+            (
+              this._handlers[eventName] &&
+              this._handlers[eventName].indexOf(handlers[j]) >= 0
+            ) ||
+            this._handlersAll.indexOf(handlers[j]) >= 0
+          ) {
+            handlers[j].handler.call(
+              'scope' in handlers[j] ? handlers[j].scope : this,
+              event
+            );
+
+            // Since the listener callback can mutate the _handlers,
+            // we register the handlers we want to remove, not the ones
+            // we want to keep
+            if (handlers[j].once)
+              a.push(handlers[j]);
+          }
+        }
+
+        // Go through handlers to remove
+        for (z = 0; z < a.length; z++) {
+          this._handlers[eventName].splice(a.indexOf(a[z]), 1);
+        }
+      }
+    }
+
+    // Events propagation:
+    for (i = 0, n = this._children.length; i !== n; i += 1) {
+      child = this._children[i];
+      child.emit.apply(child, arguments);
+    }
+
+    return this;
+  };
+
+
+  /**
+   * This method creates a new instance of Emitter and binds it as a child. Here
+   * is what children do:
+   *  - When the parent emits an event, the children will emit the same later
+   *  - When a child is killed, it is automatically unreferenced from the parent
+   *  - When the parent is killed, all children will be killed as well
+   *
+   * @return {Emitter} Returns the fresh new child.
+   */
+  Emitter.prototype.child = function() {
+    var self = this,
+        child = new Emitter();
+
+    child.on('emmett:kill', function() {
+      if (self._children)
+        for (var i = 0, l = self._children.length; i < l; i++)
+          if (self._children[i] === child) {
+            self._children.splice(i, 1);
+            break;
+          }
+    });
+    this._children.push(child);
+
+    return child;
+  };
+
+  /**
+   * This returns an array of handler functions corresponding to the given
+   * event or every handler functions if an event were not to be given.
+   *
+   * @param  {?string} event Name of the event.
+   * @return {Emitter} Returns this.
+   */
+  function mapHandlers(a) {
+    var i, l, h = [];
+
+    for (i = 0, l = a.length; i < l; i++)
+      h.push(a[i].handler);
+
+    return h;
+  }
+
+  Emitter.prototype.listeners = function(event) {
+    var handlers = [],
+        k,
+        i,
+        l;
+
+    // If no event is passed, we return every handlers
+    if (!event) {
+      handlers = mapHandlers(this._handlersAll);
+
+      for (k in this._handlers)
+        handlers = handlers.concat(mapHandlers(this._handlers[k]));
+
+      // Retrieving handlers per children
+      for (i = 0, l = this._children.length; i < l; i++)
+        handlers = handlers.concat(this._children[i].listeners());
+    }
+
+    // Else we only retrieve the needed handlers
+    else {
+      handlers = mapHandlers(this._handlers[event]);
+
+      // Retrieving handlers per children
+      for (i = 0, l = this._children.length; i < l; i++)
+        handlers = handlers.concat(this._children[i].listeners(event));
+    }
+
+    return handlers;
+  };
+
+
+  /**
+   * This method will first dispatch a "emmett:kill" event, and then unbinds all
+   * listeners and make it impossible to ever rebind any listener to any event.
+   */
+  Emitter.prototype.kill = function() {
+    this.emit('emmett:kill');
+
+    this.unbindAll();
+    this._handlers = null;
+    this._handlersAll = null;
+    this._enabled = false;
+
+    if (this._children)
+      for (var i = 0, l = this._children.length; i < l; i++)
+        this._children[i].kill();
+
+    this._children = null;
+  };
+
+
+  /**
+   * This method disabled the emitter, which means its emit method will do
+   * nothing.
+   *
+   * @return {Emitter} Returns this.
+   */
+  Emitter.prototype.disable = function() {
+    this._enabled = false;
+
+    return this;
+  };
+
+
+  /**
+   * This method enables the emitter.
+   *
+   * @return {Emitter} Returns this.
+   */
+  Emitter.prototype.enable = function() {
+    this._enabled = true;
+
+    return this;
+  };
+
+
+  /**
+   * Version:
+   */
+  Emitter.version = '2.1.2';
+
+
+  // Export:
+  if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports)
+      exports = module.exports = Emitter;
+    exports.Emitter = Emitter;
+  } else if (typeof define === 'function' && define.amd)
+    define('emmett', [], function() {
+      return Emitter;
+    });
+  else
+    this.Emitter = Emitter;
+}).call(this);
+
+},{}],4:[function(require,module,exports){
+/**
+ * typology.js - A data validation library for Node.js and the browser,
+ *
+ * Version: 0.3.1
+ * Sources: http://github.com/jacomyal/typology
+ * Doc:     http://github.com/jacomyal/typology#readme
+ *
+ * License:
+ * --------
+ * Copyright © 2014 Alexis Jacomy (@jacomyal), Guillaume Plique (@Yomguithereal)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * The Software is provided "as is", without warranty of any kind, express or
+ * implied, including but not limited to the warranties of merchantability,
+ * fitness for a particular purpose and noninfringement. In no event shall the
+ * authors or copyright holders be liable for any claim, damages or other
+ * liability, whether in an action of contract, tort or otherwise, arising
+ * from, out of or in connection with the software or the use or other dealings
+ * in the Software.
+ */
+(function(global) {
+  'use strict';
+
+  /**
+   * Code conventions:
+   * *****************
+   *  - 80 characters max per line
+   *  - Write "__myVar" for any global private variable
+   *  - Write "_myVar" for any instance private variable
+   *  - Write "myVar" any local variable
+   */
+
+
+
+  /**
+   * PRIVATE GLOBALS:
+   * ****************
+   */
+
+  /**
+   * This object is a dictionnary that maps "[object Something]" strings to the
+   * typology form "something":
+   */
+  var __class2type = {};
+
+  /**
+   * This array is the list of every types considered native by typology:
+   */
+  var __nativeTypes = ['*'];
+
+  (function() {
+    var k,
+        className,
+        classes = [
+          'Arguments',
+          'Boolean',
+          'Number',
+          'String',
+          'Function',
+          'Array',
+          'Date',
+          'RegExp',
+          'Object'
+        ];
+
+    // Fill types
+    for (k in classes) {
+      className = classes[k];
+      __nativeTypes.push(className.toLowerCase());
+      __class2type['[object ' + className + ']'] = className.toLowerCase();
+    }
+  })();
+
+
+
+  /**
+   * CONSTRUCTOR:
+   * ************
+   */
+  function Typology(defs) {
+    /**
+     * INSTANCE PRIVATES:
+     * ******************
+     */
+
+    var _self = this;
+
+    /**
+     * This objects will contain every instance-specific custom types:
+     */
+    var _customTypes = {};
+
+    /**
+     * This function will recursively scan an object to check wether or not it
+     * matches a given type. It will return null if it matches, and an Error
+     * object else.
+     *
+     * Examples:
+     * *********
+     * 1. When the type matches:
+     *  > _scan('abc', 'string');
+     *  will return null.
+     *
+     * 2. When a top-level type does not match:
+     *  > _scan('abc', 'number');
+     *  will return an Error object with the following information:
+     *   - message: Expected a "number" but found a "string".
+     *
+     * 3. When a sub-object type does not its type:
+     *  > _scan({ a: 'abc' }, { a: 'number' });
+     *  will return an Error object with the following information:
+     *   - message: Expected a "number" but found a "string".
+     *   - path: [ 'a' ]
+     *
+     * 4. When a deep sub-object type does not its type:
+     *  > _scan({ a: [ 123, 'abc' ] }, { a: ['number'] });
+     *  will return an Error object with the following information:
+     *   - message: Expected a "number" but found a "string".
+     *   - path: [ 'a', 1 ]
+     *
+     * 5. When a required key is missing:
+     *  > _scan({}, { a: 'number' });
+     *  will return an Error object with the following information:
+     *   - message: Expected a "number" but found a "undefined".
+     *   - path: [ 'a' ]
+     *
+     * 6. When an unexpected key is present:
+     *  > _scan({ a: 123, b: 456 }, { a: 'number' });
+     *  will return an Error object with the following information:
+     *   - message: Unexpected key "b".
+     *
+     * @param  {*}      obj  The value to validate.
+     * @param  {type}   type The type.
+     * @return {?Error}      Returns null or an Error object.
+     */
+    function _scan(obj, type) {
+      var a,
+          i,
+          l,
+          k,
+          error,
+          subError,
+          hasStar,
+          hasTypeOf,
+          optional = false,
+          exclusive = false,
+          typeOf = _self.get(obj);
+
+      if (_self.get(type) === 'string') {
+        a = type.replace(/^[\?\!]/, '').split(/\|/);
+        l = a.length;
+        for (i = 0; i < l; i++)
+          if (__nativeTypes.indexOf(a[i]) < 0 && !(a[i] in _customTypes))
+            throw new Error('Invalid type.');
+
+        if (type.match(/^\?/))
+          optional = true;
+
+        if (type.replace(/^\?/, '').match(/^\!/))
+          exclusive = true;
+
+        if (exclusive && optional)
+          throw new Error('Invalid type.');
+
+        for (i in a)
+          if (_customTypes[a[i]])
+            if (
+              (typeof _customTypes[a[i]].type === 'function') ?
+                (_customTypes[a[i]].type.call(_self, obj) === true) :
+                !_scan(obj, _customTypes[a[i]].type)
+            ) {
+              if (exclusive) {
+                error = new Error();
+                error.message = 'Expected a "' + type + '" but found a ' +
+                                '"' + a[i] + '".';
+              error.expected = type;
+              error.type = a[i];
+              error.value = obj;
+                return error;
+              } else
+                return null;
+            }
+
+        if (obj === null || obj === undefined) {
+          if (!exclusive && !optional) {
+            error = new Error();
+            error.message = 'Expected a "' + type + '" but found a ' +
+                            '"' + typeOf + '".';
+            error.expected = type;
+            error.type = typeOf;
+            error.value = obj;
+            return error;
+          } else
+            return null;
+
+        } else {
+          hasStar = ~a.indexOf('*');
+          hasTypeOf = ~a.indexOf(typeOf);
+          if (exclusive && (hasStar || hasTypeOf)) {
+            error = new Error();
+            error.message = 'Expected a "' + type + '" but found a ' +
+                            '"' + (hasTypeOf ? typeOf : '*') + '".';
+            error.type = hasTypeOf ? typeOf : '*';
+            error.expected = type;
+            error.value = obj;
+            return error;
+
+          } else if (!exclusive && !(hasStar || hasTypeOf)) {
+            error = new Error();
+            error.message = 'Expected a "' + type + '" but found a ' +
+                            '"' + typeOf + '".';
+            error.expected = type;
+            error.type = typeOf;
+            error.value = obj;
+            return error;
+
+          } else
+            return null;
+        }
+
+      } else if (_self.get(type) === 'object') {
+        if (typeOf !== 'object') {
+          error = new Error();
+          error.message = 'Expected an object but found a "' + typeOf + '".';
+          error.expected = type;
+          error.type = typeOf;
+          error.value = obj;
+          return error;
+        }
+
+        for (k in type)
+          if ((subError = _scan(obj[k], type[k]))) {
+            error = subError;
+            error.path = error.path ?
+              [k].concat(error.path) :
+              [k];
+            return error;
+          }
+
+        for (k in obj)
+          if (type[k] === undefined) {
+            error = new Error();
+            error.message = 'Unexpected key "' + k + '".';
+            error.type = typeOf;
+            error.value = obj;
+            return error;
+          }
+
+        return null;
+
+      } else if (_self.get(type) === 'array') {
+        if (type.length !== 1)
+          throw new Error('Invalid type.');
+
+        if (typeOf !== 'array') {
+          error = new Error();
+          error.message = 'Expected an array but found a "' + typeOf + '".';
+          error.expected = type;
+          error.type = typeOf;
+          error.value = obj;
+          return error;
+        }
+
+        l = obj.length;
+        for (i = 0; i < l; i++)
+          if ((subError = _scan(obj[i], type[0]))) {
+            error = subError;
+            error.path = error.path ?
+              [i].concat(error.path) :
+              [i];
+            return error;
+          }
+
+        return null;
+      } else
+        throw new Error('Invalid type.');
+    }
+
+
+
+    /**
+     * INSTANCE METHODS:
+     * *****************
+     */
+
+    /**
+     * This method registers a custom type into the Typology instance. A type
+     * is registered under a unique name, and is described by an object (like
+     * classical C structures) or a function.
+     *
+     * Variant 1:
+     * **********
+     * > types.add('user', { id: 'string', name: '?string' });
+     *
+     * @param  {string}   id   The unique id of the type.
+     * @param  {object}   type The corresponding structure.
+     * @return {Typology}      Returns this.
+     *
+     * Variant 2:
+     * **********
+     * > types.add('integer', function(value) {
+     * >   return typeof value === 'number' && value === value | 0;
+     * > });
+     *
+     * @param  {string}   id   The unique id of the type.
+     * @param  {function} type The function validating the type.
+     * @return {Typology}      Returns this.
+     *
+     * Variant 3:
+     * **********
+     * > types.add({
+     * >   id: 'user',
+     * >   type: { id: 'string', name: '?string' }
+     * > });
+     *
+     * > types.add({
+     * >   id: 'integer',
+     * >   type: function(value) {
+     * >     return typeof value === 'number' && value === value | 0;
+     * >   }
+     * > });
+     *
+     * @param  {object}   specs An object describing fully the type.
+     * @return {Typology}       Returns this.
+     *
+     * Recognized parameters:
+     * **********************
+     * Here is the exhaustive list of every accepted parameters in the specs
+     * object:
+     *
+     *   {string}          id    The unique id of the type.
+     *   {function|object} type  The function or the structure object
+     *                           validating the type.
+     *   {?[string]}       proto Eventually an array of ids of types that are
+     *                           referenced in the structure but do not exist
+     *                           yet.
+     */
+    this.add = function(a1, a2) {
+      var o,
+          k,
+          a,
+          id,
+          tmp,
+          type;
+
+      // Polymorphism:
+      if (arguments.length === 1) {
+        if (this.get(a1) === 'object') {
+          o = a1;
+          id = o.id;
+          type = o.type;
+        } else
+          throw new Error('If types.add is called with one argument, ' +
+                          'this one has to be an object.');
+      } else if (arguments.length === 2) {
+        if (typeof a1 !== 'string' || !a1)
+          throw new Error('If types.add is called with more than one ' +
+                          'argument, the first one must be the string id.');
+        else
+          id = a1;
+
+        type = a2;
+      } else
+        throw new Error('types.add has to be called ' +
+                        'with one or two arguments.');
+
+      if (this.get(id) !== 'string' || id.length === 0)
+        throw new Error('A type requires an string id.');
+
+      if (_customTypes[id] !== undefined && _customTypes[id] !== 'proto')
+        throw new Error('The type "' + id + '" already exists.');
+
+      if (~__nativeTypes.indexOf(id))
+        throw new Error('"' + id + '" is a reserved type name.');
+
+      _customTypes[id] = 1;
+
+      // Check given prototypes:
+      a = (o || {}).proto || [];
+      a = Array.isArray(a) ? a : [a];
+      tmp = {};
+      for (k in a)
+        if (_customTypes[a[k]] === undefined) {
+          _customTypes[a[k]] = 1;
+          tmp[a[k]] = 1;
+        }
+
+      if ((this.get(type) !== 'function') && !this.isValid(type))
+        throw new Error('A type requires a valid definition. ' +
+                        'This one can be a preexistant type or else ' +
+                        'a function testing given objects.');
+
+      // Effectively add the type:
+      _customTypes[id] = (o === undefined) ?
+        {
+          id: id,
+          type: type
+        } :
+        {};
+
+      if (o !== undefined)
+        for (k in o)
+          _customTypes[id][k] = o[k];
+
+      // Delete prototypes:
+      for (k in tmp)
+        if (k !== id)
+          delete _customTypes[k];
+
+      return this;
+    };
+
+    /**
+     * This method returns true if a custom type is already registered in this
+     * instance under the given key.
+     *
+     * @param  {string}  key A type name.
+     * @return {boolean}     Returns true if the key is registered.
+     */
+    this.has = function(key) {
+      return !!_customTypes[key];
+    };
+
+    /**
+     * This method returns the native type of a given value.
+     *
+     * Examples:
+     * *********
+     * > types.get({ a: 1 }); // returns "object"
+     * > types.get('abcde');  // returns "string"
+     * > types.get(1234567);  // returns "number"
+     * > types.get([1, 2]);   // returns "array"
+     *
+     * @param  {*}      value Anything.
+     * @return {string}       Returns the native type of the value.
+     */
+    this.get = function(obj) {
+      return (obj === null || obj === undefined) ?
+        String(obj) :
+        __class2type[Object.prototype.toString.call(obj)] || 'object';
+    };
+
+    /**
+     * This method validates some value against a given type. If the flag throws
+     * has a truthy value, then the method will throw an error instead of
+     * returning false.
+     *
+     * To know more about the error thrown, you can read the documentation of
+     * the private method _scan.
+     *
+     * Examples:
+     * *********
+     * > types.check({ a: 1 }, 'object');                      // returns true
+     * > types.check({ a: 1 }, { a: 'string' });               // returns true
+     * > types.check({ a: 1 }, { a: 'string', b: '?number' }); // returns true
+     *
+     * > types.check({ a: 1 }, { a: 'string', b: 'number' }); // returns false
+     * > types.check({ a: 1 }, { a: 'number' });              // returns false
+     * > types.check({ a: 1 }, 'array');                      // returns false
+     *
+     * > types.check({ a: 1 }, 'array', true); // throws an Error
+     *
+     * @param  {*}        value  Anything.
+     * @param  {type}     type   A valid type.
+     * @param  {?boolean} throws If true, this method will throw an error
+     *                           instead of returning false.
+     * @return {boolean}         Returns true if the value matches the type, and
+     *                           not else.
+     */
+    this.check = function(obj, type, throws) {
+      var result = _scan(obj, type);
+      if (throws && result)
+        throw result;
+      else
+        return !result;
+    };
+
+    /**
+     * This method validates a type. If the type is not referenced or is not
+     * valid, it will return false.
+     *
+     * To know more about that function, don't hesitate to read the related
+     * unit tests.
+     *
+     * Examples:
+     * *********
+     * > types.isValid('string');        // returns true
+     * > types.isValid('?string');       // returns true
+     * > types.isValid('!string');       // returns true
+     * > types.isValid('string|number'); // returns true
+     * > types.isValid({ a: 'string' }); // returns true
+     * > types.isValid(['string']);      // returns true
+     *
+     * > types.isValid('!?string');                // returns false
+     * > types.isValid('myNotDefinedType');        // returns false
+     * > types.isValid(['myNotDefinedType']);      // returns false
+     * > types.isValid({ a: 'myNotDefinedType' }); // returns false
+     *
+     * > types.isValid('user');               // returns false
+     * > types.add('user', { id: 'string' }); // makes the type become valid
+     * > types.isValid('user');               // returns true
+     *
+     * @param  {*}       type The type to get checked.
+     * @return {boolean}      Returns true if the type is valid, and false else.
+     */
+    this.isValid = function(type) {
+      var a,
+          k,
+          i;
+
+      if (this.get(type) === 'string') {
+        a = type.replace(/^[\?\!]/, '').split(/\|/);
+        for (i in a)
+          if (__nativeTypes.indexOf(a[i]) < 0 && !(a[i] in _customTypes))
+            return false;
+        return true;
+
+      } else if (this.get(type) === 'object') {
+        for (k in type)
+          if (!this.isValid(type[k]))
+            return false;
+        return true;
+
+      } else if (this.get(type) === 'array')
+        return type.length === 1 ?
+          this.isValid(type[0]) :
+          false;
+      else
+        return false;
+    };
+
+
+
+    /**
+     * INSTANTIATION ROUTINE:
+     * **********************
+     */
+
+    // Add a type "type" to shortcut the #isValid method:
+    this.add('type', (function(v) {
+      return this.isValid(v);
+    }).bind(this));
+
+    // Add a type "primitive" to match every primitive types (including null):
+    this.add('primitive', function(v) {
+      return !v || !(v instanceof Object || typeof v === 'object');
+    });
+
+    // Adding custom types at instantiation:
+    defs = defs || {};
+    if (this.get(defs) !== 'object')
+      throw Error('Invalid argument.');
+
+    for (var k in defs)
+      this.add(k, defs[k]);
+  }
+
+
+
+  /**
+   * GLOBAL PUBLIC API:
+   * ******************
+   */
+
+  // Creating a "main" typology instance to export:
+  var types = Typology;
+  Typology.call(types);
+
+  // Version:
+  Object.defineProperty(types, 'version', {
+    value: '0.3.1'
+  });
+
+
+
+  /**
+   * EXPORT:
+   * *******
+   */
+  if (typeof exports !== 'undefined') {
+    if (typeof module !== 'undefined' && module.exports)
+      exports = module.exports = types;
+    exports.types = types;
+  } else if (typeof define === 'function' && define.amd)
+    define('typology', [], function() {
+      return types;
+    });
+  else
+    this.types = types;
+})(this);
+
+},{}],5:[function(require,module,exports){
+/**
+ * Baobab Data Structure
+ * ======================
+ *
+ * A handy data tree with cursors.
+ */
+var Cursor = require('./cursor.js'),
+    EventEmitter = require('emmett'),
+    Typology = require('typology'),
+    helpers = require('./helpers.js'),
+    update = require('./update.js'),
+    merge = require('./merge.js'),
+    mixins = require('./mixins.js'),
+    defaults = require('../defaults.js'),
+    type = require('./type.js');
+
+function complexHash(type) {
+  return type + '$' +
+    (new Date()).getTime() + (''  + Math.random()).replace('0.', '');
+}
+
+/**
+ * Main Class
+ */
+function Baobab(initialData, opts) {
+  if (arguments.length < 1)
+    initialData = {};
+
+  // New keyword optional
+  if (!(this instanceof Baobab))
+    return new Baobab(initialData, opts);
+
+  if (!type.Object(initialData) && !type.Array(initialData))
+    throw Error('Baobab: invalid data.');
+
+  // Extending
+  EventEmitter.call(this);
+
+  // Merging defaults
+  this.options = helpers.shallowMerge(defaults, opts);
+  this._cloner = this.options.cloningFunction || helpers.deepClone;
+
+  // Privates
+  this._transaction = {};
+  this._future = undefined;
+  this._history = [];
+  this._cursors = {};
+
+  // Internal typology
+  this.typology = this.options.typology ?
+    (this.options.typology instanceof Typology ?
+      this.options.typology :
+      new Typology(this.options.typology)) :
+    new Typology();
+
+  // Internal validation
+  this.validate = this.options.validate || null;
+
+  if (this.validate)
+    try {
+      this.typology.check(initialData, this.validate, true);
+    }
+    catch (e) {
+      e.message = '/' + e.path.join('/') + ': ' + e.message;
+      throw e;
+    }
+
+  // Properties
+  this.data = this._cloner(initialData);
+
+  // Mixin
+  this.mixin = mixins.baobab(this);
+}
+
+helpers.inherits(Baobab, EventEmitter);
+
+/**
+ * Private prototype
+ */
+Baobab.prototype._archive = function() {
+  if (this.options.maxHistory <= 0)
+    return;
+
+  var record = {
+    data: this._cloner(this.data)
+  };
+
+  // Replacing
+  if (this._history.length === this.options.maxHistory) {
+    this._history.pop();
+  }
+  this._history.unshift(record);
+
+  return record;
+};
+
+/**
+ * Prototype
+ */
+Baobab.prototype.commit = function(referenceRecord) {
+  var self = this,
+      log;
+
+  if (referenceRecord) {
+
+    // Override
+    this.data = referenceRecord.data;
+    log = referenceRecord.log;
+  }
+  else {
+
+    // Shifting root reference
+    if (this.options.shiftReferences)
+      this.data = helpers.shallowClone(this.data);
+
+    // Applying modification (mutation)
+    var record = this._archive();
+    log = update(this.data, this._transaction, this.options);
+
+    if (record)
+      record.log = log;
+  }
+
+  if (this.validate) {
+    var errors = [],
+        l = log.length,
+        d,
+        i;
+
+    for (i = 0; i < l; i++) {
+      d = helpers.getIn(this.validate, log[i]);
+
+      if (!d)
+        continue;
+
+      try {
+        this.typology.check(this.get(log[i]), d, true);
+      }
+      catch (e) {
+        e.path = log[i].concat((e.path || []));
+        errors.push(e);
+      }
+    }
+
+    if (errors.length)
+      this.emit('invalid', {errors: errors});
+  }
+
+  // Resetting
+  this._transaction = {};
+
+  if (this._future)
+    this._future = clearTimeout(this._future);
+
+  // Baobab-level update event
+  this.emit('update', {
+    log: log
+  });
+
+  return this;
+};
+
+Baobab.prototype.select = function(path) {
+  if (arguments.length > 1)
+    path = helpers.arrayOf(arguments);
+
+  if (!type.Path(path))
+    throw Error('Baobab.select: invalid path.');
+
+  // Casting to array
+  path = !type.Array(path) ? [path] : path;
+
+  // Complex path?
+  var complex = type.ComplexPath(path);
+
+  var solvedPath;
+
+  if (complex)
+    solvedPath = helpers.solvePath(this.data, path);
+
+  // Registering a new cursor or giving the already existing one for path
+  if (!this.options.cursorSingletons) {
+    return new Cursor(this, path);
+  }
+  else {
+    var hash = path.map(function(step) {
+      if (type.Function(step))
+        return complexHash('fn');
+      else if (type.Object(step))
+        return complexHash('ob');
+      else
+        return step;
+    }).join('λ');
+
+    if (!this._cursors[hash]) {
+      var cursor = new Cursor(this, path, solvedPath, hash);
+      this._cursors[hash] = cursor;
+      return cursor;
+    }
+    else {
+      return this._cursors[hash];
+    }
+  }
+};
+
+Baobab.prototype.root = function() {
+  return this.select();
+};
+
+Baobab.prototype.reference = function(path) {
+  var data;
+
+  if (arguments.length > 1)
+    path = helpers.arrayOf(arguments);
+
+  if (!type.Path(path))
+    throw Error('Baobab.get: invalid path.');
+
+  return helpers.getIn(
+    this.data, type.String(path) || type.Number(path) ? [path] : path
+  );
+};
+
+Baobab.prototype.get = function() {
+  var ref = this.reference.apply(this, arguments);
+
+  return this.options.clone ? this._cloner(ref) : ref;
+};
+
+Baobab.prototype.clone = function(path) {
+  return this._cloner(this.reference.apply(this, arguments));
+};
+
+Baobab.prototype.set = function(key, val) {
+
+  if (arguments.length < 2)
+    throw Error('Baobab.set: expects a key and a value.');
+
+  var spec = {};
+
+  if (type.Array(key)) {
+    var path = helpers.solvePath(this.data, key);
+
+    if (!path)
+      throw Error('Baobab.set: could not solve dynamic path.');
+
+    spec = helpers.pathObject(path, {$set: val});
+  }
+  else {
+    spec[key] = {$set: val};
+  }
+
+  return this.update(spec);
+};
+
+Baobab.prototype.unset = function(key) {
+  if (!key && key !== 0)
+    throw Error('Baobab.unset: expects a valid key to unset.');
+
+  var spec = {};
+  spec[key] = {$unset: true};
+
+  return this.update(spec);
+};
+
+Baobab.prototype.update = function(spec) {
+  var self = this;
+
+  if (!type.Object(spec))
+    throw Error('Baobab.update: wrong specification.');
+
+  this._transaction = merge(spec, this._transaction);
+
+  // Should we let the user commit?
+  if (!this.options.autoCommit)
+    return this;
+
+  // Should we update synchronously?
+  if (!this.options.asynchronous)
+    return this.commit();
+
+  // Updating asynchronously
+  if (!this._future)
+    this._future = setTimeout(self.commit.bind(self, null), 0);
+
+  return this;
+};
+
+Baobab.prototype.hasHistory = function() {
+  return !!this._history.length;
+};
+
+Baobab.prototype.getHistory = function() {
+  return this._history;
+};
+
+Baobab.prototype.undo = function() {
+  if (!this.hasHistory())
+    throw Error('Baobab.undo: no history recorded, cannot undo.');
+
+  var lastRecord = this._history.shift();
+  this.commit(lastRecord);
+};
+
+Baobab.prototype.release = function() {
+
+  delete this.data;
+  delete this._transaction;
+  delete this._history;
+
+  // Releasing cursors
+  for (var k in this._cursors)
+    this._cursors[k].release();
+  delete this._cursors;
+
+  // Killing event emitter
+  this.kill();
+};
+
+/**
+ * Output
+ */
+Baobab.prototype.toJSON = function() {
+  return this.reference();
+};
+
+/**
+ * Export
+ */
+module.exports = Baobab;
+
+},{"../defaults.js":1,"./cursor.js":7,"./helpers.js":8,"./merge.js":9,"./mixins.js":10,"./type.js":11,"./update.js":12,"emmett":3,"typology":4}],6:[function(require,module,exports){
+/**
+ * Baobab Cursor Combination
+ * ==========================
+ *
+ * A useful abstraction dealing with cursor's update logical combinations.
+ */
+var EventEmitter = require('emmett'),
+    helpers = require('./helpers.js'),
+    type = require('./type.js');
+
+/**
+ * Utilities
+ */
+function bindCursor(c, cursor) {
+  cursor.on('update', c.cursorListener);
+  c.tree.off('update', c.treeListener);
+  c.tree.on('update', c.treeListener);
+}
+
+/**
+ * Main Class
+ */
+function Combination(operator /*, &cursors */) {
+  var self = this;
+
+  // Safeguard
+  if (arguments.length < 2)
+    throw Error('baobab.Combination: not enough arguments.');
+
+  var first = arguments[1],
+      rest = helpers.arrayOf(arguments).slice(2);
+
+  if (first instanceof Array) {
+    rest = first.slice(1);
+    first = first[0];
+  }
+
+  if (!type.Cursor(first))
+    throw Error('baobab.Combination: argument should be a cursor.');
+
+  if (operator !== 'or' && operator !== 'and')
+    throw Error('baobab.Combination: invalid operator.');
+
+  // Extending event emitter
+  EventEmitter.call(this);
+
+  // Properties
+  this.cursors = [first];
+  this.operators = [];
+  this.tree = first.tree;
+
+  // State
+  this.updates = new Array(this.cursors.length);
+
+  // Listeners
+  this.cursorListener = function() {
+    self.updates[self.cursors.indexOf(this)] = true;
+  };
+
+  this.treeListener = function() {
+    var shouldFire = self.updates[0],
+        i,
+        l;
+
+    for (i = 1, l = self.cursors.length; i < l; i++) {
+      shouldFire = self.operators[i - 1] === 'or' ?
+        shouldFire || self.updates[i] :
+        shouldFire && self.updates[i];
+    }
+
+    if (shouldFire)
+      self.emit('update');
+
+    // Waiting for next update
+    self.updates = new Array(self.cursors.length);
+  };
+
+  // Lazy binding
+  this.bound = false;
+
+  var regularOn = this.on,
+      regularOnce = this.once;
+
+  var lazyBind = function() {
+    if (self.bound)
+      return;
+    self.bound = true;
+    self.cursors.forEach(function(cursor) {
+      bindCursor(self, cursor);
+    });
+  };
+
+  this.on = function() {
+    lazyBind();
+    return regularOn.apply(this, arguments);
+  };
+
+  this.once = function() {
+    lazyBind();
+    return regularOnce.apply(this, arguments);
+  };
+
+  // Attaching any other passed cursors
+  rest.forEach(function(cursor) {
+    this[operator](cursor);
+  }, this);
+}
+
+helpers.inherits(Combination, EventEmitter);
+
+/**
+ * Prototype
+ */
+function makeOperator(operator) {
+  Combination.prototype[operator] = function(cursor) {
+
+    // Safeguard
+    if (!type.Cursor(cursor)) {
+      this.release();
+      throw Error('baobab.Combination.' + operator + ': argument should be a cursor.');
+    }
+
+    if (~this.cursors.indexOf(cursor)) {
+      this.release();
+      throw Error('baobab.Combination.' + operator + ': cursor already in combination.');
+    }
+
+    this.cursors.push(cursor);
+    this.operators.push(operator);
+    this.updates.length++;
+
+    if (this.bound)
+      bindCursor(this, cursor);
+
+    return this;
+  };
+}
+
+makeOperator('or');
+makeOperator('and');
+
+Combination.prototype.release = function() {
+
+  // Dropping cursors listeners
+  this.cursors.forEach(function(cursor) {
+    cursor.off('update', this.cursorListener);
+  }, this);
+
+  // Dropping tree listener
+  this.tree.off('update', this.treeListener);
+
+  // Cleaning
+  this.cursors = null;
+  this.operators = null;
+  this.tree = null;
+  this.updates = null;
+
+  // Dropping own listeners
+  this.kill();
+};
+
+/**
+ * Exporting
+ */
+module.exports = Combination;
+
+},{"./helpers.js":8,"./type.js":11,"emmett":3}],7:[function(require,module,exports){
+/**
+ * Baobab Cursor Abstraction
+ * ==========================
+ *
+ * Nested selection into a baobab tree.
+ */
+var EventEmitter = require('emmett'),
+    Combination = require('./combination.js'),
+    mixins = require('./mixins.js'),
+    helpers = require('./helpers.js'),
+    type = require('./type.js');
+
+/**
+ * Main Class
+ */
+function Cursor(tree, path, solvedPath, hash) {
+  var self = this;
+
+  // Extending event emitter
+  EventEmitter.call(this);
+
+  // Enforcing array
+  path = path || [];
+
+  // Properties
+  this.tree = tree;
+  this.path = path;
+  this.hash = hash;
+  this.relevant = this.reference() !== undefined;
+
+  // Complex path?
+  this.complexPath = !!solvedPath;
+  this.solvedPath = this.complexPath ? solvedPath : this.path;
+
+  // Root listeners
+  this.updateHandler = function(e) {
+    var log = e.data.log,
+        shouldFire = false,
+        c, p, l, m, i, j;
+
+    // Solving path if needed
+    if (self.complexPath)
+      self.solvedPath = helpers.solvePath(self.tree.data, self.path);
+
+    // If selector listens at tree, we fire
+    if (!self.path.length)
+      return self.emit('update');
+
+    // Checking update log to see whether the cursor should update.
+    outer:
+    for (i = 0, l = log.length; i < l; i++) {
+      c = log[i];
+
+      for (j = 0, m = c.length; j < m; j++) {
+        p = c[j];
+
+        // If path is not relevant to us, we break
+        if (p !== '' + self.solvedPath[j])
+          break;
+
+        // If we reached last item and we are relevant, we fire
+        if (j + 1 === m || j + 1 === self.solvedPath.length) {
+          shouldFire = true;
+          break outer;
+        }
+      }
+    }
+
+    // Handling relevancy
+    var data = self.reference() !== undefined;
+
+    if (self.relevant) {
+      if (data && shouldFire) {
+        self.emit('update');
+      }
+      else if (!data) {
+        self.emit('irrelevant');
+        self.relevant = false;
+      }
+    }
+    else {
+      if (data && shouldFire) {
+        self.emit('relevant');
+        self.emit('update');
+        self.relevant = true;
+      }
+    }
+  };
+
+  // Making mixin
+  this.mixin = mixins.cursor(this);
+
+  // Lazy binding
+  var bound = false,
+      regularOn = this.on,
+      regularOnce = this.once;
+
+  var lazyBind = function() {
+    if (bound)
+      return;
+    bound = true;
+    self.tree.on('update', self.updateHandler);
+  };
+
+  this.on = function() {
+    lazyBind();
+    return regularOn.apply(this, arguments);
+  };
+
+  this.once = function() {
+    lazyBind();
+    return regularOnce.apply(this, arguments);
+  };
+}
+
+helpers.inherits(Cursor, EventEmitter);
+
+/**
+ * Predicates
+ */
+Cursor.prototype.isRoot = function() {
+  return !this.path.length;
+};
+
+Cursor.prototype.isLeaf = function() {
+  return type.Primitive(this.reference());
+};
+
+Cursor.prototype.isBranch = function() {
+  return !this.isLeaf() && !this.isRoot();
+};
+
+/**
+ * Traversal
+ */
+Cursor.prototype.root = function() {
+  return this.tree.root();
+};
+
+Cursor.prototype.select = function(path) {
+  if (arguments.length > 1)
+    path = helpers.arrayOf(arguments);
+
+  if (!type.Path(path))
+    throw Error('baobab.Cursor.select: invalid path.');
+  return this.tree.select(this.path.concat(path));
+};
+
+Cursor.prototype.up = function() {
+  if (this.solvedPath && this.solvedPath.length)
+    return this.tree.select(this.path.slice(0, -1));
+  else
+    return null;
+};
+
+Cursor.prototype.left = function() {
+  var last = +this.solvedPath[this.solvedPath.length - 1];
+
+  if (isNaN(last))
+    throw Error('baobab.Cursor.left: cannot go left on a non-list type.');
+
+  return last ?
+    this.tree.select(this.solvedPath.slice(0, -1).concat(last - 1)) :
+    null;
+};
+
+Cursor.prototype.leftmost = function() {
+  var last = +this.solvedPath[this.solvedPath.length - 1];
+
+  if (isNaN(last))
+    throw Error('baobab.Cursor.leftmost: cannot go left on a non-list type.');
+
+  return this.tree.select(this.solvedPath.slice(0, -1).concat(0));
+};
+
+Cursor.prototype.right = function() {
+  var last = +this.solvedPath[this.solvedPath.length - 1];
+
+  if (isNaN(last))
+    throw Error('baobab.Cursor.right: cannot go right on a non-list type.');
+
+  if (last + 1 === this.up().reference().length)
+    return null;
+
+  return this.tree.select(this.solvedPath.slice(0, -1).concat(last + 1));
+};
+
+Cursor.prototype.rightmost = function() {
+  var last = +this.solvedPath[this.solvedPath.length - 1];
+
+  if (isNaN(last))
+    throw Error('baobab.Cursor.right: cannot go right on a non-list type.');
+
+  var list = this.up().reference();
+
+  return this.tree.select(this.solvedPath.slice(0, -1).concat(list.length - 1));
+};
+
+Cursor.prototype.down = function() {
+  var last = +this.solvedPath[this.solvedPath.length - 1];
+
+  if (!(this.reference() instanceof Array))
+    return null;
+
+  return this.tree.select(this.solvedPath.concat(0));
+};
+
+/**
+ * Access
+ */
+Cursor.prototype.get = function(path) {
+  if (arguments.length > 1)
+    path = helpers.arrayOf(arguments);
+
+  if (type.Step(path))
+    return this.tree.get(this.solvedPath.concat(path));
+  else
+    return this.tree.get(this.solvedPath);
+};
+
+Cursor.prototype.reference = function(path) {
+  if (arguments.length > 1)
+    path = helpers.arrayOf(arguments);
+
+  if (type.Step(path))
+    return this.tree.reference(this.solvedPath.concat(path));
+  else
+    return this.tree.reference(this.solvedPath);
+};
+
+Cursor.prototype.clone = function(path) {
+  if (arguments.length > 1)
+    path = helpers.arrayOf(arguments);
+
+  if (type.Step(path))
+    return this.tree.clone(this.solvedPath.concat(path));
+  else
+    return this.tree.clone(this.solvedPath);
+};
+
+/**
+ * Update
+ */
+Cursor.prototype.set = function(key, val) {
+  if (arguments.length < 2)
+    throw Error('baobab.Cursor.set: expecting at least key/value.');
+
+  var data = this.reference();
+
+  if (typeof data !== 'object')
+    throw Error('baobab.Cursor.set: trying to set key to a non-object.');
+
+  var spec = {};
+
+  if (type.Array(key)) {
+    var path = helpers.solvePath(data, key);
+
+    if (!path)
+      throw Error('baobab.Cursor.set: could not solve dynamic path.');
+
+    spec = helpers.pathObject(path, {$set: val});
+  }
+  else {
+    spec[key] = {$set: val};
+  }
+
+  return this.update(spec);
+};
+
+Cursor.prototype.edit = function(val) {
+  return this.update({$set: val});
+};
+
+Cursor.prototype.unset = function(key) {
+  if (!key && key !== 0)
+    throw Error('baobab.Cursor.unset: expects a valid key to unset.');
+
+  if (typeof this.reference() !== 'object')
+    throw Error('baobab.Cursor.set: trying to set key to a non-object.');
+
+  var spec = {};
+  spec[key] = {$unset: true};
+  return this.update(spec);
+};
+
+Cursor.prototype.remove = function() {
+  if (this.isRoot())
+    throw Error('baobab.Cursor.remove: cannot remove root node.');
+
+  return this.update({$unset: true});
+};
+
+Cursor.prototype.apply = function(fn) {
+  if (typeof fn !== 'function')
+    throw Error('baobab.Cursor.apply: argument is not a function.');
+
+  return this.update({$apply: fn});
+};
+
+Cursor.prototype.chain = function(fn) {
+  if (typeof fn !== 'function')
+    throw Error('baobab.Cursor.chain: argument is not a function.');
+
+  return this.update({$chain: fn});
+};
+
+Cursor.prototype.push = function(value) {
+  if (!(this.reference() instanceof Array))
+    throw Error('baobab.Cursor.push: trying to push to non-array value.');
+
+  if (arguments.length > 1)
+    return this.update({$push: helpers.arrayOf(arguments)});
+  else
+    return this.update({$push: value});
+};
+
+Cursor.prototype.unshift = function(value) {
+  if (!(this.reference() instanceof Array))
+    throw Error('baobab.Cursor.push: trying to push to non-array value.');
+
+  if (arguments.length > 1)
+    return this.update({$unshift: helpers.arrayOf(arguments)});
+  else
+    return this.update({$unshift: value});
+};
+
+Cursor.prototype.merge = function(o) {
+  if (!type.Object(o))
+    throw Error('baobab.Cursor.merge: trying to merge a non-object.');
+
+  if (!type.Object(this.reference()))
+    throw Error('baobab.Cursor.merge: trying to merge into a non-object.');
+
+  this.update({$merge: o});
+};
+
+Cursor.prototype.update = function(spec) {
+  this.tree.update(helpers.pathObject(this.solvedPath, spec));
+  return this;
+};
+
+/**
+ * Combination
+ */
+Cursor.prototype.or = function(otherCursor) {
+  return new Combination('or', this, otherCursor);
+};
+
+Cursor.prototype.and = function(otherCursor) {
+  return new Combination('and', this, otherCursor);
+};
+
+/**
+ * Releasing
+ */
+Cursor.prototype.release = function() {
+
+  // Removing listener on parent
+  this.tree.off('update', this.updateHandler);
+
+  // If the cursor is hashed, we unsubscribe from the parent
+  if (this.hash)
+    delete this.tree._cursors[this.hash];
+
+  // Dereferencing
+  delete this.tree;
+  delete this.path;
+  delete this.solvePath;
+
+  // Killing emitter
+  this.kill();
+};
+
+/**
+ * Output
+ */
+Cursor.prototype.toJSON = function() {
+  return this.reference();
+};
+
+type.Cursor = function (value) {
+  return value instanceof Cursor;
+};
+
+/**
+ * Export
+ */
+module.exports = Cursor;
+
+},{"./combination.js":6,"./helpers.js":8,"./mixins.js":10,"./type.js":11,"emmett":3}],8:[function(require,module,exports){
+/**
+ * Baobab Helpers
+ * ===============
+ *
+ * Miscellaneous helper functions.
+ */
+var type = require('./type.js');
+
+// Make a real array of an array-like object
+function arrayOf(o) {
+  return Array.prototype.slice.call(o);
+}
+
+// Shallow merge
+function shallowMerge(o1, o2) {
+  var o = {},
+      k;
+
+  for (k in o1) o[k] = o1[k];
+  for (k in o2) o[k] = o2[k];
+
+  return o;
+}
+
+// Clone a regexp
+function cloneRegexp(re) {
+  var pattern = re.source,
+      flags = '';
+
+  if (re.global) flags += 'g';
+  if (re.multiline) flags += 'm';
+  if (re.ignoreCase) flags += 'i';
+  if (re.sticky) flags += 'y';
+  if (re.unicode) flags += 'u';
+
+  return new RegExp(pattern, flags);
+}
+
+// Cloning function
+function clone(deep, item) {
+  if (!item ||
+      typeof item !== 'object' ||
+      item instanceof Error ||
+      item instanceof ArrayBuffer)
+    return item;
+
+  // Array
+  if (type.Array(item)) {
+    if (deep) {
+      var i, l, a = [];
+      for (i = 0, l = item.length; i < l; i++)
+        a.push(deepClone(item[i]));
+      return a;
+    }
+    else {
+      return item.slice(0);
+    }
+  }
+
+  // Date
+  if (type.Date(item))
+    return new Date(item.getTime());
+
+  // RegExp
+  if (item instanceof RegExp)
+    return cloneRegexp(item);
+
+  // Object
+  if (type.Object(item)) {
+    var k, o = {};
+
+    if (item.constructor && item.constructor !== Object)
+      o = Object.create(item.constructor.prototype);
+
+    for (k in item)
+      if (item.hasOwnProperty(k))
+        o[k] = deep ? deepClone(item[k]) : item[k];
+    return o;
+  }
+
+  return item;
+}
+
+// Shallow & deep cloning functions
+var shallowClone = clone.bind(null, false),
+    deepClone = clone.bind(null, true);
+
+// Simplistic composition
+function compose(fn1, fn2) {
+  return function(arg) {
+    return fn2(fn1(arg));
+  };
+}
+
+// Get first item matching predicate in list
+function first(a, fn) {
+  var i, l;
+  for (i = 0, l = a.length; i < l; i++) {
+    if (fn(a[i]))
+      return a[i];
+  }
+  return;
+}
+
+function index(a, fn) {
+  var i, l;
+  for (i = 0, l = a.length; i < l; i++) {
+    if (fn(a[i]))
+      return i;
+  }
+  return -1;
+}
+
+// Compare object to spec
+function compare(object, spec) {
+  var ok = true,
+      k;
+
+  // If we reached here via a recursive call, object may be undefined because
+  // not all items in a collection will have the same deep nesting structure
+  if (!object) {
+    return false;
+  }
+
+  for (k in spec) {
+    if (type.Object(spec[k])) {
+      ok = ok && compare(object[k], spec[k]);
+    }
+    else if (type.Array(spec[k])) {
+      ok = ok && !!~spec[k].indexOf(object[k]);
+    }
+    else {
+      if (object[k] !== spec[k])
+        return false;
+    }
+  }
+
+  return ok;
+}
+
+function firstByComparison(object, spec) {
+  return first(object, function(e) {
+    return compare(e, spec);
+  });
+}
+
+function indexByComparison(object, spec) {
+  return index(object, function(e) {
+    return compare(e, spec);
+  });
+}
+
+// Retrieve nested objects
+function getIn(object, path) {
+  path = path || [];
+
+  var c = object,
+      i,
+      l;
+
+  for (i = 0, l = path.length; i < l; i++) {
+    if (!c)
+      return;
+
+    if (typeof path[i] === 'function') {
+      if (!type.Array(c))
+        return;
+
+      c = first(c, path[i]);
+    }
+    else if (typeof path[i] === 'object') {
+      if (!type.Array(c))
+        return;
+
+      c = firstByComparison(c, path[i]);
+    }
+    else {
+      c = c[path[i]];
+    }
+  }
+
+  return c;
+}
+
+// Solve a complex path
+function solvePath(object, path) {
+  var solvedPath = [],
+      c = object,
+      idx,
+      i,
+      l;
+
+  for (i = 0, l = path.length; i < l; i++) {
+    if (!c)
+      return null;
+
+    if (typeof path[i] === 'function') {
+      if (!type.Array(c))
+        return;
+
+      idx = index(c, path[i]);
+      solvedPath.push(idx);
+      c = c[idx];
+    }
+    else if (typeof path[i] === 'object') {
+      if (!type.Array(c))
+        return;
+
+      idx = indexByComparison(c, path[i]);
+      solvedPath.push(idx);
+      c = c[idx];
+    }
+    else {
+      solvedPath.push(path[i]);
+      c = c[path[i]] || {};
+    }
+  }
+
+  return solvedPath;
+}
+
+// Return a fake object relative to the given path
+function pathObject(path, spec) {
+  var l = path.length,
+      o = {},
+      c = o,
+      i;
+
+  if (!l)
+    o = spec;
+
+  for (i = 0; i < l; i++) {
+    c[path[i]] = (i + 1 === l) ? spec : {};
+    c = c[path[i]];
+  }
+
+  return o;
+}
+
+function inherits(ctor, superCtor) {
+  ctor.super_ = superCtor;
+  var TempCtor = function () {};
+  TempCtor.prototype = superCtor.prototype;
+  ctor.prototype = new TempCtor();
+  ctor.prototype.constructor = ctor;
+}
+
+module.exports = {
+  arrayOf: arrayOf,
+  deepClone: deepClone,
+  shallowClone: shallowClone,
+  shallowMerge: shallowMerge,
+  compose: compose,
+  getIn: getIn,
+  inherits: inherits,
+  pathObject: pathObject,
+  solvePath: solvePath
+};
+
+},{"./type.js":11}],9:[function(require,module,exports){
+/**
+ * Baobab Merge
+ * =============
+ *
+ * A function used to merge updates in the stack.
+ */
+var helpers = require('./helpers.js'),
+    type = require('./type.js');
+
+// Helpers
+function hasKey(o, key) {
+  return key in (o || {});
+}
+
+function conflict(a, b, key) {
+  return hasKey(a, key) && hasKey(b, key);
+}
+
+// Main function
+function merge() {
+  var res = {},
+      current,
+      next,
+      l = arguments.length,
+      i,
+      k;
+
+  for (i = l - 1; i >= 0; i--) {
+
+    // Upper $set/$apply... and conflicts
+    // When solving conflicts, here is the priority to apply:
+    // -- 0) $unset
+    // -- 1) $set
+    // -- 2) $merge
+    // -- 3) $apply
+    // -- 4) $chain
+    if (arguments[i].$unset) {
+      delete res.$set;
+      delete res.$apply;
+      delete res.$merge;
+      res.$unset = arguments[i].$unset;
+    }
+    else if (arguments[i].$set) {
+      delete res.$apply;
+      delete res.$merge;
+      delete res.$unset;
+      res.$set = arguments[i].$set;
+      continue;
+    }
+    else if (arguments[i].$merge) {
+      delete res.$set;
+      delete res.$apply;
+      delete res.$unset;
+      res.$merge = arguments[i].$merge;
+      continue;
+    }
+    else if (arguments[i].$apply){
+      delete res.$set;
+      delete res.$merge;
+      delete res.$unset;
+      res.$apply = arguments[i].$apply;
+      continue;
+    }
+    else if (arguments[i].$chain) {
+      delete res.$set;
+      delete res.$merge;
+      delete res.$unset;
+
+      if (res.$apply)
+        res.$apply = helpers.compose(res.$apply, arguments[i].$chain);
+      else
+        res.$apply = arguments[i].$chain;
+      continue;
+    }
+
+    for (k in arguments[i]) {
+      current = res[k];
+      next = arguments[i][k];
+
+      if (current && type.Object(next)) {
+
+        // $push conflict
+        if (conflict(current, next, '$push')) {
+          if (type.Array(current.$push))
+            current.$push = current.$push.concat(next.$push);
+          else
+            current.$push = [current.$push].concat(next.$push);
+        }
+
+        // $unshift conflict
+        else if (conflict(current, next, '$unshift')) {
+          if (type.Array(next.$unshift))
+            current.$unshift = next.$unshift.concat(current.$unshift);
+          else
+            current.$unshift = [next.$unshift].concat(current.$unshift);
+        }
+
+        // No conflict
+        else {
+          res[k] = merge(next, current);
+        }
+      }
+      else {
+        res[k] = next;
+      }
+    }
+  }
+
+  return res;
+}
+
+module.exports = merge;
+
+},{"./helpers.js":8,"./type.js":11}],10:[function(require,module,exports){
+/**
+ * Baobab React Mixins
+ * ====================
+ *
+ * Compilation of react mixins designed to deal with cursors integration.
+ */
+var Combination = require('./combination.js'),
+    type = require('./type.js');
+
+module.exports = {
+  baobab: function(baobab) {
+    return {
+
+      // Run Baobab mixin first to allow mixins to access cursors
+      mixins: [{
+        getInitialState: function() {
+
+          // Binding baobab to instance
+          this.tree = baobab;
+
+          // Is there any cursors to create?
+          if (!this.cursor && !this.cursors)
+            return {};
+
+          // Is there conflicting definitions?
+          if (this.cursor && this.cursors)
+            throw Error('baobab.mixin: you cannot have both ' +
+                        '`component.cursor` and `component.cursors`. Please ' +
+                        'make up your mind.');
+
+          // Type
+          this.__type = null;
+
+          // Making update handler
+          this.__updateHandler = (function() {
+            this.setState(this.__getCursorData());
+          }).bind(this);
+
+          if (this.cursor) {
+            if (!type.MixinCursor(this.cursor))
+              throw Error('baobab.mixin.cursor: invalid data (cursor, ' +
+                          'string, array or function).');
+
+            if (type.Function(this.cursor))
+              this.cursor = this.cursor();
+
+            if (!type.Cursor(this.cursor))
+              this.cursor = baobab.select(this.cursor);
+
+            this.__getCursorData = (function() {
+              return {cursor: this.cursor.get()};
+            }).bind(this);
+            this.__type = 'single';
+          }
+          else if (this.cursors) {
+            if (!type.MixinCursors(this.cursors))
+              throw Error('baobab.mixin.cursor: invalid data (object, array or function).');
+
+            if (type.Function(this.cursors))
+              this.cursors = this.cursors();
+
+            if (type.Array(this.cursors)) {
+              this.cursors = this.cursors.map(function(path) {
+                return type.Cursor(path) ? path : baobab.select(path);
+              });
+
+              this.__getCursorData = (function() {
+                return {cursors: this.cursors.map(function(cursor) {
+                  return cursor.get();
+                })};
+              }).bind(this);
+              this.__type = 'array';
+            }
+            else {
+              for (var k in this.cursors) {
+                if (!type.Cursor(this.cursors[k]))
+                  this.cursors[k] = baobab.select(this.cursors[k]);
+              }
+
+              this.__getCursorData = (function() {
+                var d = {};
+                for (k in this.cursors)
+                  d[k] = this.cursors[k].get();
+                return {cursors: d};
+              }).bind(this);
+              this.__type = 'object';
+            }
+          }
+
+          return this.__getCursorData();
+        },
+        componentDidMount: function() {
+          if (this.__type === 'single') {
+            this.__combination = new Combination('or', [this.cursor]);
+            this.__combination.on('update', this.__updateHandler);
+          }
+          else if (this.__type === 'array') {
+            this.__combination = new Combination('or', this.cursors);
+            this.__combination.on('update', this.__updateHandler);
+          }
+          else if (this.__type === 'object') {
+            this.__combination = new Combination(
+              'or',
+              Object.keys(this.cursors).map(function(k) {
+                return this.cursors[k];
+              }, this)
+            );
+            this.__combination.on('update', this.__updateHandler);
+          }
+        },
+        componentWillUnmount: function() {
+          if (this.__combination)
+            this.__combination.release();
+        }
+      }].concat(baobab.options.mixins)
+    };
+  },
+  cursor: function(cursor) {
+    return {
+
+      // Run cursor mixin first to allow mixins to access cursors
+      mixins: [{
+        getInitialState: function() {
+
+          // Binding cursor to instance
+          this.cursor = cursor;
+
+          // Making update handler
+          this.__updateHandler = (function() {
+            this.setState({cursor: this.cursor.get()});
+          }).bind(this);
+
+          return {cursor: this.cursor.get()};
+        },
+        componentDidMount: function() {
+
+          // Listening to updates
+          this.cursor.on('update', this.__updateHandler);
+        },
+        componentWillUnmount: function() {
+
+          // Unbinding handler
+          this.cursor.off('update', this.__updateHandler);
+        }
+      }].concat(cursor.tree.options.mixins)
+    };
+  }
+};
+
+},{"./combination.js":6,"./type.js":11}],11:[function(require,module,exports){
+/**
+ * Baobab Type Checking
+ * =====================
+ *
+ * Misc helpers functions used throughout the library to perform some type
+ * tests at runtime.
+ *
+ * @christianalfoni
+ */
+
+// Not reusing methods as it will just be an extra
+// call on the stack
+var type = function (value) {
+  if (Array.isArray(value)) {
+    return 'array';
+  } else if (typeof value === 'object' && value !== null) {
+    return 'object';
+  } else if (typeof value === 'string') {
+    return 'string';
+  } else if (typeof value === 'number') {
+    return 'number';
+  } else if (typeof value === 'boolean') {
+    return 'boolean';
+  } else if (typeof value === 'function') {
+    return 'function';
+  } else if (value === null) {
+    return 'null';
+  } else if (value === undefined) {
+    return 'undefined';
+  } else if (value instanceof Date) {
+    return 'date';
+  } else {
+    return 'invalid';
+  }
+};
+
+type.Array = function (value) {
+  return Array.isArray(value);
+};
+
+type.Object = function (value) {
+  return !Array.isArray(value) && typeof value === 'object' && value !== null;
+};
+
+type.String = function (value) {
+  return typeof value === 'string';
+};
+
+type.Number = function (value) {
+  return typeof value === 'number';
+};
+
+type.Boolean = function (value) {
+  return typeof value === 'boolean';
+};
+
+type.Function = function (value) {
+  return typeof value === 'function';
+};
+
+type.Primitive = function (value) {
+  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
+};
+
+type.Date = function (value) {
+  return value instanceof Date;
+};
+
+type.Step = function (value) {
+  var valueType = type(value);
+  var notValid = ['null', 'undefined', 'invalid', 'date'];
+  return notValid.indexOf(valueType) === -1;
+};
+
+// Should undefined be allowed?
+type.Path = function (value) {
+  var types = ['object', 'string', 'number', 'function', 'undefined'];
+  if (type.Array(value)) {
+    for (var x = 0; x < value.length; x++) {
+      if (types.indexOf(type(value[x])) === -1) {
+        return false;
+      }
+    }
+  } else {
+    return types.indexOf(type(value)) >= 0;
+  }
+  return true;
+
+};
+
+// string|number|array|cursor|function
+type.MixinCursor = function (value) {
+  var allowedValues = ['string', 'number', 'array', 'function'];
+  return allowedValues.indexOf(type(value)) >= 0 || type.Cursor(value);
+};
+
+// array|object|function
+type.MixinCursors = function (value) {
+  var allowedValues = ['array', 'object', 'function'];
+  return allowedValues.indexOf(type(value)) >= 0;
+};
+
+// Already know this is an array
+type.ComplexPath = function (value) {
+  var complexTypes = ['object', 'function'];
+  for (var x = 0; x < value.length; x++) {
+    if (complexTypes.indexOf(type(value[x])) >= 0) {
+      return true;
+    }
+  }
+  return false;
+};
+
+module.exports = type;
+
+},{}],12:[function(require,module,exports){
+/**
+ * Baobab Update
+ * ==============
+ *
+ * A handy method to mutate an atom according to the given specification.
+ * Mostly inspired by http://facebook.github.io/react/docs/update.html
+ */
+var helpers = require('./helpers.js'),
+    type = require('./type.js');
+
+var COMMANDS = {};
+[
+  '$set',
+  '$push',
+  '$unshift',
+  '$apply',
+  '$merge'
+].forEach(function(c) {
+  COMMANDS[c] = true;
+});
+
+// Helpers
+function makeError(path, message) {
+  var e = new Error('baobab.update: ' + message + ' at path /' +
+                    path.toString());
+
+  e.path = path;
+  return e;
+}
+
+// Core function
+function update(target, spec, opts) {
+  opts = opts || {shiftReferences: false};
+  var log = {};
+
+  // Closure mutating the internal object
+  (function mutator(o, spec, path, parent) {
+    path = path || [];
+
+    var hash = path.join('λ'),
+        fn,
+        h,
+        k,
+        v;
+
+    for (k in spec) {
+      if (COMMANDS[k]) {
+        v = spec[k];
+
+        // Logging update
+        log[hash] = true;
+
+        // TODO: this could be before in the recursion
+        // Applying
+        switch (k) {
+          case '$push':
+            if (!type.Array(o))
+              throw makeError(path, 'using command $push to a non array');
+
+            if (!type.Array(v))
+              o.push(v);
+            else
+              o.push.apply(o, v);
+            break;
+          case '$unshift':
+            if (!type.Array(o))
+              throw makeError(path, 'using command $unshift to a non array');
+
+            if (!type.Array(v))
+              o.unshift(v);
+            else
+              o.unshift.apply(o, v);
+            break;
+        }
+      }
+      else {
+        h = hash ? hash + 'λ' + k : k;
+
+        if ('$unset' in (spec[k] || {})) {
+
+          // Logging update
+          log[h] = true;
+
+          if (type.Array(o)) {
+            if (!opts.shiftReferences)
+              o.splice(k, 1);
+            else
+              parent[path[path.length - 1]] = o.slice(0, +k).concat(o.slice(+k + 1));
+          }
+          else {
+            delete o[k];
+          }
+        }
+        else if ('$set' in (spec[k] || {})) {
+          v = spec[k].$set;
+
+          // Logging update
+          log[h] = true;
+          o[k] = v;
+        }
+        else if ('$apply' in (spec[k] || {}) || '$chain' in (spec[k] || {})) {
+
+          // TODO: this should not happen likewise.
+          fn = spec[k].$apply || spec[k].$chain;
+
+          if (typeof fn !== 'function')
+            throw makeError(path.concat(k), 'using command $apply with a non function');
+
+          // Logging update
+          log[h] = true;
+          o[k] = fn.call(null, o[k]);
+        }
+        else if ('$merge' in (spec[k] || {})) {
+          v = spec[k].$merge;
+
+          if (!type.Object(o[k]))
+            throw makeError(path.concat(k), 'using command $merge on a non-object');
+
+          // Logging update
+          log[h] = true;
+          o[k] = helpers.shallowMerge(o[k], v);
+        }
+        else if (opts.shiftReferences &&
+                 ('$push' in (spec[k] || {}) ||
+                  '$unshift' in (spec[k] || {}))) {
+          if ('$push' in (spec[k] || {})) {
+            v = spec[k].$push;
+
+            if (!type.Array(o[k]))
+              throw makeError(path.concat(k), 'using command $push to a non array');
+            o[k] = o[k].concat(v);
+          }
+          if ('$unshift' in (spec[k] || {})) {
+            v = spec[k].$unshift;
+
+            if (!type.Array(o[k]))
+              throw makeError(path.concat(k), 'using command $unshift to a non array');
+            o[k] = (v instanceof Array ? v : [v]).concat(o[k]);
+          }
+
+          // Logging update
+          log[h] = true;
+        }
+        else {
+
+          // If nested object does not exist, we create it
+          if (typeof o[k] === 'undefined')
+            o[k] = {};
+
+          // Shifting reference
+          if (opts.shiftReferences)
+            o[k] = helpers.shallowClone(o[k]);
+
+          // Recur
+          // TODO: fix this horrendous behaviour.
+          mutator(
+            o[k],
+            spec[k],
+            path.concat(k),
+            o
+          );
+        }
+      }
+    }
+  })(target, spec);
+
+  return Object.keys(log).map(function(hash) {
+    return hash.split('λ');
+  });
+}
+
+// Exporting
+module.exports = update;
+
+},{"./helpers.js":8,"./type.js":11}],13:[function(require,module,exports){
+// Generated by CoffeeScript 1.6.3
+(function() {
+  var Base, BinaryTable, CompressedImage, DataUnit, Decompress, FITS, HDU, Header, HeaderVerify, Image, ImageUtils, Parser, Table, Tabular, _ref, _ref1,
+    __hasProp = {}.hasOwnProperty,
+    __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
+    __slice = [].slice;
+
+  if (this.astro == null) {
+    this.astro = {};
+  }
+
+  Base = (function() {
+    function Base() {}
+
+    Base.include = function(obj) {
+      var key, value;
+      for (key in obj) {
+        value = obj[key];
+        this.prototype[key] = value;
+      }
+      return this;
+    };
+
+    Base.extend = function(obj) {
+      var key, value;
+      for (key in obj) {
+        value = obj[key];
+        this[key] = value;
+      }
+      return this;
+    };
+
+    Base.prototype.proxy = function(func) {
+      var _this = this;
+      return function() {
+        return func.apply(_this, arguments);
+      };
+    };
+
+    Base.prototype.invoke = function(callback, opts, data) {
+      var context;
+      context = (opts != null ? opts.context : void 0) != null ? opts.context : this;
+      if (callback != null) {
+        return callback.call(context, data, opts);
+      }
+    };
+
+    return Base;
+
+  })();
+
+  Parser = (function(_super) {
+    __extends(Parser, _super);
+
+    Parser.prototype.LINEWIDTH = 80;
+
+    Parser.prototype.BLOCKLENGTH = 2880;
+
+    File.prototype.slice = File.prototype.slice || File.prototype.webkitSlice;
+
+    Blob.prototype.slice = Blob.prototype.slice || Blob.prototype.webkitSlice;
+
+    function Parser(arg, callback, opts) {
+      var xhr,
+        _this = this;
+      this.arg = arg;
+      this.callback = callback;
+      this.opts = opts;
+      this.hdus = [];
+      this.blockCount = 0;
+      this.begin = 0;
+      this.end = this.BLOCKLENGTH;
+      this.offset = 0;
+      this.headerStorage = new Uint8Array();
+      if (typeof this.arg === 'string') {
+        this.readNextBlock = this._readBlockFromBuffer;
+        xhr = new XMLHttpRequest();
+        xhr.open('GET', this.arg);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function() {
+          if (xhr.status !== 200) {
+            _this.invoke(_this.callback, _this.opts);
+            return;
+          }
+          _this.arg = xhr.response;
+          _this.length = _this.arg.byteLength;
+          return _this.readFromBuffer();
+        };
+        xhr.send();
+      } else {
+        this.length = this.arg.size;
+        this.readNextBlock = this._readBlockFromFile;
+        this.readFromFile();
+      }
+    }
+
+    Parser.prototype.readFromBuffer = function() {
+      var block;
+      block = this.arg.slice(this.begin + this.offset, this.end + this.offset);
+      return this.readBlock(block);
+    };
+
+    Parser.prototype.readFromFile = function() {
+      var block,
+        _this = this;
+      this.reader = new FileReader();
+      this.reader.onloadend = function(e) {
+        return _this.readBlock(e.target.result);
+      };
+      block = this.arg.slice(this.begin + this.offset, this.end + this.offset);
+      return this.reader.readAsArrayBuffer(block);
+    };
+
+    Parser.prototype.readBlock = function(block) {
+      var arr, dataLength, dataunit, header, rowIndex, rows, s, slice, tmp, value, _i, _len, _ref;
+      arr = new Uint8Array(block);
+      tmp = new Uint8Array(this.headerStorage);
+      this.headerStorage = new Uint8Array(this.end);
+      this.headerStorage.set(tmp, 0);
+      this.headerStorage.set(arr, this.begin);
+      rows = this.BLOCKLENGTH / this.LINEWIDTH;
+      while (rows--) {
+        rowIndex = rows * this.LINEWIDTH;
+        if (arr[rowIndex] === 32) {
+          continue;
+        }
+        if (arr[rowIndex] === 69 && arr[rowIndex + 1] === 78 && arr[rowIndex + 2] === 68 && arr[rowIndex + 3] === 32) {
+          s = '';
+          _ref = this.headerStorage;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            value = _ref[_i];
+            s += String.fromCharCode(value);
+          }
+          header = new Header(s);
+          this.start = this.end + this.offset;
+          dataLength = header.getDataLength();
+          slice = this.arg.slice(this.start, this.start + dataLength);
+          if (header.hasDataUnit()) {
+            dataunit = this.createDataUnit(header, slice);
+          }
+          this.hdus.push(new HDU(header, dataunit));
+          this.offset += this.end + dataLength + this.excessBytes(dataLength);
+          if (this.offset === this.length) {
+            this.headerStorage = null;
+            this.invoke(this.callback, this.opts, this);
+            return;
+          }
+          this.blockCount = 0;
+          this.begin = this.blockCount * this.BLOCKLENGTH;
+          this.end = this.begin + this.BLOCKLENGTH;
+          this.headerStorage = new Uint8Array();
+          block = this.arg.slice(this.begin + this.offset, this.end + this.offset);
+          this.readNextBlock(block);
+          return;
+        }
+        break;
+      }
+      this.blockCount += 1;
+      this.begin = this.blockCount * this.BLOCKLENGTH;
+      this.end = this.begin + this.BLOCKLENGTH;
+      block = this.arg.slice(this.begin + this.offset, this.end + this.offset);
+      this.readNextBlock(block);
+    };
+
+    Parser.prototype._readBlockFromBuffer = function(block) {
+      return this.readBlock(block);
+    };
+
+    Parser.prototype._readBlockFromFile = function(block) {
+      return this.reader.readAsArrayBuffer(block);
+    };
+
+    Parser.prototype.createDataUnit = function(header, blob) {
+      var type;
+      type = header.getDataType();
+      return new astro.FITS[type](header, blob);
+    };
+
+    Parser.prototype.excessBytes = function(length) {
+      return (this.BLOCKLENGTH - (length % this.BLOCKLENGTH)) % this.BLOCKLENGTH;
+    };
+
+    Parser.prototype.isEOF = function() {
+      if (this.offset === this.length) {
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+    return Parser;
+
+  })(Base);
+
+  FITS = (function(_super) {
+    __extends(FITS, _super);
+
+    function FITS(arg, callback, opts) {
+      var parser,
+        _this = this;
+      this.arg = arg;
+      parser = new Parser(this.arg, function(fits) {
+        _this.hdus = parser.hdus;
+        return _this.invoke(callback, opts, _this);
+      });
+    }
+
+    FITS.prototype.getHDU = function(index) {
+      var hdu, _i, _len, _ref;
+      if ((index != null) && (this.hdus[index] != null)) {
+        return this.hdus[index];
+      }
+      _ref = this.hdus;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        hdu = _ref[_i];
+        if (hdu.hasData()) {
+          return hdu;
+        }
+      }
+    };
+
+    FITS.prototype.getHeader = function(index) {
+      return this.getHDU(index).header;
+    };
+
+    FITS.prototype.getDataUnit = function(index) {
+      return this.getHDU(index).data;
+    };
+
+    return FITS;
+
+  })(Base);
+
+  FITS.version = '0.6.5';
+
+  this.astro.FITS = FITS;
+
+  DataUnit = (function(_super) {
+    __extends(DataUnit, _super);
+
+    DataUnit.swapEndian = {
+      B: function(value) {
+        return value;
+      },
+      I: function(value) {
+        return (value << 8) | (value >> 8);
+      },
+      J: function(value) {
+        return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF);
+      }
+    };
+
+    DataUnit.swapEndian[8] = DataUnit.swapEndian['B'];
+
+    DataUnit.swapEndian[16] = DataUnit.swapEndian['I'];
+
+    DataUnit.swapEndian[32] = DataUnit.swapEndian['J'];
+
+    function DataUnit(header, data) {
+      if (data instanceof ArrayBuffer) {
+        this.buffer = data;
+      } else {
+        this.blob = data;
+      }
+    }
+
+    return DataUnit;
+
+  })(Base);
+
+  this.astro.FITS.DataUnit = DataUnit;
+
+  HeaderVerify = {
+    verifyOrder: function(keyword, order) {
+      if (order !== this.cardIndex) {
+        return console.warn("" + keyword + " should appear at index " + this.cardIndex + " in the FITS header");
+      }
+    },
+    verifyBetween: function(keyword, value, lower, upper) {
+      if (!(value >= lower && value <= upper)) {
+        throw "The " + keyword + " value of " + value + " is not between " + lower + " and " + upper;
+      }
+    },
+    verifyBoolean: function(value) {
+      if (value === "T") {
+        return true;
+      } else {
+        return false;
+      }
+    },
+    VerifyFns: {
+      SIMPLE: function() {
+        var args, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = arguments[0];
+        this.primary = true;
+        this.verifyOrder("SIMPLE", 0);
+        return this.verifyBoolean(value);
+      },
+      XTENSION: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        this.extension = true;
+        this.extensionType = arguments[0];
+        this.verifyOrder("XTENSION", 0);
+        return this.extensionType;
+      },
+      BITPIX: function() {
+        var args, key, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        key = "BITPIX";
+        value = parseInt(arguments[0]);
+        this.verifyOrder(key, 1);
+        if (value !== 8 && value !== 16 && value !== 32 && value !== (-32) && value !== (-64)) {
+          throw "" + key + " value " + value + " is not permitted";
+        }
+        return value;
+      },
+      NAXIS: function() {
+        var args, array, key, required, value, _ref;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        key = "NAXIS";
+        value = parseInt(arguments[0]);
+        array = arguments[1];
+        if (!array) {
+          this.verifyOrder(key, 2);
+          this.verifyBetween(key, value, 0, 999);
+          if (this.isExtension()) {
+            if ((_ref = this.extensionType) === "TABLE" || _ref === "BINTABLE") {
+              required = 2;
+              if (value !== required) {
+                throw "" + key + " must be " + required + " for TABLE and BINTABLE extensions";
+              }
+            }
+          }
+        }
+        return value;
+      },
+      PCOUNT: function() {
+        var args, key, order, required, value, _ref;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        key = "PCOUNT";
+        value = parseInt(arguments[0]);
+        order = 1 + 1 + 1 + this.get("NAXIS");
+        this.verifyOrder(key, order);
+        if (this.isExtension()) {
+          if ((_ref = this.extensionType) === "IMAGE" || _ref === "TABLE") {
+            required = 0;
+            if (value !== required) {
+              throw "" + key + " must be " + required + " for the " + this.extensionType + " extensions";
+            }
+          }
+        }
+        return value;
+      },
+      GCOUNT: function() {
+        var args, key, order, required, value, _ref;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        key = "GCOUNT";
+        value = parseInt(arguments[0]);
+        order = 1 + 1 + 1 + this.get("NAXIS") + 1;
+        this.verifyOrder(key, order);
+        if (this.isExtension()) {
+          if ((_ref = this.extensionType) === "IMAGE" || _ref === "TABLE" || _ref === "BINTABLE") {
+            required = 1;
+            if (value !== required) {
+              throw "" + key + " must be " + required + " for the " + this.extensionType + " extensions";
+            }
+          }
+        }
+        return value;
+      },
+      EXTEND: function() {
+        var args, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = arguments[0];
+        if (!this.isPrimary()) {
+          throw "EXTEND must only appear in the primary header";
+        }
+        return this.verifyBoolean(value);
+      },
+      BSCALE: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseFloat(arguments[0]);
+      },
+      BZERO: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseFloat(arguments[0]);
+      },
+      BLANK: function() {
+        var args, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = arguments[0];
+        if (!(this.get("BIXPIX") > 0)) {
+          console.warn("BLANK is not to be used for BITPIX = " + (this.get('BITPIX')));
+        }
+        return parseInt(value);
+      },
+      DATAMIN: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseFloat(arguments[0]);
+      },
+      DATAMAX: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseFloat(arguments[0]);
+      },
+      EXTVER: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseInt(arguments[0]);
+      },
+      EXTLEVEL: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseInt(arguments[0]);
+      },
+      TFIELDS: function() {
+        var args, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = parseInt(arguments[0]);
+        this.verifyBetween("TFIELDS", value, 0, 999);
+        return value;
+      },
+      TBCOL: function() {
+        var args, index, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = arguments[0];
+        index = arguments[2];
+        this.verifyBetween("TBCOL", index, 0, this.get("TFIELDS"));
+        return value;
+      },
+      ZIMAGE: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return this.verifyBoolean(arguments[0]);
+      },
+      ZCMPTYPE: function() {
+        var args, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = arguments[0];
+        if (value !== 'GZIP_1' && value !== 'RICE_1' && value !== 'PLIO_1' && value !== 'HCOMPRESS_1') {
+          throw "ZCMPTYPE value " + value + " is not permitted";
+        }
+        if (value !== 'RICE_1') {
+          throw "Compress type " + value + " is not yet implement";
+        }
+        return value;
+      },
+      ZBITPIX: function() {
+        var args, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = parseInt(arguments[0]);
+        if (value !== 8 && value !== 16 && value !== 32 && value !== 64 && value !== (-32) && value !== (-64)) {
+          throw "ZBITPIX value " + value + " is not permitted";
+        }
+        return value;
+      },
+      ZNAXIS: function() {
+        var args, array, value;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        value = parseInt(arguments[0]);
+        array = arguments[1];
+        value = value;
+        if (!array) {
+          this.verifyBetween("ZNAXIS", value, 0, 999);
+        }
+        return value;
+      },
+      ZTILE: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseInt(arguments[0]);
+      },
+      ZSIMPLE: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        if (arguments[0] === "T") {
+          return true;
+        } else {
+          return false;
+        }
+      },
+      ZPCOUNT: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseInt(arguments[0]);
+      },
+      ZGCOUNT: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseInt(arguments[0]);
+      },
+      ZDITHER0: function() {
+        var args;
+        args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return parseInt(arguments[0]);
+      }
+    }
+  };
+
+  this.astro.FITS.HeaderVerify = HeaderVerify;
+
+  Header = (function(_super) {
+    __extends(Header, _super);
+
+    Header.include(HeaderVerify);
+
+    Header.prototype.arrayPattern = /(\D+)(\d+)/;
+
+    Header.prototype.maxLines = 600;
+
+    function Header(block) {
+      var method, name, _ref;
+      this.primary = false;
+      this.extension = false;
+      this.verifyCard = {};
+      _ref = this.VerifyFns;
+      for (name in _ref) {
+        method = _ref[name];
+        this.verifyCard[name] = this.proxy(method);
+      }
+      this.cards = {};
+      this.cards["COMMENT"] = [];
+      this.cards["HISTORY"] = [];
+      this.cardIndex = 0;
+      this.block = block;
+      this.readBlock(block);
+    }
+
+    Header.prototype.get = function(key) {
+      if (this.contains(key)) {
+        return this.cards[key].value;
+      } else {
+        return null;
+      }
+    };
+
+    Header.prototype.set = function(key, value, comment) {
+      comment = comment || '';
+      this.cards[key] = {
+        index: this.cardIndex,
+        value: value,
+        comment: comment
+      };
+      return this.cardIndex += 1;
+    };
+
+    Header.prototype.contains = function(key) {
+      return this.cards.hasOwnProperty(key);
+    };
+
+    Header.prototype.readLine = function(l) {
+      var blank, comment, firstByte, indicator, key, value, _ref;
+      key = l.slice(0, 8).trim();
+      blank = key === '';
+      if (blank) {
+        return;
+      }
+      indicator = l.slice(8, 10);
+      value = l.slice(10);
+      if (indicator !== "= ") {
+        if (key === 'COMMENT' || key === 'HISTORY') {
+          this.cards[key].push(value.trim());
+        }
+        return;
+      }
+      _ref = value.split(' /'), value = _ref[0], comment = _ref[1];
+      value = value.trim();
+      firstByte = value[0];
+      if (firstByte === "'") {
+        value = value.slice(1, -1).trim();
+      } else {
+        if (value !== 'T' && value !== 'F') {
+          value = parseFloat(value);
+        }
+      }
+      value = this.validate(key, value);
+      return this.set(key, value, comment);
+    };
+
+    Header.prototype.validate = function(key, value) {
+      var baseKey, index, isArray, match, _ref;
+      index = null;
+      baseKey = key;
+      isArray = this.arrayPattern.test(key);
+      if (isArray) {
+        match = this.arrayPattern.exec(key);
+        _ref = match.slice(1), baseKey = _ref[0], index = _ref[1];
+      }
+      if (baseKey in this.verifyCard) {
+        value = this.verifyCard[baseKey](value, isArray, index);
+      }
+      return value;
+    };
+
+    Header.prototype.readBlock = function(block) {
+      var i, line, lineWidth, nLines, _i, _ref, _results;
+      lineWidth = 80;
+      nLines = block.length / lineWidth;
+      nLines = nLines < this.maxLines ? nLines : this.maxLines;
+      _results = [];
+      for (i = _i = 0, _ref = nLines - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+        line = block.slice(i * lineWidth, (i + 1) * lineWidth);
+        _results.push(this.readLine(line));
+      }
+      return _results;
+    };
+
+    Header.prototype.hasDataUnit = function() {
+      if (this.get("NAXIS") === 0) {
+        return false;
+      } else {
+        return true;
+      }
+    };
+
+    Header.prototype.getDataLength = function() {
+      var i, length, naxis, _i, _ref;
+      if (!this.hasDataUnit()) {
+        return 0;
+      }
+      naxis = [];
+      for (i = _i = 1, _ref = this.get("NAXIS"); 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        naxis.push(this.get("NAXIS" + i));
+      }
+      length = naxis.reduce(function(a, b) {
+        return a * b;
+      }) * Math.abs(this.get("BITPIX")) / 8;
+      length += this.get("PCOUNT");
+      return length;
+    };
+
+    Header.prototype.getDataType = function() {
+      switch (this.extensionType) {
+        case 'BINTABLE':
+          if (this.contains('ZIMAGE')) {
+            return 'CompressedImage';
+          }
+          return 'BinaryTable';
+        case 'TABLE':
+          return 'Table';
+        default:
+          if (this.hasDataUnit()) {
+            return 'Image';
+          } else {
+            return null;
+          }
+      }
+    };
+
+    Header.prototype.isPrimary = function() {
+      return this.primary;
+    };
+
+    Header.prototype.isExtension = function() {
+      return this.extension;
+    };
+
+    return Header;
+
+  })(Base);
+
+  this.astro.FITS.Header = Header;
+
+  ImageUtils = {
+    getExtent: function(arr) {
+      var index, max, min, value;
+      index = arr.length;
+      while (index--) {
+        value = arr[index];
+        if (isNaN(value)) {
+          continue;
+        }
+        min = max = value;
+        break;
+      }
+      if (index === -1) {
+        return [NaN, NaN];
+      }
+      while (index--) {
+        value = arr[index];
+        if (isNaN(value)) {
+          continue;
+        }
+        if (value < min) {
+          min = value;
+        }
+        if (value > max) {
+          max = value;
+        }
+      }
+      return [min, max];
+    },
+    getPixel: function(arr, x, y) {
+      return arr[y * this.width + x];
+    }
+  };
+
+  this.astro.FITS.ImageUtils = ImageUtils;
+
+  Image = (function(_super) {
+    __extends(Image, _super);
+
+    Image.include(ImageUtils);
+
+    Image.prototype.allocationSize = 16777216;
+
+    function Image(header, data) {
+      var begin, frame, i, naxis, _i, _j, _ref;
+      Image.__super__.constructor.apply(this, arguments);
+      naxis = header.get("NAXIS");
+      this.bitpix = header.get("BITPIX");
+      this.naxis = [];
+      for (i = _i = 1; 1 <= naxis ? _i <= naxis : _i >= naxis; i = 1 <= naxis ? ++_i : --_i) {
+        this.naxis.push(header.get("NAXIS" + i));
+      }
+      this.width = header.get("NAXIS1");
+      this.height = header.get("NAXIS2") || 1;
+      this.depth = header.get("NAXIS3") || 1;
+      this.bzero = header.get("BZERO") || 0;
+      this.bscale = header.get("BSCALE") || 1;
+      this.bytes = Math.abs(this.bitpix) / 8;
+      this.length = this.naxis.reduce(function(a, b) {
+        return a * b;
+      }) * Math.abs(this.bitpix) / 8;
+      this.frame = 0;
+      this.frameOffsets = [];
+      this.frameLength = this.bytes * this.width * this.height;
+      this.nBuffers = this.buffer != null ? 1 : 2;
+      for (i = _j = 0, _ref = this.depth - 1; 0 <= _ref ? _j <= _ref : _j >= _ref; i = 0 <= _ref ? ++_j : --_j) {
+        begin = i * this.frameLength;
+        frame = {
+          begin: begin
+        };
+        if (this.buffer != null) {
+          frame.buffers = [this.buffer.slice(begin, begin + this.frameLength)];
+        }
+        this.frameOffsets.push(frame);
+      }
+    }
+
+    Image.prototype._getFrame = function(buffer, bitpix, bzero, bscale) {
+      var arr, bytes, dataType, i, nPixels, swapEndian, tmp, value;
+      bytes = Math.abs(bitpix) / 8;
+      nPixels = i = buffer.byteLength / bytes;
+      dataType = Math.abs(bitpix);
+      if (bitpix > 0) {
+        switch (bitpix) {
+          case 8:
+            tmp = new Uint8Array(buffer);
+            tmp = new Uint16Array(tmp);
+            swapEndian = function(value) {
+              return value;
+            };
+            break;
+          case 16:
+            tmp = new Int16Array(buffer);
+            swapEndian = function(value) {
+              return ((value & 0xFF) << 8) | ((value >> 8) & 0xFF);
+            };
+            break;
+          case 32:
+            tmp = new Int32Array(buffer);
+            swapEndian = function(value) {
+              return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF);
+            };
+        }
+        if (!(parseInt(bzero) === bzero && parseInt(bscale) === bscale)) {
+          arr = new Float32Array(tmp.length);
+        } else {
+          arr = tmp;
+        }
+        while (nPixels--) {
+          tmp[nPixels] = swapEndian(tmp[nPixels]);
+          arr[nPixels] = bzero + bscale * tmp[nPixels];
+        }
+      } else {
+        arr = new Uint32Array(buffer);
+        swapEndian = function(value) {
+          return ((value & 0xFF) << 24) | ((value & 0xFF00) << 8) | ((value >> 8) & 0xFF00) | ((value >> 24) & 0xFF);
+        };
+        while (i--) {
+          value = arr[i];
+          arr[i] = swapEndian(value);
+        }
+        arr = new Float32Array(buffer);
+        while (nPixels--) {
+          arr[nPixels] = bzero + bscale * arr[nPixels];
+        }
+      }
+      return arr;
+    };
+
+    Image.prototype._getFrameAsync = function(buffers, callback, opts) {
+      var URL, blobGetFrame, blobOnMessage, fn1, fn2, i, mime, msg, onmessage, pixels, start, urlGetFrame, urlOnMessage, worker,
+        _this = this;
+      onmessage = function(e) {
+        var arr, bitpix, bscale, buffer, bzero, data, url;
+        data = e.data;
+        buffer = data.buffer;
+        bitpix = data.bitpix;
+        bzero = data.bzero;
+        bscale = data.bscale;
+        url = data.url;
+        importScripts(url);
+        arr = _getFrame(buffer, bitpix, bzero, bscale);
+        return postMessage(arr);
+      };
+      fn1 = onmessage.toString().replace('return postMessage', 'postMessage');
+      fn1 = "onmessage = " + fn1;
+      fn2 = this._getFrame.toString();
+      fn2 = fn2.replace('function', 'function _getFrame');
+      mime = "application/javascript";
+      blobOnMessage = new Blob([fn1], {
+        type: mime
+      });
+      blobGetFrame = new Blob([fn2], {
+        type: mime
+      });
+      URL = window.URL || window.webkitURL;
+      urlOnMessage = URL.createObjectURL(blobOnMessage);
+      urlGetFrame = URL.createObjectURL(blobGetFrame);
+      worker = new Worker(urlOnMessage);
+      msg = {
+        buffer: buffers[0],
+        bitpix: this.bitpix,
+        bzero: this.bzero,
+        bscale: this.bscale,
+        url: urlGetFrame
+      };
+      i = 0;
+      pixels = null;
+      start = 0;
+      worker.onmessage = function(e) {
+        var arr;
+        arr = e.data;
+        if (pixels == null) {
+          pixels = new arr.constructor(_this.width * _this.height);
+        }
+        pixels.set(arr, start);
+        start += arr.length;
+        i += 1;
+        if (i === _this.nBuffers) {
+          _this.invoke(callback, opts, pixels);
+          URL.revokeObjectURL(urlOnMessage);
+          URL.revokeObjectURL(urlGetFrame);
+          return worker.terminate();
+        } else {
+          msg.buffer = buffers[i];
+          return worker.postMessage(msg, [buffers[i]]);
+        }
+      };
+      worker.postMessage(msg, [buffers[0]]);
+    };
+
+    Image.prototype.getFrame = function(frame, callback, opts) {
+      var begin, blobFrame, blobs, buffers, bytesPerBuffer, frameInfo, i, nRowsPerBuffer, reader, start, _i, _ref,
+        _this = this;
+      this.frame = frame || this.frame;
+      frameInfo = this.frameOffsets[this.frame];
+      buffers = frameInfo.buffers;
+      if ((buffers != null ? buffers.length : void 0) === this.nBuffers) {
+        return this._getFrameAsync(buffers, callback, opts);
+      } else {
+        this.frameOffsets[this.frame].buffers = [];
+        begin = frameInfo.begin;
+        blobFrame = this.blob.slice(begin, begin + this.frameLength);
+        blobs = [];
+        nRowsPerBuffer = Math.floor(this.height / this.nBuffers);
+        bytesPerBuffer = nRowsPerBuffer * this.bytes * this.width;
+        for (i = _i = 0, _ref = this.nBuffers - 1; 0 <= _ref ? _i <= _ref : _i >= _ref; i = 0 <= _ref ? ++_i : --_i) {
+          start = i * bytesPerBuffer;
+          if (i === this.nBuffers - 1) {
+            blobs.push(blobFrame.slice(start));
+          } else {
+            blobs.push(blobFrame.slice(start, start + bytesPerBuffer));
+          }
+        }
+        buffers = [];
+        reader = new FileReader();
+        reader.frame = this.frame;
+        i = 0;
+        reader.onloadend = function(e) {
+          var buffer;
+          frame = e.target.frame;
+          buffer = e.target.result;
+          _this.frameOffsets[frame].buffers.push(buffer);
+          i += 1;
+          if (i === _this.nBuffers) {
+            return _this.getFrame(frame, callback, opts);
+          } else {
+            return reader.readAsArrayBuffer(blobs[i]);
+          }
+        };
+        return reader.readAsArrayBuffer(blobs[0]);
+      }
+    };
+
+    Image.prototype.getFrames = function(frame, number, callback, opts) {
+      var cb,
+        _this = this;
+      cb = function(arr, opts) {
+        _this.invoke(callback, opts, arr);
+        number -= 1;
+        frame += 1;
+        if (!number) {
+          return;
+        }
+        return _this.getFrame(frame, cb, opts);
+      };
+      return this.getFrame(frame, cb, opts);
+    };
+
+    Image.prototype.isDataCube = function() {
+      if (this.naxis.length > 2) {
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+    return Image;
+
+  })(DataUnit);
+
+  this.astro.FITS.Image = Image;
+
+  Tabular = (function(_super) {
+    __extends(Tabular, _super);
+
+    Tabular.prototype.maxMemory = 1048576;
+
+    function Tabular(header, data) {
+      Tabular.__super__.constructor.apply(this, arguments);
+      this.rowByteSize = header.get("NAXIS1");
+      this.rows = header.get("NAXIS2");
+      this.cols = header.get("TFIELDS");
+      this.length = this.rowByteSize * this.rows;
+      this.heapLength = header.get("PCOUNT");
+      this.columns = this.getColumns(header);
+      if (this.buffer != null) {
+        this.rowsInMemory = this._rowsInMemoryBuffer;
+        this.heap = this.buffer.slice(this.length, this.length + this.heapLength);
+      } else {
+        this.rowsInMemory = this._rowsInMemoryBlob;
+        this.firstRowInBuffer = this.lastRowInBuffer = 0;
+        this.nRowsInBuffer = Math.floor(this.maxMemory / this.rowByteSize);
+      }
+      this.accessors = [];
+      this.descriptors = [];
+      this.elementByteLengths = [];
+      this.setAccessors(header);
+    }
+
+    Tabular.prototype._rowsInMemoryBuffer = function() {
+      return true;
+    };
+
+    Tabular.prototype._rowsInMemoryBlob = function(firstRow, lastRow) {
+      if (firstRow < this.firstRowInBuffer) {
+        return false;
+      }
+      if (lastRow > this.lastRowInBuffer) {
+        return false;
+      }
+      return true;
+    };
+
+    Tabular.prototype.getColumns = function(header) {
+      var columns, i, key, _i, _ref;
+      columns = [];
+      for (i = _i = 1, _ref = this.cols; 1 <= _ref ? _i <= _ref : _i >= _ref; i = 1 <= _ref ? ++_i : --_i) {
+        key = "TTYPE" + i;
+        if (!header.contains(key)) {
+          return null;
+        }
+        columns.push(header.get(key));
+      }
+      return columns;
+    };
+
+    Tabular.prototype.getColumn = function(name, callback, opts) {
+      var accessor, cb, column, descriptor, elementByteLength, elementByteOffset, factor, i, index, iterations, rowsPerIteration,
+        _this = this;
+      if (this.blob != null) {
+        index = this.columns.indexOf(name);
+        descriptor = this.descriptors[index];
+        accessor = this.accessors[index];
+        elementByteLength = this.elementByteLengths[index];
+        elementByteOffset = this.elementByteLengths.slice(0, index);
+        if (elementByteOffset.length === 0) {
+          elementByteOffset = 0;
+        } else {
+          elementByteOffset = elementByteOffset.reduce(function(a, b) {
+            return a + b;
+          });
+        }
+        column = this.typedArray[descriptor] != null ? new this.typedArray[descriptor](this.rows) : [];
+        rowsPerIteration = ~~(this.maxMemory / this.rowByteSize);
+        rowsPerIteration = Math.min(rowsPerIteration, this.rows);
+        factor = this.rows / rowsPerIteration;
+        iterations = Math.floor(factor) === factor ? factor : Math.floor(factor) + 1;
+        i = 0;
+        index = 0;
+        cb = function(buffer, opts) {
+          var nRows, offset, startRow, view;
+          nRows = buffer.byteLength / _this.rowByteSize;
+          view = new DataView(buffer);
+          offset = elementByteOffset;
+          while (nRows--) {
+            column[i] = accessor(view, offset)[0];
+            i += 1;
+            offset += _this.rowByteSize;
+          }
+          iterations -= 1;
+          index += 1;
+          if (iterations) {
+            startRow = index * rowsPerIteration;
+            return _this.getTableBuffer(startRow, rowsPerIteration, cb, opts);
+          } else {
+            _this.invoke(callback, opts, column);
+          }
+        };
+        return this.getTableBuffer(0, rowsPerIteration, cb, opts);
+      } else {
+        cb = function(rows, opts) {
+          column = rows.map(function(d) {
+            return d[name];
+          });
+          return _this.invoke(callback, opts, column);
+        };
+        return this.getRows(0, this.rows, cb, opts);
+      }
+    };
+
+    Tabular.prototype.getTableBuffer = function(row, number, callback, opts) {
+      var begin, blobRows, end, reader,
+        _this = this;
+      number = Math.min(this.rows - row, number);
+      begin = row * this.rowByteSize;
+      end = begin + number * this.rowByteSize;
+      blobRows = this.blob.slice(begin, end);
+      reader = new FileReader();
+      reader.row = row;
+      reader.number = number;
+      reader.onloadend = function(e) {
+        return _this.invoke(callback, opts, e.target.result);
+      };
+      return reader.readAsArrayBuffer(blobRows);
+    };
+
+    Tabular.prototype.getRows = function(row, number, callback, opts) {
+      var begin, blobRows, buffer, end, reader, rows,
+        _this = this;
+      if (this.rowsInMemory(row, row + number)) {
+        if (this.blob != null) {
+          buffer = this.buffer;
+        } else {
+          begin = row * this.rowByteSize;
+          end = begin + number * this.rowByteSize;
+          buffer = this.buffer.slice(begin, end);
+        }
+        rows = this._getRows(buffer, number);
+        this.invoke(callback, opts, rows);
+        return rows;
+      } else {
+        begin = row * this.rowByteSize;
+        end = begin + Math.max(this.nRowsInBuffer * this.rowByteSize, number * this.rowByteSize);
+        blobRows = this.blob.slice(begin, end);
+        reader = new FileReader();
+        reader.row = row;
+        reader.number = number;
+        reader.onloadend = function(e) {
+          var target;
+          target = e.target;
+          _this.buffer = target.result;
+          _this.firstRowInBuffer = _this.lastRowInBuffer = target.row;
+          _this.lastRowInBuffer += target.number;
+          return _this.getRows(row, number, callback, opts);
+        };
+        return reader.readAsArrayBuffer(blobRows);
+      }
+    };
+
+    return Tabular;
+
+  })(DataUnit);
+
+  this.astro.FITS.Tabular = Tabular;
+
+  Table = (function(_super) {
+    __extends(Table, _super);
+
+    function Table() {
+      _ref = Table.__super__.constructor.apply(this, arguments);
+      return _ref;
+    }
+
+    Table.prototype.dataAccessors = {
+      A: function(value) {
+        return value.trim();
+      },
+      I: function(value) {
+        return parseInt(value);
+      },
+      F: function(value) {
+        return parseFloat(value);
+      },
+      E: function(value) {
+        return parseFloat(value);
+      },
+      D: function(value) {
+        return parseFloat(value);
+      }
+    };
+
+    Table.prototype.setAccessors = function(header) {
+      var descriptor, form, i, match, pattern, type, _i, _ref1, _results,
+        _this = this;
+      pattern = /([AIFED])(\d+)\.*(\d+)*/;
+      _results = [];
+      for (i = _i = 1, _ref1 = this.cols; 1 <= _ref1 ? _i <= _ref1 : _i >= _ref1; i = 1 <= _ref1 ? ++_i : --_i) {
+        form = header.get("TFORM" + i);
+        type = header.get("TTYPE" + i);
+        match = pattern.exec(form);
+        descriptor = match[1];
+        _results.push((function(descriptor) {
+          var accessor;
+          accessor = function(value) {
+            return _this.dataAccessors[descriptor](value);
+          };
+          return _this.accessors.push(accessor);
+        })(descriptor));
+      }
+      return _results;
+    };
+
+    Table.prototype._getRows = function(buffer) {
+      var accessor, arr, begin, end, i, index, line, nRows, row, rows, subarray, value, _i, _j, _k, _len, _len1, _ref1, _ref2;
+      nRows = buffer.byteLength / this.rowByteSize;
+      arr = new Uint8Array(buffer);
+      rows = [];
+      for (i = _i = 0, _ref1 = nRows - 1; 0 <= _ref1 ? _i <= _ref1 : _i >= _ref1; i = 0 <= _ref1 ? ++_i : --_i) {
+        begin = i * this.rowByteSize;
+        end = begin + this.rowByteSize;
+        subarray = arr.subarray(begin, end);
+        line = '';
+        for (_j = 0, _len = subarray.length; _j < _len; _j++) {
+          value = subarray[_j];
+          line += String.fromCharCode(value);
+        }
+        line = line.trim().split(/\s+/);
+        row = {};
+        _ref2 = this.accessors;
+        for (index = _k = 0, _len1 = _ref2.length; _k < _len1; index = ++_k) {
+          accessor = _ref2[index];
+          value = line[index];
+          row[this.columns[index]] = accessor(value);
+        }
+        rows.push(row);
+      }
+      return rows;
+    };
+
+    return Table;
+
+  })(Tabular);
+
+  this.astro.FITS.Table = Table;
+
+  BinaryTable = (function(_super) {
+    __extends(BinaryTable, _super);
+
+    function BinaryTable() {
+      _ref1 = BinaryTable.__super__.constructor.apply(this, arguments);
+      return _ref1;
+    }
+
+    BinaryTable.prototype.typedArray = {
+      B: Uint8Array,
+      I: Uint16Array,
+      J: Uint32Array,
+      E: Float32Array,
+      D: Float64Array,
+      1: Uint8Array,
+      2: Uint16Array,
+      4: Uint32Array
+    };
+
+    BinaryTable.offsets = {
+      L: 1,
+      B: 1,
+      I: 2,
+      J: 4,
+      K: 8,
+      A: 1,
+      E: 4,
+      D: 8,
+      C: 8,
+      M: 16
+    };
+
+    BinaryTable.prototype.dataAccessors = {
+      L: function(view, offset) {
+        var val, x;
+        x = view.getInt8(offset);
+        offset += 1;
+        val = x === 84 ? true : false;
+        return [val, offset];
+      },
+      B: function(view, offset) {
+        var val;
+        val = view.getUint8(offset);
+        offset += 1;
+        return [val, offset];
+      },
+      I: function(view, offset) {
+        var val;
+        val = view.getInt16(offset);
+        offset += 2;
+        return [val, offset];
+      },
+      J: function(view, offset) {
+        var val;
+        val = view.getInt32(offset);
+        offset += 4;
+        return [val, offset];
+      },
+      K: function(view, offset) {
+        var factor, highByte, lowByte, mod, val;
+        highByte = Math.abs(view.getInt32(offset));
+        offset += 4;
+        lowByte = Math.abs(view.getInt32(offset));
+        offset += 4;
+        mod = highByte % 10;
+        factor = mod ? -1 : 1;
+        highByte -= mod;
+        val = factor * ((highByte << 32) | lowByte);
+        return [val, offset];
+      },
+      A: function(view, offset) {
+        var val;
+        val = view.getUint8(offset);
+        val = String.fromCharCode(val);
+        offset += 1;
+        return [val, offset];
+      },
+      E: function(view, offset) {
+        var val;
+        val = view.getFloat32(offset);
+        offset += 4;
+        return [val, offset];
+      },
+      D: function(view, offset) {
+        var val;
+        val = view.getFloat64(offset);
+        offset += 8;
+        return [val, offset];
+      },
+      C: function(view, offset) {
+        var val, val1, val2;
+        val1 = view.getFloat32(offset);
+        offset += 4;
+        val2 = view.getFloat32(offset);
+        offset += 4;
+        val = [val1, val2];
+        return [val, offset];
+      },
+      M: function(view, offset) {
+        var val, val1, val2;
+        val1 = view.getFloat64(offset);
+        offset += 8;
+        val2 = view.getFloat64(offset);
+        offset += 8;
+        val = [val1, val2];
+        return [val, offset];
+      }
+    };
+
+    BinaryTable.prototype.toBits = function(byte) {
+      var arr, i;
+      arr = [];
+      i = 128;
+      while (i >= 1) {
+        arr.push((byte & i ? 1 : 0));
+        i /= 2;
+      }
+      return arr;
+    };
+
+    BinaryTable.prototype.getFromHeap = function(view, offset, descriptor) {
+      var arr, heapOffset, heapSlice, i, length;
+      length = view.getInt32(offset);
+      offset += 4;
+      heapOffset = view.getInt32(offset);
+      offset += 4;
+      heapSlice = this.heap.slice(heapOffset, heapOffset + length);
+      arr = new this.typedArray[descriptor](heapSlice);
+      i = arr.length;
+      while (i--) {
+        arr[i] = this.constructor.swapEndian[descriptor](arr[i]);
+      }
+      return [arr, offset];
+    };
+
+    BinaryTable.prototype.setAccessors = function(header) {
+      var count, descriptor, form, i, isArray, match, pattern, type, _i, _ref2, _results,
+        _this = this;
+      pattern = /(\d*)([P|Q]*)([L|X|B|I|J|K|A|E|D|C|M]{1})/;
+      _results = [];
+      for (i = _i = 1, _ref2 = this.cols; 1 <= _ref2 ? _i <= _ref2 : _i >= _ref2; i = 1 <= _ref2 ? ++_i : --_i) {
+        form = header.get("TFORM" + i);
+        type = header.get("TTYPE" + i);
+        match = pattern.exec(form);
+        count = parseInt(match[1]) || 1;
+        isArray = match[2];
+        descriptor = match[3];
+        _results.push((function(descriptor, count) {
+          var accessor, nBytes;
+          _this.descriptors.push(descriptor);
+          _this.elementByteLengths.push(_this.constructor.offsets[descriptor] * count);
+          if (isArray) {
+            switch (type) {
+              case "COMPRESSED_DATA":
+                accessor = function(view, offset) {
+                  var arr, pixels, _ref3;
+                  _ref3 = _this.getFromHeap(view, offset, descriptor), arr = _ref3[0], offset = _ref3[1];
+                  pixels = new _this.typedArray[_this.algorithmParameters["BYTEPIX"]](_this.ztile[0]);
+                  Decompress.Rice(arr, _this.algorithmParameters["BLOCKSIZE"], _this.algorithmParameters["BYTEPIX"], pixels, _this.ztile[0], Decompress.RiceSetup);
+                  return [pixels, offset];
+                };
+                break;
+              case "GZIP_COMPRESSED_DATA":
+                accessor = function(view, offset) {
+                  var arr;
+                  arr = new Float32Array(_this.width);
+                  i = arr.length;
+                  while (i--) {
+                    arr[i] = NaN;
+                  }
+                  return [arr, offset];
+                };
+                break;
+              default:
+                accessor = function(view, offset) {
+                  return _this.getFromHeap(view, offset, descriptor);
+                };
+            }
+          } else {
+            if (count === 1) {
+              accessor = function(view, offset) {
+                var value, _ref3;
+                _ref3 = _this.dataAccessors[descriptor](view, offset), value = _ref3[0], offset = _ref3[1];
+                return [value, offset];
+              };
+            } else {
+              if (descriptor === 'X') {
+                nBytes = Math.log(count) / Math.log(2);
+                accessor = function(view, offset) {
+                  var arr, bits, buffer, byte, bytes, _j, _len;
+                  buffer = view.buffer.slice(offset, offset + nBytes);
+                  bytes = new Uint8Array(buffer);
+                  bits = [];
+                  for (_j = 0, _len = bytes.length; _j < _len; _j++) {
+                    byte = bytes[_j];
+                    arr = _this.toBits(byte);
+                    bits = bits.concat(arr);
+                  }
+                  offset += nBytes;
+                  return [bits.slice(0, +(count - 1) + 1 || 9e9), offset];
+                };
+              } else if (descriptor === 'A') {
+                accessor = function(view, offset) {
+                  var arr, buffer, s, value, _j, _len;
+                  buffer = view.buffer.slice(offset, offset + count);
+                  arr = new Uint8Array(buffer);
+                  s = '';
+                  for (_j = 0, _len = arr.length; _j < _len; _j++) {
+                    value = arr[_j];
+                    s += String.fromCharCode(value);
+                  }
+                  s = s.trim();
+                  offset += count;
+                  return [s, offset];
+                };
+              } else {
+                accessor = function(view, offset) {
+                  var data, value, _ref3;
+                  i = count;
+                  data = [];
+                  while (i--) {
+                    _ref3 = _this.dataAccessors[descriptor](view, offset), value = _ref3[0], offset = _ref3[1];
+                    data.push(value);
+                  }
+                  return [data, offset];
+                };
+              }
+            }
+          }
+          return _this.accessors.push(accessor);
+        })(descriptor, count));
+      }
+      return _results;
+    };
+
+    BinaryTable.prototype._getRows = function(buffer, nRows) {
+      var accessor, index, offset, row, rows, value, view, _i, _len, _ref2, _ref3;
+      view = new DataView(buffer);
+      offset = 0;
+      rows = [];
+      while (nRows--) {
+        row = {};
+        _ref2 = this.accessors;
+        for (index = _i = 0, _len = _ref2.length; _i < _len; index = ++_i) {
+          accessor = _ref2[index];
+          _ref3 = accessor(view, offset), value = _ref3[0], offset = _ref3[1];
+          row[this.columns[index]] = value;
+        }
+        rows.push(row);
+      }
+      return rows;
+    };
+
+    return BinaryTable;
+
+  })(Tabular);
+
+  this.astro.FITS.BinaryTable = BinaryTable;
+
+  Decompress = {
+    RiceSetup: {
+      1: function(array) {
+        var fsbits, fsmax, lastpix, pointer;
+        pointer = 1;
+        fsbits = 3;
+        fsmax = 6;
+        lastpix = array[0];
+        return [fsbits, fsmax, lastpix, pointer];
+      },
+      2: function(array) {
+        var bytevalue, fsbits, fsmax, lastpix, pointer;
+        pointer = 2;
+        fsbits = 4;
+        fsmax = 14;
+        lastpix = 0;
+        bytevalue = array[0];
+        lastpix = lastpix | (bytevalue << 8);
+        bytevalue = array[1];
+        lastpix = lastpix | bytevalue;
+        return [fsbits, fsmax, lastpix, pointer];
+      },
+      4: function(array) {
+        var bytevalue, fsbits, fsmax, lastpix, pointer;
+        pointer = 4;
+        fsbits = 5;
+        fsmax = 25;
+        lastpix = 0;
+        bytevalue = array[0];
+        lastpix = lastpix | (bytevalue << 24);
+        bytevalue = array[1];
+        lastpix = lastpix | (bytevalue << 16);
+        bytevalue = array[2];
+        lastpix = lastpix | (bytevalue << 8);
+        bytevalue = array[3];
+        lastpix = lastpix | bytevalue;
+        return [fsbits, fsmax, lastpix, pointer];
+      }
+    },
+    Rice: function(array, blocksize, bytepix, pixels, nx, setup) {
+      var b, bbits, diff, fs, fsbits, fsmax, i, imax, k, lastpix, nbits, nonzeroCount, nzero, pointer, _ref2, _ref3;
+      bbits = 1 << fsbits;
+      _ref2 = setup[bytepix](array), fsbits = _ref2[0], fsmax = _ref2[1], lastpix = _ref2[2], pointer = _ref2[3];
+      nonzeroCount = new Uint8Array(256);
+      nzero = 8;
+      _ref3 = [128, 255], k = _ref3[0], i = _ref3[1];
+      while (i >= 0) {
+        while (i >= k) {
+          nonzeroCount[i] = nzero;
+          i -= 1;
+        }
+        k = k / 2;
+        nzero -= 1;
+      }
+      nonzeroCount[0] = 0;
+      b = array[pointer++];
+      nbits = 8;
+      i = 0;
+      while (i < nx) {
+        nbits -= fsbits;
+        while (nbits < 0) {
+          b = (b << 8) | array[pointer++];
+          nbits += 8;
+        }
+        fs = (b >> nbits) - 1;
+        b &= (1 << nbits) - 1;
+        imax = i + blocksize;
+        if (imax > nx) {
+          imax = nx;
+        }
+        if (fs < 0) {
+          while (i < imax) {
+            pixels[i] = lastpix;
+            i += 1;
+          }
+        } else if (fs === fsmax) {
+          while (i < imax) {
+            k = bbits - nbits;
+            diff = b << k;
+            k -= 8;
+            while (k >= 0) {
+              b = array[pointer++];
+              diff |= b << k;
+              k -= 8;
+            }
+            if (nbits > 0) {
+              b = array[pointer++];
+              diff |= b >> (-k);
+              b &= (1 << nbits) - 1;
+            } else {
+              b = 0;
+            }
+            if ((diff & 1) === 0) {
+              diff = diff >> 1;
+            } else {
+              diff = ~(diff >> 1);
+            }
+            pixels[i] = diff + lastpix;
+            lastpix = pixels[i];
+            i++;
+          }
+        } else {
+          while (i < imax) {
+            while (b === 0) {
+              nbits += 8;
+              b = array[pointer++];
+            }
+            nzero = nbits - nonzeroCount[b];
+            nbits -= nzero + 1;
+            b ^= 1 << nbits;
+            nbits -= fs;
+            while (nbits < 0) {
+              b = (b << 8) | array[pointer++];
+              nbits += 8;
+            }
+            diff = (nzero << fs) | (b >> nbits);
+            b &= (1 << nbits) - 1;
+            if ((diff & 1) === 0) {
+              diff = diff >> 1;
+            } else {
+              diff = ~(diff >> 1);
+            }
+            pixels[i] = diff + lastpix;
+            lastpix = pixels[i];
+            i++;
+          }
+        }
+      }
+      return pixels;
+    }
+  };
+
+  this.astro.FITS.Decompress = Decompress;
+
+  CompressedImage = (function(_super) {
+    __extends(CompressedImage, _super);
+
+    CompressedImage.include(ImageUtils);
+
+    CompressedImage.extend(Decompress);
+
+    CompressedImage.randomGenerator = function() {
+      var a, i, m, random, seed, temp, _i;
+      a = 16807;
+      m = 2147483647;
+      seed = 1;
+      random = new Float32Array(10000);
+      for (i = _i = 0; _i <= 9999; i = ++_i) {
+        temp = a * seed;
+        seed = temp - m * parseInt(temp / m);
+        random[i] = seed / m;
+      }
+      return random;
+    };
+
+    CompressedImage.randomSequence = CompressedImage.randomGenerator();
+
+    function CompressedImage(header, data) {
+      var i, key, value, ztile, _i, _ref2;
+      CompressedImage.__super__.constructor.apply(this, arguments);
+      this.zcmptype = header.get("ZCMPTYPE");
+      this.zbitpix = header.get("ZBITPIX");
+      this.znaxis = header.get("ZNAXIS");
+      this.zblank = header.get("ZBLANK");
+      this.blank = header.get("BLANK");
+      this.zdither = header.get('ZDITHER0') || 0;
+      this.ztile = [];
+      for (i = _i = 1, _ref2 = this.znaxis; 1 <= _ref2 ? _i <= _ref2 : _i >= _ref2; i = 1 <= _ref2 ? ++_i : --_i) {
+        ztile = header.contains("ZTILE" + i) ? header.get("ZTILE" + i) : i === 1 ? header.get("ZNAXIS1") : 1;
+        this.ztile.push(ztile);
+      }
+      this.width = header.get("ZNAXIS1");
+      this.height = header.get("ZNAXIS2") || 1;
+      this.algorithmParameters = {};
+      if (this.zcmptype === 'RICE_1') {
+        this.algorithmParameters["BLOCKSIZE"] = 32;
+        this.algorithmParameters["BYTEPIX"] = 4;
+      }
+      i = 1;
+      while (true) {
+        key = "ZNAME" + i;
+        if (!header.contains(key)) {
+          break;
+        }
+        value = "ZVAL" + i;
+        this.algorithmParameters[header.get(key)] = header.get(value);
+        i += 1;
+      }
+      this.zmaskcmp = header.get("ZMASKCMP");
+      this.zquantiz = header.get("ZQUANTIZ") || "LINEAR_SCALING";
+      this.bzero = header.get("BZERO") || 0;
+      this.bscale = header.get("BSCALE") || 1;
+    }
+
+    CompressedImage.prototype._getRows = function(buffer, nRows) {
+      var accessor, arr, blank, data, i, index, nTile, offset, r, rIndex, row, scale, seed0, seed1, value, view, zero, _i, _j, _len, _len1, _ref2, _ref3;
+      view = new DataView(buffer);
+      offset = 0;
+      arr = new Float32Array(this.width * this.height);
+      while (nRows--) {
+        row = {};
+        _ref2 = this.accessors;
+        for (index = _i = 0, _len = _ref2.length; _i < _len; index = ++_i) {
+          accessor = _ref2[index];
+          _ref3 = accessor(view, offset), value = _ref3[0], offset = _ref3[1];
+          row[this.columns[index]] = value;
+        }
+        data = row['COMPRESSED_DATA'] || row['UNCOMPRESSED_DATA'] || row['GZIP_COMPRESSED_DATA'];
+        blank = row['ZBLANK'] || this.zblank;
+        scale = row['ZSCALE'] || this.bscale;
+        zero = row['ZZERO'] || this.bzero;
+        nTile = this.height - nRows;
+        seed0 = nTile + this.zdither - 1;
+        seed1 = (seed0 - 1) % 10000;
+        rIndex = parseInt(this.constructor.randomSequence[seed1] * 500);
+        for (index = _j = 0, _len1 = data.length; _j < _len1; index = ++_j) {
+          value = data[index];
+          i = (nTile - 1) * this.width + index;
+          if (value === -2147483647) {
+            arr[i] = NaN;
+          } else if (value === -2147483646) {
+            arr[i] = 0;
+          } else {
+            r = this.constructor.randomSequence[rIndex];
+            arr[i] = (value - r + 0.5) * scale + zero;
+          }
+          rIndex += 1;
+          if (rIndex === 10000) {
+            seed1 = (seed1 + 1) % 10000;
+            rIndex = parseInt(this.randomSequence[seed1] * 500);
+          }
+        }
+      }
+      return arr;
+    };
+
+    CompressedImage.prototype.getFrame = function(nFrame, callback, opts) {
+      var heapBlob, reader,
+        _this = this;
+      if (this.heap) {
+        this.frame = nFrame || this.frame;
+        return this.getRows(0, this.rows, callback, opts);
+      } else {
+        heapBlob = this.blob.slice(this.length, this.length + this.heapLength);
+        reader = new FileReader();
+        reader.onloadend = function(e) {
+          _this.heap = e.target.result;
+          return _this.getFrame(nFrame, callback, opts);
+        };
+        return reader.readAsArrayBuffer(heapBlob);
+      }
+    };
+
+    return CompressedImage;
+
+  })(BinaryTable);
+
+  this.astro.FITS.CompressedImage = CompressedImage;
+
+  HDU = (function() {
+    function HDU(header, data) {
+      this.header = header;
+      this.data = data;
+    }
+
+    HDU.prototype.hasData = function() {
+      if (this.data != null) {
+        return true;
+      } else {
+        return false;
+      }
+    };
+
+    return HDU;
+
+  })();
+
+  this.astro.FITS.HDU = HDU;
+
+}).call(this);
+
+},{}],14:[function(require,module,exports){
+function isLittleEndian() {
+    //could use a more robust check here ....
+    var a = new ArrayBuffer(4);
+    var b = new Uint8Array(a);
+    var c = new Uint32Array(a);
+    b[0] = 0xa1;
+    b[1] = 0xb2;
+    b[2] = 0xc3;
+    b[3] = 0xd4;
+    if(c[0] == 0xd4c3b2a1) 
+        return true;
+    if(c[0] == 0xa1b2c3d4) 
+        return false;
+    else {
+        //Could not determine endianness
+        return null;
+    }              
+}
+
+//test to see if ImageData uses 
+//CanvasPixelArray or Uint8ClampedArray 
+function isUint8ClampedImageData() {
+    if (typeof Uint8ClampedArray === "undefined")
+        return false;
+    var elem = document.createElement('canvas');
+    var ctx = elem.getContext('2d');
+    if (!ctx) //bail out early..
+        return false;
+    var image = ctx.createImageData(1, 1);
+    return image.data instanceof Uint8ClampedArray;
+}
+
+//null means 'could not detect endianness'
+var LITTLE_ENDIAN = isLittleEndian();
+
+//determine our capabilities
+var SUPPORTS_32BIT = 
+            typeof ArrayBuffer !== "undefined"
+            && typeof Uint8ClampedArray !== "undefined"
+            && typeof Int32Array !== "undefined"
+            && LITTLE_ENDIAN !== null
+            && isUint8ClampedImageData();
+
+/**
+ * An ImageBuffer is a simple array of pixels that make up an image.
+ * Int32Array is used for better performance if supported, otherwise
+ * simple 8-bit manipulation is used as a fallback.
+ *
+ * To use this class; construct a new ImageBuffer with the specified dimensions, and modify
+ * its pixels with either setPixel/getPixel or setPixelAt/getPixelAt
+ * methods. Then, you can use the buffer.apply(imageData) to apply the changes to
+ * a shared ImageData object.
+ *
+ * You can also cache the image for later use by calling createImage(). Note that
+ * this is an expensive operation which should be used wisely.
+ * 
+ * If you pass an ImageData object as the first parameter to the constructor, instead
+ * of width and height, any changes to the pixels array should be reflected immediately 
+ * on the given ImageData object. In such a case, apply() has no effect.
+ * 
+ * @class  ImageBuffer
+ * @constructor
+ * @param  {Number} width      the width of the image
+ * @param  {Number} height     the height of the image
+ */
+var ImageBuffer = function(width, height) {
+    this.imageData = null;
+
+    if (typeof width !== "number") { //first argument is non-numerical.. must be ImageData
+        this.imageData = width;
+        width = this.imageData.width;
+        height = this.imageData.height;
+    }
+
+    this.width = width;
+    this.height = height;
+
+    
+
+    this.pixels = null;
+    this.direct = false;
+    this.uint8 = null;
+
+
+    //If an ImageData is provided, we will try to manipulate its array directly.
+    if (this.imageData) {
+        this.direct = true;
+
+        //we can do direct manipulation
+        if (SUPPORTS_32BIT) {
+            this.uint8 = this.imageData.data;
+            this.pixels = new Int32Array(this.uint8.buffer);
+        } 
+        //CanvasPixelArray + 8bit data... :(
+        else {
+            this.pixels = this.uint8 = this.imageData.data;
+        }
+    } else {
+        //use a separate buffer
+        if (SUPPORTS_32BIT) {
+            this.uint8 = new Uint8ClampedArray(width * height * ImageBuffer.NUM_COMPONENTS);
+            this.pixels = new Int32Array(this.uint8.buffer);
+        }
+        //assume no typed array support, use a simple array..
+        else {
+            this.pixels = this.uint8 = new Array(width * height * ImageBuffer.NUM_COMPONENTS);
+        }
+    }
+};
+
+ImageBuffer.prototype.constructor = ImageBuffer;
+
+/**
+ * This is a utility function to set the color at the specified X and Y 
+ * position (from top left). 
+ *
+ * @method  setPixelAt
+ * @param {Number} x    the x position to modify
+ * @param {Number} y    the y position to modify
+ * @param {Number} r the red byte, 0-255
+ * @param {Number} g the green byte, 0-255
+ * @param {Number} b the blue byte, 0-255
+ * @param {Number} a the alpha byte, 0-255
+ */
+ImageBuffer.prototype.setPixelAt = function(x, y, r, g, b, a) {
+    var i = ~~(x + (y * this.width));
+    this.setPixel(i, r, g, b, a);
+};
+
+/**
+ * This is a utility function to get the color at the specified X and Y 
+ * position (from top left). You can specify a color object to reduce allocations.
+ * 
+ * @method  getPixelAt
+ * @param {Number} x    the x position to modify
+ * @param {Number} y    the y position to modify
+ * @param {Number} out  the color object with `r, g, b, a` properties, or null
+ * @return {Object} a color representing the pixel at that location
+ */
+ImageBuffer.prototype.getPixelAt = function(x, y, out) {
+    var i = ~~(x + (y * this.width));
+    return this.getPixel(i, out);
+};
+
+/**
+ * Creates a new Image object from this ImageBuffer. You can pass 
+ * a context to re-use, otherwise this method will create a new canvas
+ * and get its 2d context. This method uses toDataURL to generate
+ * a new Image.
+ *
+ * Note that this is not supported on older 2.x Android devices.
+ *
+ * @method  createImage
+ * @param  {CanvasRenderingContext} context the canvas 2D rendering context
+ * @return {Image}         a new Image object with the data URI of your ImageBuffer
+ */
+ImageBuffer.prototype.createImage = function(context) {
+    var canvas;
+
+    if (!context) { //creates a new canvas element
+        canvas = document.createElement("canvas");
+        context = canvas.getContext("2d");
+    } else {
+        canvas = context.canvas; //context's back-reference
+    }   
+
+    if (typeof canvas.toDataURL !== "function")
+        throw new Error("Canvas.toDataURL is not supported");
+
+    canvas.width = this.width;
+    canvas.height = this.height;
+    
+    var imageData = this.imageData;
+
+    //if we need to first apply the image.... do so here:
+    if (!this.direct || !this.imageData) {
+        imageData = context.createImageData(this.width, this.height);
+        this.apply(imageData);
+    }
+
+    //put the data onto the context
+    context.clearRect(0, 0, this.width, this.height);
+    context.putImageData(imageData, 0, 0);  
+
+    //create a new image object
+    var img = new Image();
+    img.src = canvas.toDataURL.apply(canvas, Array.prototype.slice.call(arguments, 1));
+
+    //we can only hope the GC will get rid of these quickly !
+    imageData = null;
+    context   = null;
+    canvas    = null;
+    
+    return img;
+};
+
+/**
+ * Applies this buffer's pixels to an ImageData object. If
+ * the supplied ImageData is strictly equal to this buffer's
+ * ImageData, and we are modifying pixels directly, then this call does
+ * nothing. 
+ *
+ * You can provide another ImageBuffer object, which essentially copies
+ * this buffer's pixels to the specified ImageBuffer. If the specified ImageBuffer
+ * is "directly" modifying its own ImageData's pixels, then it should be updated
+ * immediately. 
+ *
+ * @method  apply
+ * @param  {ImageData|ImageBuffer} imageData the image data or ImageBuffer
+ */
+ImageBuffer.prototype.apply = function(imageData) {
+    if (this.imageData === imageData && this.direct) {
+        return;
+    }
+
+    if (SUPPORTS_32BIT) {
+        //update the other ImageBuffer with this buffer's pixels
+        if (imageData instanceof ImageBuffer) {
+            imageData.pixels.set(this.pixels);
+        }
+        //it must be an ImageData object.. update that
+        else {
+            imageData.data.set(this.uint8);
+        }
+    }
+    //No support for typed arrays..
+    //can't assume that set(otherArray) works :( 
+    else {
+        var data = imageData instanceof ImageBuffer 
+                    ? imageData.pixels : imageData.data;
+        if (!data)
+            throw new Error("imageData must be an ImageBuffer or Canvas ImageData object");
+
+        var pixels = this.pixels;
+        if (data.length !== pixels.length)
+            throw new Error("the image data for apply() must have the same dimensions");
+        
+        //straight copy
+        for (var i=0; i<pixels.length; i++) {
+            data[i] = pixels[i];
+        }
+    } 
+};
+
+ImageBuffer.NUM_COMPONENTS = 4;
+
+/**
+ * Will be `true` if this context supports 32bit pixel
+ * maipulation using array buffer views.
+ * 
+ * @attribute SUPPORTS_32BIT
+ * @readOnly
+ * @static
+ * @final
+ * @type {Boolean} 
+ */
+ImageBuffer.SUPPORTS_32BIT = SUPPORTS_32BIT;
+
+/** 
+ * Will be `true` if little endianness was detected,
+ * or `false` if big endian was detected. If we could
+ * not detect the endianness (e.g. typed arrays not
+ * available, spec not implemented correctly), then
+ * this value will be null.
+ *
+ * @attribute LITTLE_ENDIAN
+ * @readOnly
+ * @static
+ * @final
+ * @type {Boolean|null} 
+ */
+ImageBuffer.LITTLE_ENDIAN = LITTLE_ENDIAN;
+
+/**
+ * Sets the pixel at the given index of the ImageBuffer's "data" array,
+ * which might be a Int32Array (modern browsers) or CanvasPixelArray (fallback),
+ * depending on the context's capabilities. Also takes endianness into account.
+ *
+ * @method  setPixel
+ * @param {Int32Array|CanvasPixelArray} pixels the pixels data from ImageBuffer
+ * @param {Number} index the offset in the data to manipulate
+ * @param {Number} r the red byte, 0-255
+ * @param {Number} g the green byte, 0-255
+ * @param {Number} b the blue byte, 0-255
+ * @param {Number} a the alpha byte, 0-255
+ */
+
+/**
+ * This is a convenience method to multiply all of the
+ * pixels in inputBuffer with the specified (r, g, b, a) color, 
+ * and place the result into outputBuffer. It's assumed that
+ * both buffers have the same size.
+ *
+ * @method  multiply
+ * @static 
+ * @param {ImageBuffer} inputBuffer the input image data
+ * @param {ImageBuffer} inputBuffer the output image data
+ * @param {Number} r the red byte, 0-255
+ * @param {Number} g the green byte, 0-255
+ * @param {Number} b the blue byte, 0-255
+ * @param {Number} a the alpha byte, 0-255
+ */
+
+if (SUPPORTS_32BIT) {
+    if (LITTLE_ENDIAN) {
+        ImageBuffer.prototype.setPixel = function(index, r, g, b, a) {
+            this.pixels[index] = (a << 24) | (b << 16) | (g <<  8) | r;
+        };
+
+
+        ImageBuffer.multiply = function(inputBuffer, outputBuffer, r, g, b, a) {
+            var rgba = (a << 24) | (b << 16) | (g << 8) | r;
+            var input = inputBuffer.pixels,
+                output = outputBuffer.pixels,
+                len = input.length,
+                a1, a2, b1, b2, g1, g2, r1, r2,
+                val;
+
+            for (var i=0; i<len; i++) {
+                val1 = input[i];
+
+                a1 = ((val1 & 0xff000000) >>> 24);
+                a2 = ((rgba & 0xff000000) >>> 24);
+                b1 = ((val1 & 0x00ff0000) >>> 16);
+                b2 = ((rgba & 0x00ff0000) >>> 16);
+                g1 = ((val1 & 0x0000ff00) >>> 8);
+                g2 = ((rgba & 0x0000ff00) >>> 8);
+                r1 = ((val1 & 0x000000ff));
+                r2 = ((rgba & 0x000000ff));
+                r  = r1 * r2 / 255;
+                g  = g1 * g2 / 255;
+                b  = b1 * b2 / 255;
+                a  = a1 * a2 / 255;
+
+                output[i] = (a << 24) | (b << 16) | (g << 8) | r;
+            }
+        };
+    } else {
+        ImageBuffer.prototype.setPixel = function(index, r, g, b, a) {
+            this.pixels[index] = (r << 24) | (g << 16) | (b <<  8) | a;
+        };
+
+        ///TOOD: optimize with something like this:
+        ///rgba = ((rgba & 0xFF000000) * (rgba2 >> 24)) | (((rgba & 0x00FF0000) * ((rgba2 >> 16) & 0xFF))) | (((rgba) & 0x0000FF00) * ((rgba2 >> 8) & 0xFF)) | ((rgba & 0x000000FF) * (rgba2 & 0xFF));
+
+        ImageBuffer.multiply = function(inputBuffer, outputBuffer, r, g, b, a) {
+            var rgba = (r << 24) | (g << 16) | (b << 8) | a;
+            var input = inputBuffer.pixels,
+                output = outputBuffer.pixels,
+                len = input.length,
+                a1, a2, b1, b2, g1, g2, r1, r2,
+                val1;
+
+            for (var i=0; i<len; i++) {
+                val1 = input[i];
+
+                r1 = ((val1 & 0xff000000) >>> 24);
+                r2 = ((rgba & 0xff000000) >>> 24);
+                g1 = ((val1 & 0x00ff0000) >>> 16);
+                g2 = ((rgba & 0x00ff0000) >>> 16);
+                b1 = ((val1 & 0x0000ff00) >>> 8);
+                b2 = ((rgba & 0x0000ff00) >>> 8);
+                a1 = ((val1 & 0x000000ff));
+                a2 = ((rgba & 0x000000ff));
+                r  = r1 * r2 / 255;
+                g  = g1 * g2 / 255;
+                b  = b1 * b2 / 255;
+                a  = a1 * a2 / 255;
+                    
+                output[i] = (r << 24) | (g << 16) | (b << 8) | a;
+            }
+        };
+    }
+} else {
+    ImageBuffer.prototype.setPixel = function(index, r, g, b, a) {
+        var pixels = this.pixels;
+        index *= 4;
+        pixels[index] = r;
+        pixels[++index] = g;
+        pixels[++index] = b;
+        pixels[++index] = a;
+    };
+
+    ImageBuffer.multiply = function(inputBuffer, outputBuffer, r, g, b, a) {
+        var input = inputBuffer.pixels,
+            output = outputBuffer.pixels,
+            len = input.length;
+        for (var i=0; i<len; i+=4) {
+            output[i] = input[i] * r / 255;
+            output[i+1] = input[i+1] * g / 255;
+            output[i+2] = input[i+2] * b / 255;
+            output[i+3] = input[i+3] * a / 255;
+        }
+    };
+}
+
+/**
+ * Gets the pixel at the given index of the ImageBuffer's "data" array,
+ * which might be a Int32Array (modern browsers) or CanvasPixelArray (fallback),
+ * depending on the context's capabilities. Also takes endianness into account.
+ *
+ * The returned value is an object containing the color components as bytes (0-255)
+ * in `r, g, b, a`. If `out` is specified, it will use that instead to reduce object creation.
+ *
+ * @method  getPixel
+ * @param {Int32Array|CanvasPixelArray} pixels the pixels data from ImageBuffer
+ * @param {Number} index the offset in the data to grab the color
+ * @param {Number} out  the color object with `r, g, b, a` properties, or null
+ * @return {Object} a color representing the pixel at that location
+ */
+ImageBuffer.prototype.getPixel = function(index, out) {
+    var pixels = this.uint8;
+    index *= 4;
+    if (!out)
+        out = {r:0, g:0, b:0, a:0};
+    out.r = pixels[index];
+    out.g = pixels[++index];
+    out.b = pixels[++index];
+    out.a = pixels[++index];
+    return out;
+};
+
+/**
+ * Packs the r, g, b, a components into a single integer, for use with
+ * Int32Array. If LITTLE_ENDIAN, then ABGR order is used. Otherwise,
+ * RGBA order is used.
+ *
+ * @method  packPixel
+ * @static
+ * @param {Number} r the red byte, 0-255
+ * @param {Number} g the green byte, 0-255
+ * @param {Number} b the blue byte, 0-255
+ * @param {Number} a the alpha byte, 0-255
+ * @return {Number} the packed color
+ */
+
+/**
+ * Unpacks the r, g, b, a components into the specified color object, or a new
+ * object, for use with Int32Array. If LITTLE_ENDIAN, then ABGR order is used when 
+ * unpacking, otherwise, RGBA order is used. The resulting color object has the
+ * `r, g, b, a` properties which are unrelated to endianness.
+ *
+ * Note that the integer is assumed to be packed in the correct endianness. On little-endian
+ * the format is 0xAABBGGRR and on big-endian the format is 0xRRGGBBAA. If you want a
+ * endian-independent method, use fromRGBA(rgba) and toRGBA(r, g, b, a).
+ * 
+ * @method  unpackPixel
+ * @static
+ * @param {Number} rgba the integer, packed in endian order by packPixel
+ * @param {Number} out  the color object with `r, g, b, a` properties, or null
+ * @return {Object} a color representing the pixel at that location
+ */
+
+if (LITTLE_ENDIAN) {
+    ImageBuffer.packPixel = function(r, g, b, a) {
+        return (a << 24) | (b << 16) | (g <<  8) | r;
+    };
+    ImageBuffer.unpackPixel = function(rgba, out) {
+        if (!out)
+            out = {r:0, g:0, b:0, a:0};
+        out.a = ((rgba & 0xff000000) >>> 24);
+        out.b = ((rgba & 0x00ff0000) >>> 16);
+        out.g = ((rgba & 0x0000ff00) >>> 8);
+        out.r = ((rgba & 0x000000ff));
+        return out;
+    };
+} else {
+    ImageBuffer.packPixel = function(r, g, b, a) {
+        return (r << 24) | (g << 16) | (b <<  8) | a;
+    };
+    ImageBuffer.unpackPixel = function(rgba, out) {
+        if (!out)
+            out = {r:0, g:0, b:0, a:0};
+        out.r = ((rgba & 0xff000000) >>> 24);
+        out.g = ((rgba & 0x00ff0000) >>> 16);
+        out.b = ((rgba & 0x0000ff00) >>> 8);
+        out.a = ((rgba & 0x000000ff));
+        return out;
+    };
+}
+
+/**
+ * A utility to convert an integer in 0xRRGGBBAA format to a color object.
+ * This does not rely on endianness.
+ *
+ * @method  fromRGBA
+ * @static
+ * @param  {Number} rgba an RGBA hex
+ * @param  {Object} out the object to use, optional
+ * @return {Object} a color object
+ */
+ImageBuffer.fromRGBA = function(rgba, out) {
+    if (!out)
+        out = {r:0, g:0, b:0, a:0};
+    out.r = ((rgba & 0xff000000) >>> 24);
+    out.g = ((rgba & 0x00ff0000) >>> 16);
+    out.b = ((rgba & 0x0000ff00) >>> 8);
+    out.a = ((rgba & 0x000000ff));
+    return out;
+};
+
+/**
+ * A utility to convert RGBA components to a 32 bit integer
+ * in RRGGBBAA format.
+ *
+ * @method  toRGBA
+ * @static
+ * @param  {Number} r the r color component (0 - 255)
+ * @param  {Number} g the g color component (0 - 255)
+ * @param  {Number} b the b color component (0 - 255)
+ * @param  {Number} a the a color component (0 - 255)
+ * @return {Number} a RGBA-packed 32 bit integer
+ */
+ImageBuffer.toRGBA = function(r, g, b, a) {
+    return (r << 24) | (g << 16) | (b <<  8) | a;
+};
+
+/**
+ * A utility function to create a lightweight 'color'
+ * object with the default components. Any components
+ * that are not specified will default to zero.
+ *
+ * This is useful when you want to use a shared color
+ * object for the getPixel and getPixelAt methods.
+ *
+ * @method  createColor
+ * @static
+ * @param  {Number} r the r color component (0 - 255)
+ * @param  {Number} g the g color component (0 - 255)
+ * @param  {Number} b the b color component (0 - 255)
+ * @param  {Number} a the a color component (0 - 255)
+ * @return {Object}   the resulting color object, with r, g, b, a properties
+ */
+ImageBuffer.createColor = function(r, g, b, a) {
+    return {
+        r: r||0,
+        g: g||0,
+        b: b||0,
+        a: a||0
+    };
+};
+
+module.exports = ImageBuffer;
+},{}],15:[function(require,module,exports){
+/**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
  *
@@ -25,7 +5192,7 @@ var AutoFocusMixin = {
 
 module.exports = AutoFocusMixin;
 
-},{"./focusNode":119}],2:[function(require,module,exports){
+},{"./focusNode":133}],16:[function(require,module,exports){
 /**
  * Copyright 2013-2015 Facebook, Inc.
  * All rights reserved.
@@ -520,7 +5687,7 @@ var BeforeInputEventPlugin = {
 
 module.exports = BeforeInputEventPlugin;
 
-},{"./EventConstants":14,"./EventPropagators":19,"./ExecutionEnvironment":20,"./FallbackCompositionState":21,"./SyntheticCompositionEvent":93,"./SyntheticInputEvent":97,"./keyOf":141}],3:[function(require,module,exports){
+},{"./EventConstants":28,"./EventPropagators":33,"./ExecutionEnvironment":34,"./FallbackCompositionState":35,"./SyntheticCompositionEvent":107,"./SyntheticInputEvent":111,"./keyOf":155}],17:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -641,7 +5808,7 @@ var CSSProperty = {
 
 module.exports = CSSProperty;
 
-},{}],4:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -823,7 +5990,7 @@ var CSSPropertyOperations = {
 module.exports = CSSPropertyOperations;
 
 }).call(this,require('_process'))
-},{"./CSSProperty":3,"./ExecutionEnvironment":20,"./camelizeStyleName":108,"./dangerousStyleValue":113,"./hyphenateStyleName":133,"./memoizeStringOnly":143,"./warning":154,"_process":156}],5:[function(require,module,exports){
+},{"./CSSProperty":17,"./ExecutionEnvironment":34,"./camelizeStyleName":122,"./dangerousStyleValue":127,"./hyphenateStyleName":147,"./memoizeStringOnly":157,"./warning":168,"_process":170}],19:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -923,7 +6090,7 @@ PooledClass.addPoolingTo(CallbackQueue);
 module.exports = CallbackQueue;
 
 }).call(this,require('_process'))
-},{"./Object.assign":26,"./PooledClass":27,"./invariant":135,"_process":156}],6:[function(require,module,exports){
+},{"./Object.assign":40,"./PooledClass":41,"./invariant":149,"_process":170}],20:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1305,7 +6472,7 @@ var ChangeEventPlugin = {
 
 module.exports = ChangeEventPlugin;
 
-},{"./EventConstants":14,"./EventPluginHub":16,"./EventPropagators":19,"./ExecutionEnvironment":20,"./ReactUpdates":87,"./SyntheticEvent":95,"./isEventSupported":136,"./isTextInputElement":138,"./keyOf":141}],7:[function(require,module,exports){
+},{"./EventConstants":28,"./EventPluginHub":30,"./EventPropagators":33,"./ExecutionEnvironment":34,"./ReactUpdates":101,"./SyntheticEvent":109,"./isEventSupported":150,"./isTextInputElement":152,"./keyOf":155}],21:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -1330,7 +6497,7 @@ var ClientReactRootIndex = {
 
 module.exports = ClientReactRootIndex;
 
-},{}],8:[function(require,module,exports){
+},{}],22:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -1468,7 +6635,7 @@ var DOMChildrenOperations = {
 module.exports = DOMChildrenOperations;
 
 }).call(this,require('_process'))
-},{"./Danger":11,"./ReactMultiChildUpdateTypes":72,"./invariant":135,"./setTextContent":149,"_process":156}],9:[function(require,module,exports){
+},{"./Danger":25,"./ReactMultiChildUpdateTypes":86,"./invariant":149,"./setTextContent":163,"_process":170}],23:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -1767,7 +6934,7 @@ var DOMProperty = {
 module.exports = DOMProperty;
 
 }).call(this,require('_process'))
-},{"./invariant":135,"_process":156}],10:[function(require,module,exports){
+},{"./invariant":149,"_process":170}],24:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -1959,7 +7126,7 @@ var DOMPropertyOperations = {
 module.exports = DOMPropertyOperations;
 
 }).call(this,require('_process'))
-},{"./DOMProperty":9,"./quoteAttributeValueForBrowser":147,"./warning":154,"_process":156}],11:[function(require,module,exports){
+},{"./DOMProperty":23,"./quoteAttributeValueForBrowser":161,"./warning":168,"_process":170}],25:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -2146,7 +7313,7 @@ var Danger = {
 module.exports = Danger;
 
 }).call(this,require('_process'))
-},{"./ExecutionEnvironment":20,"./createNodesFromMarkup":112,"./emptyFunction":114,"./getMarkupWrap":127,"./invariant":135,"_process":156}],12:[function(require,module,exports){
+},{"./ExecutionEnvironment":34,"./createNodesFromMarkup":126,"./emptyFunction":128,"./getMarkupWrap":141,"./invariant":149,"_process":170}],26:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -2185,7 +7352,7 @@ var DefaultEventPluginOrder = [
 
 module.exports = DefaultEventPluginOrder;
 
-},{"./keyOf":141}],13:[function(require,module,exports){
+},{"./keyOf":155}],27:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -2325,7 +7492,7 @@ var EnterLeaveEventPlugin = {
 
 module.exports = EnterLeaveEventPlugin;
 
-},{"./EventConstants":14,"./EventPropagators":19,"./ReactMount":70,"./SyntheticMouseEvent":99,"./keyOf":141}],14:[function(require,module,exports){
+},{"./EventConstants":28,"./EventPropagators":33,"./ReactMount":84,"./SyntheticMouseEvent":113,"./keyOf":155}],28:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -2397,7 +7564,7 @@ var EventConstants = {
 
 module.exports = EventConstants;
 
-},{"./keyMirror":140}],15:[function(require,module,exports){
+},{"./keyMirror":154}],29:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -2487,7 +7654,7 @@ var EventListener = {
 module.exports = EventListener;
 
 }).call(this,require('_process'))
-},{"./emptyFunction":114,"_process":156}],16:[function(require,module,exports){
+},{"./emptyFunction":128,"_process":170}],30:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -2765,7 +7932,7 @@ var EventPluginHub = {
 module.exports = EventPluginHub;
 
 }).call(this,require('_process'))
-},{"./EventPluginRegistry":17,"./EventPluginUtils":18,"./accumulateInto":105,"./forEachAccumulated":120,"./invariant":135,"_process":156}],17:[function(require,module,exports){
+},{"./EventPluginRegistry":31,"./EventPluginUtils":32,"./accumulateInto":119,"./forEachAccumulated":134,"./invariant":149,"_process":170}],31:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -3045,7 +8212,7 @@ var EventPluginRegistry = {
 module.exports = EventPluginRegistry;
 
 }).call(this,require('_process'))
-},{"./invariant":135,"_process":156}],18:[function(require,module,exports){
+},{"./invariant":149,"_process":170}],32:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -3266,7 +8433,7 @@ var EventPluginUtils = {
 module.exports = EventPluginUtils;
 
 }).call(this,require('_process'))
-},{"./EventConstants":14,"./invariant":135,"_process":156}],19:[function(require,module,exports){
+},{"./EventConstants":28,"./invariant":149,"_process":170}],33:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -3408,7 +8575,7 @@ var EventPropagators = {
 module.exports = EventPropagators;
 
 }).call(this,require('_process'))
-},{"./EventConstants":14,"./EventPluginHub":16,"./accumulateInto":105,"./forEachAccumulated":120,"_process":156}],20:[function(require,module,exports){
+},{"./EventConstants":28,"./EventPluginHub":30,"./accumulateInto":119,"./forEachAccumulated":134,"_process":170}],34:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -3452,7 +8619,7 @@ var ExecutionEnvironment = {
 
 module.exports = ExecutionEnvironment;
 
-},{}],21:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -3543,7 +8710,7 @@ PooledClass.addPoolingTo(FallbackCompositionState);
 
 module.exports = FallbackCompositionState;
 
-},{"./Object.assign":26,"./PooledClass":27,"./getTextContentAccessor":130}],22:[function(require,module,exports){
+},{"./Object.assign":40,"./PooledClass":41,"./getTextContentAccessor":144}],36:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -3748,7 +8915,7 @@ var HTMLDOMPropertyConfig = {
 
 module.exports = HTMLDOMPropertyConfig;
 
-},{"./DOMProperty":9,"./ExecutionEnvironment":20}],23:[function(require,module,exports){
+},{"./DOMProperty":23,"./ExecutionEnvironment":34}],37:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -3904,7 +9071,7 @@ var LinkedValueUtils = {
 module.exports = LinkedValueUtils;
 
 }).call(this,require('_process'))
-},{"./ReactPropTypes":78,"./invariant":135,"_process":156}],24:[function(require,module,exports){
+},{"./ReactPropTypes":92,"./invariant":149,"_process":170}],38:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -3961,7 +9128,7 @@ var LocalEventTrapMixin = {
 module.exports = LocalEventTrapMixin;
 
 }).call(this,require('_process'))
-},{"./ReactBrowserEventEmitter":30,"./accumulateInto":105,"./forEachAccumulated":120,"./invariant":135,"_process":156}],25:[function(require,module,exports){
+},{"./ReactBrowserEventEmitter":44,"./accumulateInto":119,"./forEachAccumulated":134,"./invariant":149,"_process":170}],39:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -4019,7 +9186,7 @@ var MobileSafariClickEventPlugin = {
 
 module.exports = MobileSafariClickEventPlugin;
 
-},{"./EventConstants":14,"./emptyFunction":114}],26:[function(require,module,exports){
+},{"./EventConstants":28,"./emptyFunction":128}],40:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -4068,7 +9235,7 @@ function assign(target, sources) {
 
 module.exports = assign;
 
-},{}],27:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -4184,7 +9351,7 @@ var PooledClass = {
 module.exports = PooledClass;
 
 }).call(this,require('_process'))
-},{"./invariant":135,"_process":156}],28:[function(require,module,exports){
+},{"./invariant":149,"_process":170}],42:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -4336,7 +9503,7 @@ React.version = '0.13.1';
 module.exports = React;
 
 }).call(this,require('_process'))
-},{"./EventPluginUtils":18,"./ExecutionEnvironment":20,"./Object.assign":26,"./ReactChildren":32,"./ReactClass":33,"./ReactComponent":34,"./ReactContext":38,"./ReactCurrentOwner":39,"./ReactDOM":40,"./ReactDOMTextComponent":51,"./ReactDefaultInjection":54,"./ReactElement":57,"./ReactElementValidator":58,"./ReactInstanceHandles":66,"./ReactMount":70,"./ReactPerf":75,"./ReactPropTypes":78,"./ReactReconciler":81,"./ReactServerRendering":84,"./findDOMNode":117,"./onlyChild":144,"_process":156}],29:[function(require,module,exports){
+},{"./EventPluginUtils":32,"./ExecutionEnvironment":34,"./Object.assign":40,"./ReactChildren":46,"./ReactClass":47,"./ReactComponent":48,"./ReactContext":52,"./ReactCurrentOwner":53,"./ReactDOM":54,"./ReactDOMTextComponent":65,"./ReactDefaultInjection":68,"./ReactElement":71,"./ReactElementValidator":72,"./ReactInstanceHandles":80,"./ReactMount":84,"./ReactPerf":89,"./ReactPropTypes":92,"./ReactReconciler":95,"./ReactServerRendering":98,"./findDOMNode":131,"./onlyChild":158,"_process":170}],43:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -4367,7 +9534,7 @@ var ReactBrowserComponentMixin = {
 
 module.exports = ReactBrowserComponentMixin;
 
-},{"./findDOMNode":117}],30:[function(require,module,exports){
+},{"./findDOMNode":131}],44:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -4720,7 +9887,7 @@ var ReactBrowserEventEmitter = assign({}, ReactEventEmitterMixin, {
 
 module.exports = ReactBrowserEventEmitter;
 
-},{"./EventConstants":14,"./EventPluginHub":16,"./EventPluginRegistry":17,"./Object.assign":26,"./ReactEventEmitterMixin":61,"./ViewportMetrics":104,"./isEventSupported":136}],31:[function(require,module,exports){
+},{"./EventConstants":28,"./EventPluginHub":30,"./EventPluginRegistry":31,"./Object.assign":40,"./ReactEventEmitterMixin":75,"./ViewportMetrics":118,"./isEventSupported":150}],45:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -4847,7 +10014,7 @@ var ReactChildReconciler = {
 
 module.exports = ReactChildReconciler;
 
-},{"./ReactReconciler":81,"./flattenChildren":118,"./instantiateReactComponent":134,"./shouldUpdateReactComponent":151}],32:[function(require,module,exports){
+},{"./ReactReconciler":95,"./flattenChildren":132,"./instantiateReactComponent":148,"./shouldUpdateReactComponent":165}],46:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -5000,7 +10167,7 @@ var ReactChildren = {
 module.exports = ReactChildren;
 
 }).call(this,require('_process'))
-},{"./PooledClass":27,"./ReactFragment":63,"./traverseAllChildren":153,"./warning":154,"_process":156}],33:[function(require,module,exports){
+},{"./PooledClass":41,"./ReactFragment":77,"./traverseAllChildren":167,"./warning":168,"_process":170}],47:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -5946,7 +11113,7 @@ var ReactClass = {
 module.exports = ReactClass;
 
 }).call(this,require('_process'))
-},{"./Object.assign":26,"./ReactComponent":34,"./ReactCurrentOwner":39,"./ReactElement":57,"./ReactErrorUtils":60,"./ReactInstanceMap":67,"./ReactLifeCycle":68,"./ReactPropTypeLocationNames":76,"./ReactPropTypeLocations":77,"./ReactUpdateQueue":86,"./invariant":135,"./keyMirror":140,"./keyOf":141,"./warning":154,"_process":156}],34:[function(require,module,exports){
+},{"./Object.assign":40,"./ReactComponent":48,"./ReactCurrentOwner":53,"./ReactElement":71,"./ReactErrorUtils":74,"./ReactInstanceMap":81,"./ReactLifeCycle":82,"./ReactPropTypeLocationNames":90,"./ReactPropTypeLocations":91,"./ReactUpdateQueue":100,"./invariant":149,"./keyMirror":154,"./keyOf":155,"./warning":168,"_process":170}],48:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -6082,7 +11249,7 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = ReactComponent;
 
 }).call(this,require('_process'))
-},{"./ReactUpdateQueue":86,"./invariant":135,"./warning":154,"_process":156}],35:[function(require,module,exports){
+},{"./ReactUpdateQueue":100,"./invariant":149,"./warning":168,"_process":170}],49:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -6129,7 +11296,7 @@ var ReactComponentBrowserEnvironment = {
 
 module.exports = ReactComponentBrowserEnvironment;
 
-},{"./ReactDOMIDOperations":44,"./ReactMount":70}],36:[function(require,module,exports){
+},{"./ReactDOMIDOperations":58,"./ReactMount":84}],50:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -6190,7 +11357,7 @@ var ReactComponentEnvironment = {
 module.exports = ReactComponentEnvironment;
 
 }).call(this,require('_process'))
-},{"./invariant":135,"_process":156}],37:[function(require,module,exports){
+},{"./invariant":149,"_process":170}],51:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -7080,7 +12247,7 @@ var ReactCompositeComponent = {
 module.exports = ReactCompositeComponent;
 
 }).call(this,require('_process'))
-},{"./Object.assign":26,"./ReactComponentEnvironment":36,"./ReactContext":38,"./ReactCurrentOwner":39,"./ReactElement":57,"./ReactElementValidator":58,"./ReactInstanceMap":67,"./ReactLifeCycle":68,"./ReactNativeComponent":73,"./ReactPerf":75,"./ReactPropTypeLocationNames":76,"./ReactPropTypeLocations":77,"./ReactReconciler":81,"./ReactUpdates":87,"./emptyObject":115,"./invariant":135,"./shouldUpdateReactComponent":151,"./warning":154,"_process":156}],38:[function(require,module,exports){
+},{"./Object.assign":40,"./ReactComponentEnvironment":50,"./ReactContext":52,"./ReactCurrentOwner":53,"./ReactElement":71,"./ReactElementValidator":72,"./ReactInstanceMap":81,"./ReactLifeCycle":82,"./ReactNativeComponent":87,"./ReactPerf":89,"./ReactPropTypeLocationNames":90,"./ReactPropTypeLocations":91,"./ReactReconciler":95,"./ReactUpdates":101,"./emptyObject":129,"./invariant":149,"./shouldUpdateReactComponent":165,"./warning":168,"_process":170}],52:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -7158,7 +12325,7 @@ var ReactContext = {
 module.exports = ReactContext;
 
 }).call(this,require('_process'))
-},{"./Object.assign":26,"./emptyObject":115,"./warning":154,"_process":156}],39:[function(require,module,exports){
+},{"./Object.assign":40,"./emptyObject":129,"./warning":168,"_process":170}],53:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -7192,7 +12359,7 @@ var ReactCurrentOwner = {
 
 module.exports = ReactCurrentOwner;
 
-},{}],40:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -7370,7 +12537,7 @@ var ReactDOM = mapObject({
 module.exports = ReactDOM;
 
 }).call(this,require('_process'))
-},{"./ReactElement":57,"./ReactElementValidator":58,"./mapObject":142,"_process":156}],41:[function(require,module,exports){
+},{"./ReactElement":71,"./ReactElementValidator":72,"./mapObject":156,"_process":170}],55:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -7434,7 +12601,7 @@ var ReactDOMButton = ReactClass.createClass({
 
 module.exports = ReactDOMButton;
 
-},{"./AutoFocusMixin":1,"./ReactBrowserComponentMixin":29,"./ReactClass":33,"./ReactElement":57,"./keyMirror":140}],42:[function(require,module,exports){
+},{"./AutoFocusMixin":15,"./ReactBrowserComponentMixin":43,"./ReactClass":47,"./ReactElement":71,"./keyMirror":154}],56:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -7940,7 +13107,7 @@ ReactDOMComponent.injection = {
 module.exports = ReactDOMComponent;
 
 }).call(this,require('_process'))
-},{"./CSSPropertyOperations":4,"./DOMProperty":9,"./DOMPropertyOperations":10,"./Object.assign":26,"./ReactBrowserEventEmitter":30,"./ReactComponentBrowserEnvironment":35,"./ReactMount":70,"./ReactMultiChild":71,"./ReactPerf":75,"./escapeTextContentForBrowser":116,"./invariant":135,"./isEventSupported":136,"./keyOf":141,"./warning":154,"_process":156}],43:[function(require,module,exports){
+},{"./CSSPropertyOperations":18,"./DOMProperty":23,"./DOMPropertyOperations":24,"./Object.assign":40,"./ReactBrowserEventEmitter":44,"./ReactComponentBrowserEnvironment":49,"./ReactMount":84,"./ReactMultiChild":85,"./ReactPerf":89,"./escapeTextContentForBrowser":130,"./invariant":149,"./isEventSupported":150,"./keyOf":155,"./warning":168,"_process":170}],57:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -7989,7 +13156,7 @@ var ReactDOMForm = ReactClass.createClass({
 
 module.exports = ReactDOMForm;
 
-},{"./EventConstants":14,"./LocalEventTrapMixin":24,"./ReactBrowserComponentMixin":29,"./ReactClass":33,"./ReactElement":57}],44:[function(require,module,exports){
+},{"./EventConstants":28,"./LocalEventTrapMixin":38,"./ReactBrowserComponentMixin":43,"./ReactClass":47,"./ReactElement":71}],58:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -8157,7 +13324,7 @@ ReactPerf.measureMethods(ReactDOMIDOperations, 'ReactDOMIDOperations', {
 module.exports = ReactDOMIDOperations;
 
 }).call(this,require('_process'))
-},{"./CSSPropertyOperations":4,"./DOMChildrenOperations":8,"./DOMPropertyOperations":10,"./ReactMount":70,"./ReactPerf":75,"./invariant":135,"./setInnerHTML":148,"_process":156}],45:[function(require,module,exports){
+},{"./CSSPropertyOperations":18,"./DOMChildrenOperations":22,"./DOMPropertyOperations":24,"./ReactMount":84,"./ReactPerf":89,"./invariant":149,"./setInnerHTML":162,"_process":170}],59:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -8202,7 +13369,7 @@ var ReactDOMIframe = ReactClass.createClass({
 
 module.exports = ReactDOMIframe;
 
-},{"./EventConstants":14,"./LocalEventTrapMixin":24,"./ReactBrowserComponentMixin":29,"./ReactClass":33,"./ReactElement":57}],46:[function(require,module,exports){
+},{"./EventConstants":28,"./LocalEventTrapMixin":38,"./ReactBrowserComponentMixin":43,"./ReactClass":47,"./ReactElement":71}],60:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -8248,7 +13415,7 @@ var ReactDOMImg = ReactClass.createClass({
 
 module.exports = ReactDOMImg;
 
-},{"./EventConstants":14,"./LocalEventTrapMixin":24,"./ReactBrowserComponentMixin":29,"./ReactClass":33,"./ReactElement":57}],47:[function(require,module,exports){
+},{"./EventConstants":28,"./LocalEventTrapMixin":38,"./ReactBrowserComponentMixin":43,"./ReactClass":47,"./ReactElement":71}],61:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -8425,7 +13592,7 @@ var ReactDOMInput = ReactClass.createClass({
 module.exports = ReactDOMInput;
 
 }).call(this,require('_process'))
-},{"./AutoFocusMixin":1,"./DOMPropertyOperations":10,"./LinkedValueUtils":23,"./Object.assign":26,"./ReactBrowserComponentMixin":29,"./ReactClass":33,"./ReactElement":57,"./ReactMount":70,"./ReactUpdates":87,"./invariant":135,"_process":156}],48:[function(require,module,exports){
+},{"./AutoFocusMixin":15,"./DOMPropertyOperations":24,"./LinkedValueUtils":37,"./Object.assign":40,"./ReactBrowserComponentMixin":43,"./ReactClass":47,"./ReactElement":71,"./ReactMount":84,"./ReactUpdates":101,"./invariant":149,"_process":170}],62:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -8477,7 +13644,7 @@ var ReactDOMOption = ReactClass.createClass({
 module.exports = ReactDOMOption;
 
 }).call(this,require('_process'))
-},{"./ReactBrowserComponentMixin":29,"./ReactClass":33,"./ReactElement":57,"./warning":154,"_process":156}],49:[function(require,module,exports){
+},{"./ReactBrowserComponentMixin":43,"./ReactClass":47,"./ReactElement":71,"./warning":168,"_process":170}],63:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -8655,7 +13822,7 @@ var ReactDOMSelect = ReactClass.createClass({
 
 module.exports = ReactDOMSelect;
 
-},{"./AutoFocusMixin":1,"./LinkedValueUtils":23,"./Object.assign":26,"./ReactBrowserComponentMixin":29,"./ReactClass":33,"./ReactElement":57,"./ReactUpdates":87}],50:[function(require,module,exports){
+},{"./AutoFocusMixin":15,"./LinkedValueUtils":37,"./Object.assign":40,"./ReactBrowserComponentMixin":43,"./ReactClass":47,"./ReactElement":71,"./ReactUpdates":101}],64:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -8868,7 +14035,7 @@ var ReactDOMSelection = {
 
 module.exports = ReactDOMSelection;
 
-},{"./ExecutionEnvironment":20,"./getNodeForCharacterOffset":128,"./getTextContentAccessor":130}],51:[function(require,module,exports){
+},{"./ExecutionEnvironment":34,"./getNodeForCharacterOffset":142,"./getTextContentAccessor":144}],65:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -8985,7 +14152,7 @@ assign(ReactDOMTextComponent.prototype, {
 
 module.exports = ReactDOMTextComponent;
 
-},{"./DOMPropertyOperations":10,"./Object.assign":26,"./ReactComponentBrowserEnvironment":35,"./ReactDOMComponent":42,"./escapeTextContentForBrowser":116}],52:[function(require,module,exports){
+},{"./DOMPropertyOperations":24,"./Object.assign":40,"./ReactComponentBrowserEnvironment":49,"./ReactDOMComponent":56,"./escapeTextContentForBrowser":130}],66:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -9125,7 +14292,7 @@ var ReactDOMTextarea = ReactClass.createClass({
 module.exports = ReactDOMTextarea;
 
 }).call(this,require('_process'))
-},{"./AutoFocusMixin":1,"./DOMPropertyOperations":10,"./LinkedValueUtils":23,"./Object.assign":26,"./ReactBrowserComponentMixin":29,"./ReactClass":33,"./ReactElement":57,"./ReactUpdates":87,"./invariant":135,"./warning":154,"_process":156}],53:[function(require,module,exports){
+},{"./AutoFocusMixin":15,"./DOMPropertyOperations":24,"./LinkedValueUtils":37,"./Object.assign":40,"./ReactBrowserComponentMixin":43,"./ReactClass":47,"./ReactElement":71,"./ReactUpdates":101,"./invariant":149,"./warning":168,"_process":170}],67:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -9198,7 +14365,7 @@ var ReactDefaultBatchingStrategy = {
 
 module.exports = ReactDefaultBatchingStrategy;
 
-},{"./Object.assign":26,"./ReactUpdates":87,"./Transaction":103,"./emptyFunction":114}],54:[function(require,module,exports){
+},{"./Object.assign":40,"./ReactUpdates":101,"./Transaction":117,"./emptyFunction":128}],68:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -9357,7 +14524,7 @@ module.exports = {
 };
 
 }).call(this,require('_process'))
-},{"./BeforeInputEventPlugin":2,"./ChangeEventPlugin":6,"./ClientReactRootIndex":7,"./DefaultEventPluginOrder":12,"./EnterLeaveEventPlugin":13,"./ExecutionEnvironment":20,"./HTMLDOMPropertyConfig":22,"./MobileSafariClickEventPlugin":25,"./ReactBrowserComponentMixin":29,"./ReactClass":33,"./ReactComponentBrowserEnvironment":35,"./ReactDOMButton":41,"./ReactDOMComponent":42,"./ReactDOMForm":43,"./ReactDOMIDOperations":44,"./ReactDOMIframe":45,"./ReactDOMImg":46,"./ReactDOMInput":47,"./ReactDOMOption":48,"./ReactDOMSelect":49,"./ReactDOMTextComponent":51,"./ReactDOMTextarea":52,"./ReactDefaultBatchingStrategy":53,"./ReactDefaultPerf":55,"./ReactElement":57,"./ReactEventListener":62,"./ReactInjection":64,"./ReactInstanceHandles":66,"./ReactMount":70,"./ReactReconcileTransaction":80,"./SVGDOMPropertyConfig":88,"./SelectEventPlugin":89,"./ServerReactRootIndex":90,"./SimpleEventPlugin":91,"./createFullPageComponent":111,"_process":156}],55:[function(require,module,exports){
+},{"./BeforeInputEventPlugin":16,"./ChangeEventPlugin":20,"./ClientReactRootIndex":21,"./DefaultEventPluginOrder":26,"./EnterLeaveEventPlugin":27,"./ExecutionEnvironment":34,"./HTMLDOMPropertyConfig":36,"./MobileSafariClickEventPlugin":39,"./ReactBrowserComponentMixin":43,"./ReactClass":47,"./ReactComponentBrowserEnvironment":49,"./ReactDOMButton":55,"./ReactDOMComponent":56,"./ReactDOMForm":57,"./ReactDOMIDOperations":58,"./ReactDOMIframe":59,"./ReactDOMImg":60,"./ReactDOMInput":61,"./ReactDOMOption":62,"./ReactDOMSelect":63,"./ReactDOMTextComponent":65,"./ReactDOMTextarea":66,"./ReactDefaultBatchingStrategy":67,"./ReactDefaultPerf":69,"./ReactElement":71,"./ReactEventListener":76,"./ReactInjection":78,"./ReactInstanceHandles":80,"./ReactMount":84,"./ReactReconcileTransaction":94,"./SVGDOMPropertyConfig":102,"./SelectEventPlugin":103,"./ServerReactRootIndex":104,"./SimpleEventPlugin":105,"./createFullPageComponent":125,"_process":170}],69:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -9623,7 +14790,7 @@ var ReactDefaultPerf = {
 
 module.exports = ReactDefaultPerf;
 
-},{"./DOMProperty":9,"./ReactDefaultPerfAnalysis":56,"./ReactMount":70,"./ReactPerf":75,"./performanceNow":146}],56:[function(require,module,exports){
+},{"./DOMProperty":23,"./ReactDefaultPerfAnalysis":70,"./ReactMount":84,"./ReactPerf":89,"./performanceNow":160}],70:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -9829,7 +14996,7 @@ var ReactDefaultPerfAnalysis = {
 
 module.exports = ReactDefaultPerfAnalysis;
 
-},{"./Object.assign":26}],57:[function(require,module,exports){
+},{"./Object.assign":40}],71:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -10137,7 +15304,7 @@ ReactElement.isValidElement = function(object) {
 module.exports = ReactElement;
 
 }).call(this,require('_process'))
-},{"./Object.assign":26,"./ReactContext":38,"./ReactCurrentOwner":39,"./warning":154,"_process":156}],58:[function(require,module,exports){
+},{"./Object.assign":40,"./ReactContext":52,"./ReactCurrentOwner":53,"./warning":168,"_process":170}],72:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -10602,7 +15769,7 @@ var ReactElementValidator = {
 module.exports = ReactElementValidator;
 
 }).call(this,require('_process'))
-},{"./ReactCurrentOwner":39,"./ReactElement":57,"./ReactFragment":63,"./ReactNativeComponent":73,"./ReactPropTypeLocationNames":76,"./ReactPropTypeLocations":77,"./getIteratorFn":126,"./invariant":135,"./warning":154,"_process":156}],59:[function(require,module,exports){
+},{"./ReactCurrentOwner":53,"./ReactElement":71,"./ReactFragment":77,"./ReactNativeComponent":87,"./ReactPropTypeLocationNames":90,"./ReactPropTypeLocations":91,"./getIteratorFn":140,"./invariant":149,"./warning":168,"_process":170}],73:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -10697,7 +15864,7 @@ var ReactEmptyComponent = {
 module.exports = ReactEmptyComponent;
 
 }).call(this,require('_process'))
-},{"./ReactElement":57,"./ReactInstanceMap":67,"./invariant":135,"_process":156}],60:[function(require,module,exports){
+},{"./ReactElement":71,"./ReactInstanceMap":81,"./invariant":149,"_process":170}],74:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -10729,7 +15896,7 @@ var ReactErrorUtils = {
 
 module.exports = ReactErrorUtils;
 
-},{}],61:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -10779,7 +15946,7 @@ var ReactEventEmitterMixin = {
 
 module.exports = ReactEventEmitterMixin;
 
-},{"./EventPluginHub":16}],62:[function(require,module,exports){
+},{"./EventPluginHub":30}],76:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -10962,7 +16129,7 @@ var ReactEventListener = {
 
 module.exports = ReactEventListener;
 
-},{"./EventListener":15,"./ExecutionEnvironment":20,"./Object.assign":26,"./PooledClass":27,"./ReactInstanceHandles":66,"./ReactMount":70,"./ReactUpdates":87,"./getEventTarget":125,"./getUnboundedScrollPosition":131}],63:[function(require,module,exports){
+},{"./EventListener":29,"./ExecutionEnvironment":34,"./Object.assign":40,"./PooledClass":41,"./ReactInstanceHandles":80,"./ReactMount":84,"./ReactUpdates":101,"./getEventTarget":139,"./getUnboundedScrollPosition":145}],77:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2015, Facebook, Inc.
@@ -11147,7 +16314,7 @@ var ReactFragment = {
 module.exports = ReactFragment;
 
 }).call(this,require('_process'))
-},{"./ReactElement":57,"./warning":154,"_process":156}],64:[function(require,module,exports){
+},{"./ReactElement":71,"./warning":168,"_process":170}],78:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -11189,7 +16356,7 @@ var ReactInjection = {
 
 module.exports = ReactInjection;
 
-},{"./DOMProperty":9,"./EventPluginHub":16,"./ReactBrowserEventEmitter":30,"./ReactClass":33,"./ReactComponentEnvironment":36,"./ReactDOMComponent":42,"./ReactEmptyComponent":59,"./ReactNativeComponent":73,"./ReactPerf":75,"./ReactRootIndex":83,"./ReactUpdates":87}],65:[function(require,module,exports){
+},{"./DOMProperty":23,"./EventPluginHub":30,"./ReactBrowserEventEmitter":44,"./ReactClass":47,"./ReactComponentEnvironment":50,"./ReactDOMComponent":56,"./ReactEmptyComponent":73,"./ReactNativeComponent":87,"./ReactPerf":89,"./ReactRootIndex":97,"./ReactUpdates":101}],79:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -11324,7 +16491,7 @@ var ReactInputSelection = {
 
 module.exports = ReactInputSelection;
 
-},{"./ReactDOMSelection":50,"./containsNode":109,"./focusNode":119,"./getActiveElement":121}],66:[function(require,module,exports){
+},{"./ReactDOMSelection":64,"./containsNode":123,"./focusNode":133,"./getActiveElement":135}],80:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -11660,7 +16827,7 @@ var ReactInstanceHandles = {
 module.exports = ReactInstanceHandles;
 
 }).call(this,require('_process'))
-},{"./ReactRootIndex":83,"./invariant":135,"_process":156}],67:[function(require,module,exports){
+},{"./ReactRootIndex":97,"./invariant":149,"_process":170}],81:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -11709,7 +16876,7 @@ var ReactInstanceMap = {
 
 module.exports = ReactInstanceMap;
 
-},{}],68:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 /**
  * Copyright 2015, Facebook, Inc.
  * All rights reserved.
@@ -11746,7 +16913,7 @@ var ReactLifeCycle = {
 
 module.exports = ReactLifeCycle;
 
-},{}],69:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -11794,7 +16961,7 @@ var ReactMarkupChecksum = {
 
 module.exports = ReactMarkupChecksum;
 
-},{"./adler32":106}],70:[function(require,module,exports){
+},{"./adler32":120}],84:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -12685,7 +17852,7 @@ ReactPerf.measureMethods(ReactMount, 'ReactMount', {
 module.exports = ReactMount;
 
 }).call(this,require('_process'))
-},{"./DOMProperty":9,"./ReactBrowserEventEmitter":30,"./ReactCurrentOwner":39,"./ReactElement":57,"./ReactElementValidator":58,"./ReactEmptyComponent":59,"./ReactInstanceHandles":66,"./ReactInstanceMap":67,"./ReactMarkupChecksum":69,"./ReactPerf":75,"./ReactReconciler":81,"./ReactUpdateQueue":86,"./ReactUpdates":87,"./containsNode":109,"./emptyObject":115,"./getReactRootElementInContainer":129,"./instantiateReactComponent":134,"./invariant":135,"./setInnerHTML":148,"./shouldUpdateReactComponent":151,"./warning":154,"_process":156}],71:[function(require,module,exports){
+},{"./DOMProperty":23,"./ReactBrowserEventEmitter":44,"./ReactCurrentOwner":53,"./ReactElement":71,"./ReactElementValidator":72,"./ReactEmptyComponent":73,"./ReactInstanceHandles":80,"./ReactInstanceMap":81,"./ReactMarkupChecksum":83,"./ReactPerf":89,"./ReactReconciler":95,"./ReactUpdateQueue":100,"./ReactUpdates":101,"./containsNode":123,"./emptyObject":129,"./getReactRootElementInContainer":143,"./instantiateReactComponent":148,"./invariant":149,"./setInnerHTML":162,"./shouldUpdateReactComponent":165,"./warning":168,"_process":170}],85:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -13115,7 +18282,7 @@ var ReactMultiChild = {
 
 module.exports = ReactMultiChild;
 
-},{"./ReactChildReconciler":31,"./ReactComponentEnvironment":36,"./ReactMultiChildUpdateTypes":72,"./ReactReconciler":81}],72:[function(require,module,exports){
+},{"./ReactChildReconciler":45,"./ReactComponentEnvironment":50,"./ReactMultiChildUpdateTypes":86,"./ReactReconciler":95}],86:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -13148,7 +18315,7 @@ var ReactMultiChildUpdateTypes = keyMirror({
 
 module.exports = ReactMultiChildUpdateTypes;
 
-},{"./keyMirror":140}],73:[function(require,module,exports){
+},{"./keyMirror":154}],87:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -13255,7 +18422,7 @@ var ReactNativeComponent = {
 module.exports = ReactNativeComponent;
 
 }).call(this,require('_process'))
-},{"./Object.assign":26,"./invariant":135,"_process":156}],74:[function(require,module,exports){
+},{"./Object.assign":40,"./invariant":149,"_process":170}],88:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -13367,7 +18534,7 @@ var ReactOwner = {
 module.exports = ReactOwner;
 
 }).call(this,require('_process'))
-},{"./invariant":135,"_process":156}],75:[function(require,module,exports){
+},{"./invariant":149,"_process":170}],89:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -13471,7 +18638,7 @@ function _noMeasure(objName, fnName, func) {
 module.exports = ReactPerf;
 
 }).call(this,require('_process'))
-},{"_process":156}],76:[function(require,module,exports){
+},{"_process":170}],90:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -13499,7 +18666,7 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = ReactPropTypeLocationNames;
 
 }).call(this,require('_process'))
-},{"_process":156}],77:[function(require,module,exports){
+},{"_process":170}],91:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -13523,7 +18690,7 @@ var ReactPropTypeLocations = keyMirror({
 
 module.exports = ReactPropTypeLocations;
 
-},{"./keyMirror":140}],78:[function(require,module,exports){
+},{"./keyMirror":154}],92:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -13872,7 +19039,7 @@ function getPreciseType(propValue) {
 
 module.exports = ReactPropTypes;
 
-},{"./ReactElement":57,"./ReactFragment":63,"./ReactPropTypeLocationNames":76,"./emptyFunction":114}],79:[function(require,module,exports){
+},{"./ReactElement":71,"./ReactFragment":77,"./ReactPropTypeLocationNames":90,"./emptyFunction":128}],93:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -13928,7 +19095,7 @@ PooledClass.addPoolingTo(ReactPutListenerQueue);
 
 module.exports = ReactPutListenerQueue;
 
-},{"./Object.assign":26,"./PooledClass":27,"./ReactBrowserEventEmitter":30}],80:[function(require,module,exports){
+},{"./Object.assign":40,"./PooledClass":41,"./ReactBrowserEventEmitter":44}],94:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -14104,7 +19271,7 @@ PooledClass.addPoolingTo(ReactReconcileTransaction);
 
 module.exports = ReactReconcileTransaction;
 
-},{"./CallbackQueue":5,"./Object.assign":26,"./PooledClass":27,"./ReactBrowserEventEmitter":30,"./ReactInputSelection":65,"./ReactPutListenerQueue":79,"./Transaction":103}],81:[function(require,module,exports){
+},{"./CallbackQueue":19,"./Object.assign":40,"./PooledClass":41,"./ReactBrowserEventEmitter":44,"./ReactInputSelection":79,"./ReactPutListenerQueue":93,"./Transaction":117}],95:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -14228,7 +19395,7 @@ var ReactReconciler = {
 module.exports = ReactReconciler;
 
 }).call(this,require('_process'))
-},{"./ReactElementValidator":58,"./ReactRef":82,"_process":156}],82:[function(require,module,exports){
+},{"./ReactElementValidator":72,"./ReactRef":96,"_process":170}],96:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -14299,7 +19466,7 @@ ReactRef.detachRefs = function(instance, element) {
 
 module.exports = ReactRef;
 
-},{"./ReactOwner":74}],83:[function(require,module,exports){
+},{"./ReactOwner":88}],97:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -14330,7 +19497,7 @@ var ReactRootIndex = {
 
 module.exports = ReactRootIndex;
 
-},{}],84:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -14412,7 +19579,7 @@ module.exports = {
 };
 
 }).call(this,require('_process'))
-},{"./ReactElement":57,"./ReactInstanceHandles":66,"./ReactMarkupChecksum":69,"./ReactServerRenderingTransaction":85,"./emptyObject":115,"./instantiateReactComponent":134,"./invariant":135,"_process":156}],85:[function(require,module,exports){
+},{"./ReactElement":71,"./ReactInstanceHandles":80,"./ReactMarkupChecksum":83,"./ReactServerRenderingTransaction":99,"./emptyObject":129,"./instantiateReactComponent":148,"./invariant":149,"_process":170}],99:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -14525,7 +19692,7 @@ PooledClass.addPoolingTo(ReactServerRenderingTransaction);
 
 module.exports = ReactServerRenderingTransaction;
 
-},{"./CallbackQueue":5,"./Object.assign":26,"./PooledClass":27,"./ReactPutListenerQueue":79,"./Transaction":103,"./emptyFunction":114}],86:[function(require,module,exports){
+},{"./CallbackQueue":19,"./Object.assign":40,"./PooledClass":41,"./ReactPutListenerQueue":93,"./Transaction":117,"./emptyFunction":128}],100:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2015, Facebook, Inc.
@@ -14824,7 +19991,7 @@ var ReactUpdateQueue = {
 module.exports = ReactUpdateQueue;
 
 }).call(this,require('_process'))
-},{"./Object.assign":26,"./ReactCurrentOwner":39,"./ReactElement":57,"./ReactInstanceMap":67,"./ReactLifeCycle":68,"./ReactUpdates":87,"./invariant":135,"./warning":154,"_process":156}],87:[function(require,module,exports){
+},{"./Object.assign":40,"./ReactCurrentOwner":53,"./ReactElement":71,"./ReactInstanceMap":81,"./ReactLifeCycle":82,"./ReactUpdates":101,"./invariant":149,"./warning":168,"_process":170}],101:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -15106,7 +20273,7 @@ var ReactUpdates = {
 module.exports = ReactUpdates;
 
 }).call(this,require('_process'))
-},{"./CallbackQueue":5,"./Object.assign":26,"./PooledClass":27,"./ReactCurrentOwner":39,"./ReactPerf":75,"./ReactReconciler":81,"./Transaction":103,"./invariant":135,"./warning":154,"_process":156}],88:[function(require,module,exports){
+},{"./CallbackQueue":19,"./Object.assign":40,"./PooledClass":41,"./ReactCurrentOwner":53,"./ReactPerf":89,"./ReactReconciler":95,"./Transaction":117,"./invariant":149,"./warning":168,"_process":170}],102:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15198,7 +20365,7 @@ var SVGDOMPropertyConfig = {
 
 module.exports = SVGDOMPropertyConfig;
 
-},{"./DOMProperty":9}],89:[function(require,module,exports){
+},{"./DOMProperty":23}],103:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15393,7 +20560,7 @@ var SelectEventPlugin = {
 
 module.exports = SelectEventPlugin;
 
-},{"./EventConstants":14,"./EventPropagators":19,"./ReactInputSelection":65,"./SyntheticEvent":95,"./getActiveElement":121,"./isTextInputElement":138,"./keyOf":141,"./shallowEqual":150}],90:[function(require,module,exports){
+},{"./EventConstants":28,"./EventPropagators":33,"./ReactInputSelection":79,"./SyntheticEvent":109,"./getActiveElement":135,"./isTextInputElement":152,"./keyOf":155,"./shallowEqual":164}],104:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15424,7 +20591,7 @@ var ServerReactRootIndex = {
 
 module.exports = ServerReactRootIndex;
 
-},{}],91:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -15852,7 +21019,7 @@ var SimpleEventPlugin = {
 module.exports = SimpleEventPlugin;
 
 }).call(this,require('_process'))
-},{"./EventConstants":14,"./EventPluginUtils":18,"./EventPropagators":19,"./SyntheticClipboardEvent":92,"./SyntheticDragEvent":94,"./SyntheticEvent":95,"./SyntheticFocusEvent":96,"./SyntheticKeyboardEvent":98,"./SyntheticMouseEvent":99,"./SyntheticTouchEvent":100,"./SyntheticUIEvent":101,"./SyntheticWheelEvent":102,"./getEventCharCode":122,"./invariant":135,"./keyOf":141,"./warning":154,"_process":156}],92:[function(require,module,exports){
+},{"./EventConstants":28,"./EventPluginUtils":32,"./EventPropagators":33,"./SyntheticClipboardEvent":106,"./SyntheticDragEvent":108,"./SyntheticEvent":109,"./SyntheticFocusEvent":110,"./SyntheticKeyboardEvent":112,"./SyntheticMouseEvent":113,"./SyntheticTouchEvent":114,"./SyntheticUIEvent":115,"./SyntheticWheelEvent":116,"./getEventCharCode":136,"./invariant":149,"./keyOf":155,"./warning":168,"_process":170}],106:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15897,7 +21064,7 @@ SyntheticEvent.augmentClass(SyntheticClipboardEvent, ClipboardEventInterface);
 
 module.exports = SyntheticClipboardEvent;
 
-},{"./SyntheticEvent":95}],93:[function(require,module,exports){
+},{"./SyntheticEvent":109}],107:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15942,7 +21109,7 @@ SyntheticEvent.augmentClass(
 
 module.exports = SyntheticCompositionEvent;
 
-},{"./SyntheticEvent":95}],94:[function(require,module,exports){
+},{"./SyntheticEvent":109}],108:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15981,7 +21148,7 @@ SyntheticMouseEvent.augmentClass(SyntheticDragEvent, DragEventInterface);
 
 module.exports = SyntheticDragEvent;
 
-},{"./SyntheticMouseEvent":99}],95:[function(require,module,exports){
+},{"./SyntheticMouseEvent":113}],109:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16147,7 +21314,7 @@ PooledClass.addPoolingTo(SyntheticEvent, PooledClass.threeArgumentPooler);
 
 module.exports = SyntheticEvent;
 
-},{"./Object.assign":26,"./PooledClass":27,"./emptyFunction":114,"./getEventTarget":125}],96:[function(require,module,exports){
+},{"./Object.assign":40,"./PooledClass":41,"./emptyFunction":128,"./getEventTarget":139}],110:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16186,7 +21353,7 @@ SyntheticUIEvent.augmentClass(SyntheticFocusEvent, FocusEventInterface);
 
 module.exports = SyntheticFocusEvent;
 
-},{"./SyntheticUIEvent":101}],97:[function(require,module,exports){
+},{"./SyntheticUIEvent":115}],111:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16232,7 +21399,7 @@ SyntheticEvent.augmentClass(
 
 module.exports = SyntheticInputEvent;
 
-},{"./SyntheticEvent":95}],98:[function(require,module,exports){
+},{"./SyntheticEvent":109}],112:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16319,7 +21486,7 @@ SyntheticUIEvent.augmentClass(SyntheticKeyboardEvent, KeyboardEventInterface);
 
 module.exports = SyntheticKeyboardEvent;
 
-},{"./SyntheticUIEvent":101,"./getEventCharCode":122,"./getEventKey":123,"./getEventModifierState":124}],99:[function(require,module,exports){
+},{"./SyntheticUIEvent":115,"./getEventCharCode":136,"./getEventKey":137,"./getEventModifierState":138}],113:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16400,7 +21567,7 @@ SyntheticUIEvent.augmentClass(SyntheticMouseEvent, MouseEventInterface);
 
 module.exports = SyntheticMouseEvent;
 
-},{"./SyntheticUIEvent":101,"./ViewportMetrics":104,"./getEventModifierState":124}],100:[function(require,module,exports){
+},{"./SyntheticUIEvent":115,"./ViewportMetrics":118,"./getEventModifierState":138}],114:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16448,7 +21615,7 @@ SyntheticUIEvent.augmentClass(SyntheticTouchEvent, TouchEventInterface);
 
 module.exports = SyntheticTouchEvent;
 
-},{"./SyntheticUIEvent":101,"./getEventModifierState":124}],101:[function(require,module,exports){
+},{"./SyntheticUIEvent":115,"./getEventModifierState":138}],115:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16510,7 +21677,7 @@ SyntheticEvent.augmentClass(SyntheticUIEvent, UIEventInterface);
 
 module.exports = SyntheticUIEvent;
 
-},{"./SyntheticEvent":95,"./getEventTarget":125}],102:[function(require,module,exports){
+},{"./SyntheticEvent":109,"./getEventTarget":139}],116:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16571,7 +21738,7 @@ SyntheticMouseEvent.augmentClass(SyntheticWheelEvent, WheelEventInterface);
 
 module.exports = SyntheticWheelEvent;
 
-},{"./SyntheticMouseEvent":99}],103:[function(require,module,exports){
+},{"./SyntheticMouseEvent":113}],117:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -16812,7 +21979,7 @@ var Transaction = {
 module.exports = Transaction;
 
 }).call(this,require('_process'))
-},{"./invariant":135,"_process":156}],104:[function(require,module,exports){
+},{"./invariant":149,"_process":170}],118:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16841,7 +22008,7 @@ var ViewportMetrics = {
 
 module.exports = ViewportMetrics;
 
-},{}],105:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -16907,7 +22074,7 @@ function accumulateInto(current, next) {
 module.exports = accumulateInto;
 
 }).call(this,require('_process'))
-},{"./invariant":135,"_process":156}],106:[function(require,module,exports){
+},{"./invariant":149,"_process":170}],120:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16941,7 +22108,7 @@ function adler32(data) {
 
 module.exports = adler32;
 
-},{}],107:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16973,7 +22140,7 @@ function camelize(string) {
 
 module.exports = camelize;
 
-},{}],108:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -17015,7 +22182,7 @@ function camelizeStyleName(string) {
 
 module.exports = camelizeStyleName;
 
-},{"./camelize":107}],109:[function(require,module,exports){
+},{"./camelize":121}],123:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17059,7 +22226,7 @@ function containsNode(outerNode, innerNode) {
 
 module.exports = containsNode;
 
-},{"./isTextNode":139}],110:[function(require,module,exports){
+},{"./isTextNode":153}],124:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17145,7 +22312,7 @@ function createArrayFromMixed(obj) {
 
 module.exports = createArrayFromMixed;
 
-},{"./toArray":152}],111:[function(require,module,exports){
+},{"./toArray":166}],125:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -17207,7 +22374,7 @@ function createFullPageComponent(tag) {
 module.exports = createFullPageComponent;
 
 }).call(this,require('_process'))
-},{"./ReactClass":33,"./ReactElement":57,"./invariant":135,"_process":156}],112:[function(require,module,exports){
+},{"./ReactClass":47,"./ReactElement":71,"./invariant":149,"_process":170}],126:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -17297,7 +22464,7 @@ function createNodesFromMarkup(markup, handleScript) {
 module.exports = createNodesFromMarkup;
 
 }).call(this,require('_process'))
-},{"./ExecutionEnvironment":20,"./createArrayFromMixed":110,"./getMarkupWrap":127,"./invariant":135,"_process":156}],113:[function(require,module,exports){
+},{"./ExecutionEnvironment":34,"./createArrayFromMixed":124,"./getMarkupWrap":141,"./invariant":149,"_process":170}],127:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17355,7 +22522,7 @@ function dangerousStyleValue(name, value) {
 
 module.exports = dangerousStyleValue;
 
-},{"./CSSProperty":3}],114:[function(require,module,exports){
+},{"./CSSProperty":17}],128:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17389,7 +22556,7 @@ emptyFunction.thatReturnsArgument = function(arg) { return arg; };
 
 module.exports = emptyFunction;
 
-},{}],115:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -17413,7 +22580,7 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = emptyObject;
 
 }).call(this,require('_process'))
-},{"_process":156}],116:[function(require,module,exports){
+},{"_process":170}],130:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17453,7 +22620,7 @@ function escapeTextContentForBrowser(text) {
 
 module.exports = escapeTextContentForBrowser;
 
-},{}],117:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -17526,7 +22693,7 @@ function findDOMNode(componentOrElement) {
 module.exports = findDOMNode;
 
 }).call(this,require('_process'))
-},{"./ReactCurrentOwner":39,"./ReactInstanceMap":67,"./ReactMount":70,"./invariant":135,"./isNode":137,"./warning":154,"_process":156}],118:[function(require,module,exports){
+},{"./ReactCurrentOwner":53,"./ReactInstanceMap":81,"./ReactMount":84,"./invariant":149,"./isNode":151,"./warning":168,"_process":170}],132:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -17584,7 +22751,7 @@ function flattenChildren(children) {
 module.exports = flattenChildren;
 
 }).call(this,require('_process'))
-},{"./traverseAllChildren":153,"./warning":154,"_process":156}],119:[function(require,module,exports){
+},{"./traverseAllChildren":167,"./warning":168,"_process":170}],133:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -17613,7 +22780,7 @@ function focusNode(node) {
 
 module.exports = focusNode;
 
-},{}],120:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17644,7 +22811,7 @@ var forEachAccumulated = function(arr, cb, scope) {
 
 module.exports = forEachAccumulated;
 
-},{}],121:[function(require,module,exports){
+},{}],135:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17673,7 +22840,7 @@ function getActiveElement() /*?DOMElement*/ {
 
 module.exports = getActiveElement;
 
-},{}],122:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17725,7 +22892,7 @@ function getEventCharCode(nativeEvent) {
 
 module.exports = getEventCharCode;
 
-},{}],123:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17830,7 +22997,7 @@ function getEventKey(nativeEvent) {
 
 module.exports = getEventKey;
 
-},{"./getEventCharCode":122}],124:[function(require,module,exports){
+},{"./getEventCharCode":136}],138:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17877,7 +23044,7 @@ function getEventModifierState(nativeEvent) {
 
 module.exports = getEventModifierState;
 
-},{}],125:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17908,7 +23075,7 @@ function getEventTarget(nativeEvent) {
 
 module.exports = getEventTarget;
 
-},{}],126:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17952,7 +23119,7 @@ function getIteratorFn(maybeIterable) {
 
 module.exports = getIteratorFn;
 
-},{}],127:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -18069,7 +23236,7 @@ function getMarkupWrap(nodeName) {
 module.exports = getMarkupWrap;
 
 }).call(this,require('_process'))
-},{"./ExecutionEnvironment":20,"./invariant":135,"_process":156}],128:[function(require,module,exports){
+},{"./ExecutionEnvironment":34,"./invariant":149,"_process":170}],142:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18144,7 +23311,7 @@ function getNodeForCharacterOffset(root, offset) {
 
 module.exports = getNodeForCharacterOffset;
 
-},{}],129:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18179,7 +23346,7 @@ function getReactRootElementInContainer(container) {
 
 module.exports = getReactRootElementInContainer;
 
-},{}],130:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18216,7 +23383,7 @@ function getTextContentAccessor() {
 
 module.exports = getTextContentAccessor;
 
-},{"./ExecutionEnvironment":20}],131:[function(require,module,exports){
+},{"./ExecutionEnvironment":34}],145:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18256,7 +23423,7 @@ function getUnboundedScrollPosition(scrollable) {
 
 module.exports = getUnboundedScrollPosition;
 
-},{}],132:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18289,7 +23456,7 @@ function hyphenate(string) {
 
 module.exports = hyphenate;
 
-},{}],133:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18330,7 +23497,7 @@ function hyphenateStyleName(string) {
 
 module.exports = hyphenateStyleName;
 
-},{"./hyphenate":132}],134:[function(require,module,exports){
+},{"./hyphenate":146}],148:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -18467,7 +23634,7 @@ function instantiateReactComponent(node, parentCompositeType) {
 module.exports = instantiateReactComponent;
 
 }).call(this,require('_process'))
-},{"./Object.assign":26,"./ReactCompositeComponent":37,"./ReactEmptyComponent":59,"./ReactNativeComponent":73,"./invariant":135,"./warning":154,"_process":156}],135:[function(require,module,exports){
+},{"./Object.assign":40,"./ReactCompositeComponent":51,"./ReactEmptyComponent":73,"./ReactNativeComponent":87,"./invariant":149,"./warning":168,"_process":170}],149:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -18524,7 +23691,7 @@ var invariant = function(condition, format, a, b, c, d, e, f) {
 module.exports = invariant;
 
 }).call(this,require('_process'))
-},{"_process":156}],136:[function(require,module,exports){
+},{"_process":170}],150:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18589,7 +23756,7 @@ function isEventSupported(eventNameSuffix, capture) {
 
 module.exports = isEventSupported;
 
-},{"./ExecutionEnvironment":20}],137:[function(require,module,exports){
+},{"./ExecutionEnvironment":34}],151:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18616,7 +23783,7 @@ function isNode(object) {
 
 module.exports = isNode;
 
-},{}],138:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18659,7 +23826,7 @@ function isTextInputElement(elem) {
 
 module.exports = isTextInputElement;
 
-},{}],139:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18684,7 +23851,7 @@ function isTextNode(object) {
 
 module.exports = isTextNode;
 
-},{"./isNode":137}],140:[function(require,module,exports){
+},{"./isNode":151}],154:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -18739,7 +23906,7 @@ var keyMirror = function(obj) {
 module.exports = keyMirror;
 
 }).call(this,require('_process'))
-},{"./invariant":135,"_process":156}],141:[function(require,module,exports){
+},{"./invariant":149,"_process":170}],155:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18775,7 +23942,7 @@ var keyOf = function(oneKeyObj) {
 
 module.exports = keyOf;
 
-},{}],142:[function(require,module,exports){
+},{}],156:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18828,7 +23995,7 @@ function mapObject(object, callback, context) {
 
 module.exports = mapObject;
 
-},{}],143:[function(require,module,exports){
+},{}],157:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18861,7 +24028,7 @@ function memoizeStringOnly(callback) {
 
 module.exports = memoizeStringOnly;
 
-},{}],144:[function(require,module,exports){
+},{}],158:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -18901,7 +24068,7 @@ function onlyChild(children) {
 module.exports = onlyChild;
 
 }).call(this,require('_process'))
-},{"./ReactElement":57,"./invariant":135,"_process":156}],145:[function(require,module,exports){
+},{"./ReactElement":71,"./invariant":149,"_process":170}],159:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18929,7 +24096,7 @@ if (ExecutionEnvironment.canUseDOM) {
 
 module.exports = performance || {};
 
-},{"./ExecutionEnvironment":20}],146:[function(require,module,exports){
+},{"./ExecutionEnvironment":34}],160:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18957,7 +24124,7 @@ var performanceNow = performance.now.bind(performance);
 
 module.exports = performanceNow;
 
-},{"./performance":145}],147:[function(require,module,exports){
+},{"./performance":159}],161:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18985,7 +24152,7 @@ function quoteAttributeValueForBrowser(value) {
 
 module.exports = quoteAttributeValueForBrowser;
 
-},{"./escapeTextContentForBrowser":116}],148:[function(require,module,exports){
+},{"./escapeTextContentForBrowser":130}],162:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -19074,7 +24241,7 @@ if (ExecutionEnvironment.canUseDOM) {
 
 module.exports = setInnerHTML;
 
-},{"./ExecutionEnvironment":20}],149:[function(require,module,exports){
+},{"./ExecutionEnvironment":34}],163:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -19116,7 +24283,7 @@ if (ExecutionEnvironment.canUseDOM) {
 
 module.exports = setTextContent;
 
-},{"./ExecutionEnvironment":20,"./escapeTextContentForBrowser":116,"./setInnerHTML":148}],150:[function(require,module,exports){
+},{"./ExecutionEnvironment":34,"./escapeTextContentForBrowser":130,"./setInnerHTML":162}],164:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -19160,7 +24327,7 @@ function shallowEqual(objA, objB) {
 
 module.exports = shallowEqual;
 
-},{}],151:[function(require,module,exports){
+},{}],165:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -19264,7 +24431,7 @@ function shouldUpdateReactComponent(prevElement, nextElement) {
 module.exports = shouldUpdateReactComponent;
 
 }).call(this,require('_process'))
-},{"./warning":154,"_process":156}],152:[function(require,module,exports){
+},{"./warning":168,"_process":170}],166:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -19336,7 +24503,7 @@ function toArray(obj) {
 module.exports = toArray;
 
 }).call(this,require('_process'))
-},{"./invariant":135,"_process":156}],153:[function(require,module,exports){
+},{"./invariant":149,"_process":170}],167:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -19589,7 +24756,7 @@ function traverseAllChildren(children, callback, traverseContext) {
 module.exports = traverseAllChildren;
 
 }).call(this,require('_process'))
-},{"./ReactElement":57,"./ReactFragment":63,"./ReactInstanceHandles":66,"./getIteratorFn":126,"./invariant":135,"./warning":154,"_process":156}],154:[function(require,module,exports){
+},{"./ReactElement":71,"./ReactFragment":77,"./ReactInstanceHandles":80,"./getIteratorFn":140,"./invariant":149,"./warning":168,"_process":170}],168:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -19652,10 +24819,10 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = warning;
 
 }).call(this,require('_process'))
-},{"./emptyFunction":114,"_process":156}],155:[function(require,module,exports){
+},{"./emptyFunction":128,"_process":170}],169:[function(require,module,exports){
 module.exports = require('./lib/React');
 
-},{"./lib/React":28}],156:[function(require,module,exports){
+},{"./lib/React":42}],170:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -19715,7 +24882,89 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],157:[function(require,module,exports){
+},{}],171:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var state = _interopRequire(require("../state"));
+
+var LoadImage = _interopRequire(require("../utils/loadImage"));
+
+var RenderImage = _interopRequire(require("../utils/renderImage"));
+
+var data = state({
+  images: ["images"],
+  previewImage: ["previewImage"]
+});
+var images = data.images;
+var previewImage = data.prevewImage;
+var _id = 0;
+
+function getId() {
+  var id = _id;
+  _id++;
+  return id;
+}
+
+var Image = function Image() {
+  _classCallCheck(this, Image);
+
+  this.id = getId();
+  this.isLoaded = false;
+  this.isDirty = true;
+};
+
+function imageLoaded(data) {
+  var image = images.select({ id: this.id });
+  image.merge(data);
+  new RenderImage(image.get(), 1, imageRendered.bind(this));
+}
+
+function imageRendered(data) {
+  var image = images.select({ id: this.id });
+  image.merge({
+    imgRaw: data,
+    isDirty: false
+  });
+
+  //DEV
+  ImageActions.showPreview(image.get());
+}
+
+var ImageActions = {
+
+  addImage: function addImage(file) {
+    var newImage = new Image();
+    images.push(newImage);
+    LoadImage(file, imageLoaded.bind(newImage));
+  },
+  removeImage: function () {
+    return console.log("Remove Image");
+  },
+  updateImage: function () {
+    return console.log("Update Image");
+  },
+
+  showPreview: function showPreview(image) {
+    data.previewImage.edit(image);
+  },
+
+  renderPreview: function renderPreview(image, scale, scaleValue, callback) {
+    new RenderImage(image, scale, callback, true, scaleValue); //true = isPreview
+  }
+
+};
+
+module.exports = ImageActions;
+
+// DEV
+var imagePath = "/fits/656nmos.fits";
+ImageActions.addImage(imagePath);
+
+},{"../state":178,"../utils/loadImage":179,"../utils/renderImage":180}],172:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -19728,28 +24977,115 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
 
 var React = _interopRequire(require("react"));
 
-var App = (function (_React$Component) {
-  function App() {
-    _classCallCheck(this, App);
+var ImageActions = _interopRequire(require("../../actions/imageActions"));
+
+function attemptFileLoad(event) {
+  var files = event.target.files;
+  ImageActions.addImage(files[0]);
+}
+
+var AddImage = (function (_React$Component) {
+  function AddImage() {
+    _classCallCheck(this, AddImage);
 
     if (_React$Component != null) {
       _React$Component.apply(this, arguments);
     }
   }
 
-  _inherits(App, _React$Component);
+  _inherits(AddImage, _React$Component);
 
-  _createClass(App, {
+  _createClass(AddImage, {
     render: {
       value: function render() {
         return React.createElement(
           "div",
-          { className: "main-inner" },
+          { className: "add-image add-image--sidebar" },
           React.createElement(
-            "span",
-            null,
-            "SIDEBAR GOES HERE!!!"
+            "button",
+            { className: "add-image__button gi gi-plus" },
+            React.createElement("input", { className: "add-image__input", type: "file", onChange: attemptFileLoad.bind(this) }),
+            React.createElement("span", { className: "add-image_label" })
           )
+        );
+      }
+    }
+  });
+
+  return AddImage;
+})(React.Component);
+
+module.exports = AddImage;
+/**Load Props here**/
+
+},{"../../actions/imageActions":171,"react":169}],173:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var React = _interopRequire(require("react"));
+
+var state = _interopRequire(require("../../state"));
+
+var Sidebar = _interopRequire(require("../sidebar/sidebar.jsx"));
+
+var ImagePreview = _interopRequire(require("../preview/imagePreview.jsx"));
+
+var data = state({
+  images: ["images"],
+  previewImage: ["previewImage"]
+});
+
+var App = (function (_React$Component) {
+  function App(props) {
+    _classCallCheck(this, App);
+
+    _get(Object.getPrototypeOf(App.prototype), "constructor", this).call(this, props);
+    this.state = data.get();
+  }
+
+  _inherits(App, _React$Component);
+
+  _createClass(App, {
+    componentDidMount: {
+      value: function componentDidMount() {
+        var _this = this;
+
+        data.listen.on("update", function () {
+          return _this.setState(data.get());
+        });
+      }
+    },
+    componentWillUnmount: {
+      value: function componentWillUnmount() {
+        var _this = this;
+
+        data.listen.off("update", function () {
+          return _this.setState(data.get());
+        });
+      }
+    },
+    render: {
+      value: function render() {
+
+        var images = this.state.images,
+            previewImage = this.state.previewImage;
+
+        var imagePreview = previewImage ? React.createElement(ImagePreview, { image: previewImage }) : "";
+
+        return React.createElement(
+          "div",
+          { className: "main-inner" },
+          React.createElement(Sidebar, { images: images }),
+          imagePreview
         );
       }
     }
@@ -19760,12 +25096,258 @@ var App = (function (_React$Component) {
 
 module.exports = App;
 
-/**
- * d.div class-name: 'main-inner',
-      sidebar!
- */
+},{"../../state":178,"../preview/imagePreview.jsx":175,"../sidebar/sidebar.jsx":176,"react":169}],174:[function(require,module,exports){
+"use strict";
 
-},{"react":155}],158:[function(require,module,exports){
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var React = _interopRequire(require("react"));
+
+var ImageActions = _interopRequire(require("../../actions/imageActions"));
+
+function showPreview(event) {
+  ImageActions.showPreview(this.props.image);
+}
+
+var ImageThumb = (function (_React$Component) {
+  function ImageThumb() {
+    _classCallCheck(this, ImageThumb);
+
+    if (_React$Component != null) {
+      _React$Component.apply(this, arguments);
+    }
+  }
+
+  _inherits(ImageThumb, _React$Component);
+
+  _createClass(ImageThumb, {
+    render: {
+      value: function render() {
+
+        var image = this.props.image,
+            loading = image.isDirty,
+            imageThumb = undefined;
+
+        if (loading) {
+          imageThumb = React.createElement(
+            "span",
+            { className: "thumb__image" },
+            "loading..."
+          );
+        } else {
+          imageThumb = React.createElement("img", { src: image.imgRaw.src, style: { width: 50, height: 50 }, className: "thumb__image", onClick: showPreview.bind(this) });
+        }
+
+        return React.createElement(
+          "div",
+          { className: "thumb" },
+          imageThumb
+        );
+      }
+    }
+  });
+
+  return ImageThumb;
+})(React.Component);
+
+module.exports = ImageThumb;
+
+},{"../../actions/imageActions":171,"react":169}],175:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var React = _interopRequire(require("react"));
+
+var ImageActions = _interopRequire(require("../../actions/imageActions"));
+
+var canvasId = "previewCanvas",
+    size = 400,
+    defaultState = {
+	scaleValue: 500
+};
+
+var ImagePreview = (function (_React$Component) {
+	function ImagePreview(props) {
+		_classCallCheck(this, ImagePreview);
+
+		_get(Object.getPrototypeOf(ImagePreview.prototype), "constructor", this).call(this, props);
+		this.state = defaultState;
+	}
+
+	_inherits(ImagePreview, _React$Component);
+
+	_createClass(ImagePreview, {
+		resetState: {
+			value: function resetState() {
+				this.setState(defaultState);
+			}
+		},
+		componentDidMount: {
+			value: function componentDidMount() {
+				var el = document.getElementById(canvasId);
+				this.ctx = el.getContext("2d");
+				this.renderPreview();
+			}
+		},
+		componentDidUpdate: {
+			value: function componentDidUpdate(prevProps) {
+
+				if (prevProps.image.id !== this.props.image.id) {
+					console.info("TODO: WORK OUT UPDATE LOGIC!");
+					this.renderPreview();
+				}
+			}
+		},
+		componentWillReceiveProps: {
+			value: function componentWillReceiveProps(nextProps) {
+				console.info("TODO: GET STATE FROM PROPS");
+				this.setState(defaultState);
+			}
+		},
+		renderPreview: {
+			value: function renderPreview() {
+				var scale = size / this.props.image.metaData.width;
+
+				ImageActions.renderPreview(this.props.image, scale, this.state.scaleValue, (function (data) {
+					this.ctx.putImageData(data.imageData, 0, 0);
+				}).bind(this));
+			}
+		},
+		updateScale: {
+			value: function updateScale(value) {
+				this.setState({ scaleValue: value });
+				this.renderPreview();
+			}
+		},
+		render: {
+			value: function render() {
+
+				var valueLink = {
+					value: this.state.scaleValue,
+					requestChange: this.updateScale.bind(this)
+				};
+
+				return React.createElement(
+					"div",
+					{ className: "preview" },
+					React.createElement("canvas", { width: size, height: size, className: "preview__canvas", id: canvasId }),
+					React.createElement("input", { type: "range", min: "0", max: "10000", valueLink: valueLink })
+				);
+			}
+		}
+	});
+
+	return ImagePreview;
+})(React.Component);
+
+module.exports = ImagePreview;
+
+/**require! react:React
+require! '../../common/globalEvents.ls'
+
+d = React.DOM
+
+# Class
+ImagePreview = React.createFactory React.createClass do
+
+	display-name: 'ImagePreview'
+
+	getInitialState: ->
+		visible: false,
+		image: null
+
+	componentDidMount: ->
+		globalEvents.on 'showPreview', @showPreview
+		globalEvents.on 'hidePreview', @hidePreview
+	
+	componentWillUnmount: ->
+		globalEvents.off 'showPreview', @showPreview
+		globalEvents.off 'hidePreview', @hidePreview
+
+	showPreview: (image) -> @setState { visible: true, image: image }
+
+	hidePreview: -> @setState visible: false
+
+	render: ->
+		d.div null, if @state.visible
+			d.div onClick: @hidePreview,
+				d.div null,
+					d.h2 null, 'PREVIEW'
+					d.h3 null, 'image-id: ' + @state.image.id
+
+
+module.exports = ImagePreview**/
+
+},{"../../actions/imageActions":171,"react":169}],176:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var React = _interopRequire(require("react"));
+
+var AddImage = _interopRequire(require("../add-image/addImage.jsx"));
+
+var ImageThumb = _interopRequire(require("../image-thumb/imageThumb.jsx"));
+
+var Sidebar = (function (_React$Component) {
+  function Sidebar() {
+    _classCallCheck(this, Sidebar);
+
+    if (_React$Component != null) {
+      _React$Component.apply(this, arguments);
+    }
+  }
+
+  _inherits(Sidebar, _React$Component);
+
+  _createClass(Sidebar, {
+    render: {
+      value: function render() {
+
+        var images = [];
+
+        this.props.images.forEach(function (image) {
+          images.push(React.createElement(ImageThumb, { key: image.id, image: image }));
+        });
+
+        return React.createElement(
+          "div",
+          { className: "sidebar" },
+          React.createElement("div", { className: "sidebar__logo" }),
+          images,
+          React.createElement(AddImage, null)
+        );
+      }
+    }
+  });
+
+  return Sidebar;
+})(React.Component);
+
+module.exports = Sidebar;
+
+},{"../add-image/addImage.jsx":172,"../image-thumb/imageThumb.jsx":174,"react":169}],177:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -19776,4 +25358,261 @@ var App = _interopRequire(require("./components/app/app.jsx"));
 
 React.render(React.createElement(App, null), document.getElementById("main"));
 
-},{"./components/app/app.jsx":157,"react":155}]},{},[158]);
+},{"./components/app/app.jsx":173,"react":169}],178:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var React = _interopRequire(require("react"));
+
+var Boabab = _interopRequire(require("baobab"));
+
+var data = {
+  mode: "view",
+  maxImages: 8,
+  previewImage: null,
+  images: []
+};
+
+var options = {
+  asynchronous: false,
+  shiftReferences: true,
+  mixins: [React.PureRenderMixin]
+};
+
+var cursors = new Boabab(data, options);
+
+/**
+ * Get Value of all cusors
+ * @param  {[type]} opts [description]
+ * @return {[type]}      [description]
+ */
+function getAll(opts) {
+
+  return function () {
+
+    var output = {};
+
+    Object.keys(opts).forEach(function (key) {
+
+      var cursor = opts[key];
+
+      output[key] = cursor.get();
+    });
+
+    return output;
+  };
+}
+
+/**
+ * Helper method to get cursors, cursor data and listen to events
+ * @param  {[type]} opts [description]
+ * @return {[type]}      [description]
+ */
+function state(opts) {
+
+  var _cursors = {},
+      listen = undefined;
+
+  Object.keys(opts).forEach(function (key) {
+
+    var obj = opts[key];
+
+    var cursor = cursors.select.apply(cursors, obj);
+    _cursors[key] = cursor;
+
+    if (!listen) {
+      listen = cursor;
+    } else {
+      listen = listen.or(cursor);
+    }
+  });
+
+  var get = getAll(_cursors);
+
+  var output = Object.create(_cursors);
+  output.get = get;
+  output.listen = listen;
+  return output;
+}
+
+module.exports = state;
+
+},{"baobab":2,"react":169}],179:[function(require,module,exports){
+"use strict";
+
+var astro = require("fitsjs").astro;
+
+window.astro = astro; // Hack to stop fitsjs breaking with commonjs
+var FITS = astro.FITS; // Assign FITS
+
+module.exports = function LoadImage(file, callback) {
+
+  var output = {};
+
+  function getImageData(imageData) {
+    output.imageData = imageData;
+    output.isLoaded = true;
+    callback(output);
+  }
+
+  function onLoad(fits) {
+    if (fits.hdus.length > 0) {
+
+      var metaData = fits.getDataUnit();
+
+      output.metaData = metaData;
+      output.header = fits.getHeader();
+
+      //Assumes that each image only has one frame!
+      metaData.getFrame(0, getImageData);
+    }
+  }
+
+  var fits = new FITS(file, onLoad);
+};
+
+},{"fitsjs":13}],180:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var imageBuffer = _interopRequire(require("imageBuffer"));
+
+function RenderImage(image, scale, callback, isPreview, scaleValue) {
+
+  this.image = image;
+  this.width = image.metaData.width;
+  this.height = image.metaData.height;
+  this.scale = scale || 1;
+  this.scaleValue = scaleValue || 1000;
+  this.sample = Math.floor(1 / this.scale);
+  this.targetWidth = this.width * this.scale;
+  this.targetHeight = this.height * this.scale;
+
+  this.canvas = document.createElement("canvas");
+  this.canvas.width = this.targetWidth;
+  this.canvas.height = this.targetHeight;
+  this.ctx = this.canvas.getContext("2d");
+
+  this.imageData = this.ctx.createImageData(this.targetWidth, this.targetHeight);
+  this.buffer = new imageBuffer(this.imageData);
+
+  renderPixels.apply(this);
+
+  if (isPreview) {
+    callback(this.buffer);
+  } else {
+    callback(this.buffer.createImage());
+  }
+}
+
+function renderPixels() {
+  console.log("Start rendering pixels");
+  console.log("TODO: MAKE THIS ASYNC / NON BLOCKING");
+
+  var area = this.targetWidth * this.targetHeight,
+      min = 0,
+      max = this.scaleValue,
+      x = 0,
+      y = 0;
+
+  for (var i = 0; i < area; i++) {
+
+    var pixelIndex = x * this.sample + y * this.sample * this.width,
+        value = this.image.imageData[pixelIndex],
+        v = (value + min) / max * 255 || 0;
+
+    //clamp
+    v = v < 0 ? 0 : v;
+    v = v > 255 || isNaN(v) ? 255 : v;
+
+    var r = v,
+        g = v,
+        b = v,
+        a = 255;
+
+    // set the pixel, using original alpha
+    this.buffer.setPixel(i, r, g, b, a);
+
+    if (i % this.targetWidth === 0) {
+      x = 0;
+      y++;
+    } else {
+      x++;
+    }
+  }
+}
+
+module.exports = RenderImage;
+
+/**require! <[ imageBuffer ]>
+
+
+render-image = (image, scale, callback) ->
+
+  this.image = image
+  this.width = image.meta-data.width
+  this.height = image.meta-data.height
+  this.scale = scale || 1
+  this.sample = Math.floor(1 / this.scale)
+  this.target-width = this.width * this.scale
+  this.target-height = this.height * this.scale
+
+  this.canvas = document.create-element('canvas')
+  this.canvas.width = this.target-width
+  this.canvas.height = this.target-height
+  this.ctx = this.canvas.get-context('2d')
+
+  this.imageData = this.ctx.create-image-data(this.targetWidth, this.targetHeight)
+  this.buffer = new image-buffer(this.imageData)
+
+  render-pixels.apply this.
+
+  callback this.buffer.createImage!
+
+
+
+render-pixels = ->
+
+  console.log 'Start rendering pixels'
+  console.log 'TODO: MAKE THIS ASYNC / NON BLOCKING'
+
+  area = this.targetWidth * this.targetHeight
+  min = 0
+  max = 500
+  x = 0
+  y = 0
+
+  console.log area
+
+  for i from 0 to area by 1
+
+    pixelIndex = (x * this.sample) + ((y * this.sample) * this.width)
+    value = this.image.imageData[pixelIndex]
+    v = ((value + min) / max) * 255 || 0
+
+    #clamp
+    v = 0 if v < 0
+    v = 255 if v > 255 or isNaN v
+
+    r = v
+    g = v
+    b = v
+    a = 255
+
+    # set the pixel, using original alpha
+    this.buffer.setPixel i, r, g, b, a
+
+    if i % this.targetWidth == 0
+      x = 0
+      y++
+    else
+      x++
+
+  console.log 'Finished rendering pixels'
+
+module.exports = render-image
+**/
+
+},{"imageBuffer":14}]},{},[177]);

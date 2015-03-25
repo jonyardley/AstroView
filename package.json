@@ -10,7 +10,7 @@
     "http-server": "^0.7.5",
     "live-reload": "^1.1.0",
     "livereload": "^0.3.6",
-    "napa": "^1.2.0",
+    "napa": "1.2.0",
     "node-sass": "^2.0.1",
     "react": "^0.13.1",
     "watchify": "^2.3.0"
@@ -35,8 +35,8 @@
   "homepage": "https://github.com/jonyardley/AstroView",
   "napa": {
     "fitsjs": "astrojs/fitsjs",
-    "imageBuffer": "mattdesl/imagebuffer",
-    "fabric": "kangax/fabric.js"
+    "fabric": "kangax/fabric.js",
+    "imageBuffer": "mattdesl/imagebuffer"
   },
   "browser": {
     "fitsjs": "fitsjs/lib/fits"
