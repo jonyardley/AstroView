@@ -5,22 +5,21 @@
   "main": "index.js",
   "dependencies": {},
   "devDependencies": {
+    "babelify": "^5.0.4",
     "baobab": "^0.4.2",
     "http-server": "^0.7.5",
     "live-reload": "^1.1.0",
-    "liveify": "^2.0.0",
     "livereload": "^0.3.6",
-    "napa": "^1.2.0",
+    "napa": "1.2.0",
     "node-sass": "^2.0.1",
-    "prelude-ls": "^1.1.1",
-    "react": "^0.12.2",
+    "react": "^0.13.1",
     "watchify": "^2.3.0"
   },
   "scripts": {
     "install": "./node_modules/.bin/napa",
     "start": "npm run watch & npm run static & npm run sass & npm run reload",
     "reload": "./node_modules/.bin/livereload dist",
-    "watch": "./node_modules/.bin/watchify -t liveify -o dist/bundle.js src/main.ls",
+    "watch": "./node_modules/.bin/watchify src/main.jsx -t babelify -o dist/bundle.js",
     "static": "./node_modules/.bin/http-server dist",
     "sass": "./node_modules/.bin/node-sass -wr -o dist/styles src/styles/main.sass"
   },
@@ -36,8 +35,8 @@
   "homepage": "https://github.com/jonyardley/AstroView",
   "napa": {
     "fitsjs": "astrojs/fitsjs",
-    "imageBuffer": "mattdesl/imagebuffer",
-    "fabric": "kangax/fabric.js"
+    "fabric": "kangax/fabric.js",
+    "imageBuffer": "mattdesl/imagebuffer"
   },
   "browser": {
     "fitsjs": "fitsjs/lib/fits"
