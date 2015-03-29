@@ -1,6 +1,7 @@
 import state from '../state';
 import LoadImage from '../utils/loadImage';
 import RenderImage from '../utils/renderImage';
+import gradient from '../utils/gradient';
 
 let data = state({
   images: ['images'],
@@ -16,19 +17,56 @@ function getId (){
   return id; 
 }
 
+function getMax(imageData){
+  let length = imageData.length,
+      max = 0;
+  while(length--){
+    let value = imageData[length];
+    if(value > max){
+      max = value;
+    }
+  }
+  return max;
+}
+
 class Image {
   constructor(){
     this.id = getId()
     this.isLoaded = false;
     this.isDirty = true;
+      //create scalebar canvas
+    let el = document.createElement('canvas'),
+        ctx = el.getContext('2d');
+  
+    el.width = 500;
+    el.height = 1;
+
+    this.scaling = {
+      min: 0,
+      max: 0,
+      scaleMin: 0,
+      scaleMax: 1000,
+      colors: ['red', 'yellow', 'orange', 'white'],
+      ctx: ctx
+    };
+
   }
 }
 
 
 function imageLoaded(data) {
-  let image = images.select({id: this.id});
-  image.merge(data)
-  new RenderImage(image.get(), 1, imageRendered.bind(this));
+
+  let imageCursor = images.select({id: this.id});
+  imageCursor.merge(data);
+
+  var scaling = imageCursor.select('scaling');
+  scaling.set('max', getMax(data.imageData));
+
+  let image = imageCursor.get();
+
+  gradient.render(image.scaling);
+
+  new RenderImage(image, 1, imageRendered.bind(this));
 }
 
 function imageRendered(data) {
@@ -51,14 +89,25 @@ let ImageActions = {
     LoadImage(file, imageLoaded.bind(newImage));
   },
   removeImage: () => console.log('Remove Image'),
-  updateImage: () => console.log('Update Image'),
+  
+  updateImage: function(image){
+    let imageCursor = images.select({id: image.id});
+    imageCursor.edit(image);
+  },
 
   showPreview: function showPreview(image){
     data.previewImage.edit(image);
   },
 
-  renderPreview: function renderPreview(image, scale, scaleValue, callback){
-    new RenderImage(image, scale, callback, true, scaleValue); //true = isPreview
+  renderPreview: function renderPreview(image, scale, callback){
+    new RenderImage(image, scale, callback, true); //true = isPreview
+  },
+
+  updateScalingContext: function(image, ctx){
+    let imageCursor = images.select({id: image.id}),
+        scalingCursor = imageCursor.select('scaling');
+
+    scalingCursor.set('ctx', ctx);
   }
 
 };
@@ -68,3 +117,4 @@ module.exports = ImageActions;
 // DEV
 let imagePath = '/fits/656nmos.fits';
 ImageActions.addImage(imagePath);
+

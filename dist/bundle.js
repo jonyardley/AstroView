@@ -24895,6 +24895,8 @@ var LoadImage = _interopRequire(require("../utils/loadImage"));
 
 var RenderImage = _interopRequire(require("../utils/renderImage"));
 
+var gradient = _interopRequire(require("../utils/gradient"));
+
 var data = state({
   images: ["images"],
   previewImage: ["previewImage"]
@@ -24909,18 +24911,54 @@ function getId() {
   return id;
 }
 
+function getMax(imageData) {
+  var length = imageData.length,
+      max = 0;
+  while (length--) {
+    var value = imageData[length];
+    if (value > max) {
+      max = value;
+    }
+  }
+  return max;
+}
+
 var Image = function Image() {
   _classCallCheck(this, Image);
 
   this.id = getId();
   this.isLoaded = false;
   this.isDirty = true;
+  //create scalebar canvas
+  var el = document.createElement("canvas"),
+      ctx = el.getContext("2d");
+
+  el.width = 500;
+  el.height = 1;
+
+  this.scaling = {
+    min: 0,
+    max: 0,
+    scaleMin: 0,
+    scaleMax: 1000,
+    colors: ["red", "yellow", "orange", "white"],
+    ctx: ctx
+  };
 };
 
 function imageLoaded(data) {
-  var image = images.select({ id: this.id });
-  image.merge(data);
-  new RenderImage(image.get(), 1, imageRendered.bind(this));
+
+  var imageCursor = images.select({ id: this.id });
+  imageCursor.merge(data);
+
+  var scaling = imageCursor.select("scaling");
+  scaling.set("max", getMax(data.imageData));
+
+  var image = imageCursor.get();
+
+  gradient.render(image.scaling);
+
+  new RenderImage(image, 1, imageRendered.bind(this));
 }
 
 function imageRendered(data) {
@@ -24944,16 +24982,25 @@ var ImageActions = {
   removeImage: function () {
     return console.log("Remove Image");
   },
-  updateImage: function () {
-    return console.log("Update Image");
+
+  updateImage: function updateImage(image) {
+    var imageCursor = images.select({ id: image.id });
+    imageCursor.edit(image);
   },
 
   showPreview: function showPreview(image) {
     data.previewImage.edit(image);
   },
 
-  renderPreview: function renderPreview(image, scale, scaleValue, callback) {
-    new RenderImage(image, scale, callback, true, scaleValue); //true = isPreview
+  renderPreview: function renderPreview(image, scale, callback) {
+    new RenderImage(image, scale, callback, true); //true = isPreview
+  },
+
+  updateScalingContext: function updateScalingContext(image, ctx) {
+    var imageCursor = images.select({ id: image.id }),
+        scalingCursor = imageCursor.select("scaling");
+
+    scalingCursor.set("ctx", ctx);
   }
 
 };
@@ -24964,7 +25011,7 @@ module.exports = ImageActions;
 var imagePath = "/fits/656nmos.fits";
 ImageActions.addImage(imagePath);
 
-},{"../state":178,"../utils/loadImage":179,"../utils/renderImage":180}],172:[function(require,module,exports){
+},{"../state":179,"../utils/gradient":180,"../utils/loadImage":181,"../utils/renderImage":182}],172:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25096,7 +25143,7 @@ var App = (function (_React$Component) {
 
 module.exports = App;
 
-},{"../../state":178,"../preview/imagePreview.jsx":175,"../sidebar/sidebar.jsx":176,"react":169}],174:[function(require,module,exports){
+},{"../../state":179,"../preview/imagePreview.jsx":175,"../sidebar/sidebar.jsx":177,"react":169}],174:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25175,28 +25222,21 @@ var React = _interopRequire(require("react"));
 
 var ImageActions = _interopRequire(require("../../actions/imageActions"));
 
+var ScaleBar = _interopRequire(require("./scaleBar.jsx"));
+
 var canvasId = "previewCanvas",
-    size = 400,
-    defaultState = {
-	scaleValue: 500
-};
+    size = 400;
 
 var ImagePreview = (function (_React$Component) {
 	function ImagePreview(props) {
 		_classCallCheck(this, ImagePreview);
 
 		_get(Object.getPrototypeOf(ImagePreview.prototype), "constructor", this).call(this, props);
-		this.state = defaultState;
 	}
 
 	_inherits(ImagePreview, _React$Component);
 
 	_createClass(ImagePreview, {
-		resetState: {
-			value: function resetState() {
-				this.setState(defaultState);
-			}
-		},
 		componentDidMount: {
 			value: function componentDidMount() {
 				var el = document.getElementById(canvasId);
@@ -25206,47 +25246,26 @@ var ImagePreview = (function (_React$Component) {
 		},
 		componentDidUpdate: {
 			value: function componentDidUpdate(prevProps) {
-
-				if (prevProps.image.id !== this.props.image.id) {
-					console.info("TODO: WORK OUT UPDATE LOGIC!");
-					this.renderPreview();
-				}
-			}
-		},
-		componentWillReceiveProps: {
-			value: function componentWillReceiveProps(nextProps) {
-				console.info("TODO: GET STATE FROM PROPS");
-				this.setState(defaultState);
+				console.info("TODO: WORK OUT UPDATE LOGIC!");
+				this.renderPreview();
 			}
 		},
 		renderPreview: {
 			value: function renderPreview() {
 				var scale = size / this.props.image.metaData.width;
-
-				ImageActions.renderPreview(this.props.image, scale, this.state.scaleValue, (function (data) {
+				ImageActions.renderPreview(this.props.image, scale, (function (data) {
 					this.ctx.putImageData(data.imageData, 0, 0);
 				}).bind(this));
-			}
-		},
-		updateScale: {
-			value: function updateScale(value) {
-				this.setState({ scaleValue: value });
-				this.renderPreview();
 			}
 		},
 		render: {
 			value: function render() {
 
-				var valueLink = {
-					value: this.state.scaleValue,
-					requestChange: this.updateScale.bind(this)
-				};
-
 				return React.createElement(
 					"div",
 					{ className: "preview" },
 					React.createElement("canvas", { width: size, height: size, className: "preview__canvas", id: canvasId }),
-					React.createElement("input", { type: "range", min: "0", max: "10000", valueLink: valueLink })
+					React.createElement(ScaleBar, { image: this.props.image })
 				);
 			}
 		}
@@ -25255,45 +25274,69 @@ var ImagePreview = (function (_React$Component) {
 	return ImagePreview;
 })(React.Component);
 
+/**
+ * 
+ * <input type="range" min="0" max="10000" valueLink={valueLink} />
+ */
+
 module.exports = ImagePreview;
 
-/**require! react:React
-require! '../../common/globalEvents.ls'
+},{"../../actions/imageActions":171,"./scaleBar.jsx":176,"react":169}],176:[function(require,module,exports){
+"use strict";
 
-d = React.DOM
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-# Class
-ImagePreview = React.createFactory React.createClass do
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-	display-name: 'ImagePreview'
+var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
 
-	getInitialState: ->
-		visible: false,
-		image: null
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 
-	componentDidMount: ->
-		globalEvents.on 'showPreview', @showPreview
-		globalEvents.on 'hidePreview', @hidePreview
-	
-	componentWillUnmount: ->
-		globalEvents.off 'showPreview', @showPreview
-		globalEvents.off 'hidePreview', @hidePreview
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
-	showPreview: (image) -> @setState { visible: true, image: image }
+var React = _interopRequire(require("react"));
 
-	hidePreview: -> @setState visible: false
+var gradient = _interopRequire(require("../../utils/gradient"));
 
-	render: ->
-		d.div null, if @state.visible
-			d.div onClick: @hidePreview,
-				d.div null,
-					d.h2 null, 'PREVIEW'
-					d.h3 null, 'image-id: ' + @state.image.id
+var ImageActions = _interopRequire(require("../../actions/imageActions"));
 
+var ScaleBar = (function (_React$Component) {
+  function ScaleBar(props) {
+    _classCallCheck(this, ScaleBar);
 
-module.exports = ImagePreview**/
+    _get(Object.getPrototypeOf(ScaleBar.prototype), "constructor", this).call(this, props);
+  }
 
-},{"../../actions/imageActions":171,"react":169}],176:[function(require,module,exports){
+  _inherits(ScaleBar, _React$Component);
+
+  _createClass(ScaleBar, {
+    componentDidMount: {
+      value: function componentDidMount() {
+        this.canvas = document.getElementById("scaleBar");
+        this.ctx = this.canvas.getContext("2d");
+        this.ctx.drawImage(this.props.image.scaling.ctx.canvas, 0, 0);
+
+        //ImageActions.updateScalingContext(this.props.image, this.ctx);
+        //gradient.render(this.props.);
+      }
+    },
+    render: {
+      value: function render() {
+        return React.createElement(
+          "div",
+          null,
+          React.createElement("canvas", { id: "scaleBar", className: "preview__scale-bar", height: 1, width: 500, style: { height: 30, width: 500 } })
+        );
+      }
+    }
+  });
+
+  return ScaleBar;
+})(React.Component);
+
+module.exports = ScaleBar;
+
+},{"../../actions/imageActions":171,"../../utils/gradient":180,"react":169}],177:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25347,7 +25390,7 @@ var Sidebar = (function (_React$Component) {
 
 module.exports = Sidebar;
 
-},{"../add-image/addImage.jsx":172,"../image-thumb/imageThumb.jsx":174,"react":169}],177:[function(require,module,exports){
+},{"../add-image/addImage.jsx":172,"../image-thumb/imageThumb.jsx":174,"react":169}],178:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25358,7 +25401,7 @@ var App = _interopRequire(require("./components/app/app.jsx"));
 
 React.render(React.createElement(App, null), document.getElementById("main"));
 
-},{"./components/app/app.jsx":173,"react":169}],178:[function(require,module,exports){
+},{"./components/app/app.jsx":173,"react":169}],179:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25438,7 +25481,43 @@ function state(opts) {
 
 module.exports = state;
 
-},{"baobab":2,"react":169}],179:[function(require,module,exports){
+},{"baobab":2,"react":169}],180:[function(require,module,exports){
+"use strict";
+
+function render(opts) {
+
+  var ctx = opts.ctx,
+      width = ctx.canvas.width,
+      height = ctx.canvas.height,
+      colors = opts.colors,
+      min = opts.min,
+      max = opts.max,
+      scaleMin = opts.scaleMin,
+      scaleMax = opts.scaleMax,
+      scaleMin_n = normalize(opts.scaleMin, min, max, width),
+      scaleMax_n = normalize(opts.scaleMax, min, max, width),
+      stop = 1 / (colors.length - 1);
+
+  var grad = ctx.createLinearGradient(scaleMin_n, 0, scaleMax_n, 0);
+
+  colors.forEach(function (color, index, list) {
+    var colorStop = stop * index;
+    grad.addColorStop(colorStop, color);
+  });
+
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, width, height);
+
+  console.log(grad, width, height);
+}
+
+function normalize(v, min, max, newMax) {
+  return (v - min) * (newMax / (max - min));
+}
+
+module.exports = { render: render };
+
+},{}],181:[function(require,module,exports){
 "use strict";
 
 var astro = require("fitsjs").astro;
@@ -25472,20 +25551,23 @@ module.exports = function LoadImage(file, callback) {
   var fits = new FITS(file, onLoad);
 };
 
-},{"fitsjs":13}],180:[function(require,module,exports){
+},{"fitsjs":13}],182:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
 var imageBuffer = _interopRequire(require("imageBuffer"));
 
-function RenderImage(image, scale, callback, isPreview, scaleValue) {
+var MPV = 255;
+
+function RenderImage(image, scale, callback, isPreview) {
 
   this.image = image;
   this.width = image.metaData.width;
   this.height = image.metaData.height;
   this.scale = scale || 1;
-  this.scaleValue = scaleValue || 1000;
+  this.scaleMin = image.scaling.scaleMin;
+  this.scaleMax = image.scaling.scaleMax;
   this.sample = Math.floor(1 / this.scale);
   this.targetWidth = this.width * this.scale;
   this.targetHeight = this.height * this.scale;
@@ -25508,111 +25590,50 @@ function RenderImage(image, scale, callback, isPreview, scaleValue) {
 }
 
 function renderPixels() {
-  console.log("Start rendering pixels");
-  console.log("TODO: MAKE THIS ASYNC / NON BLOCKING");
 
   var area = this.targetWidth * this.targetHeight,
-      min = 0,
-      max = this.scaleValue,
-      x = 0,
-      y = 0;
+      min = this.scaleMin,
+      max = this.scaleMax,
+      x = this.width,
+      y = 0,
+      ctx = this.image.scaling.ctx,
+      ctxWidth = ctx.canvas.width;
+
+  var pixelValues = [];
+
+  for (var i = 0; i < ctxWidth; i++) {
+    pixelValues.push(ctx.getImageData(i, 0, 1, 1).data);
+  }
 
   for (var i = 0; i < area; i++) {
 
     var pixelIndex = x * this.sample + y * this.sample * this.width,
         value = this.image.imageData[pixelIndex],
-        v = (value + min) / max * 255 || 0;
-
+        v = (value - min) * (pixelValues.length / (max - min)) || 0;
+    v = Math.floor(v);
     //clamp
     v = v < 0 ? 0 : v;
-    v = v > 255 || isNaN(v) ? 255 : v;
+    v = v > pixelValues.length - 1 || isNaN(v) ? pixelValues.length - 1 : v;
+    var data = pixelValues[v];
 
-    var r = v,
-        g = v,
-        b = v,
-        a = 255;
+    var r = data[0],
+        g = data[1],
+        b = data[2],
+        a = data[3];
 
     // set the pixel, using original alpha
-    this.buffer.setPixel(i, r, g, b, a);
+    this.buffer.setPixel(area - i, r, g, b, a);
 
+    //if where at the start of a new row...
     if (i % this.targetWidth === 0) {
-      x = 0;
-      y++;
+      x = this.width; //reset x
+      y++; // increase the row value
     } else {
-      x++;
+      x--; // move to next column
     }
   }
 }
 
 module.exports = RenderImage;
 
-/**require! <[ imageBuffer ]>
-
-
-render-image = (image, scale, callback) ->
-
-  this.image = image
-  this.width = image.meta-data.width
-  this.height = image.meta-data.height
-  this.scale = scale || 1
-  this.sample = Math.floor(1 / this.scale)
-  this.target-width = this.width * this.scale
-  this.target-height = this.height * this.scale
-
-  this.canvas = document.create-element('canvas')
-  this.canvas.width = this.target-width
-  this.canvas.height = this.target-height
-  this.ctx = this.canvas.get-context('2d')
-
-  this.imageData = this.ctx.create-image-data(this.targetWidth, this.targetHeight)
-  this.buffer = new image-buffer(this.imageData)
-
-  render-pixels.apply this.
-
-  callback this.buffer.createImage!
-
-
-
-render-pixels = ->
-
-  console.log 'Start rendering pixels'
-  console.log 'TODO: MAKE THIS ASYNC / NON BLOCKING'
-
-  area = this.targetWidth * this.targetHeight
-  min = 0
-  max = 500
-  x = 0
-  y = 0
-
-  console.log area
-
-  for i from 0 to area by 1
-
-    pixelIndex = (x * this.sample) + ((y * this.sample) * this.width)
-    value = this.image.imageData[pixelIndex]
-    v = ((value + min) / max) * 255 || 0
-
-    #clamp
-    v = 0 if v < 0
-    v = 255 if v > 255 or isNaN v
-
-    r = v
-    g = v
-    b = v
-    a = 255
-
-    # set the pixel, using original alpha
-    this.buffer.setPixel i, r, g, b, a
-
-    if i % this.targetWidth == 0
-      x = 0
-      y++
-    else
-      x++
-
-  console.log 'Finished rendering pixels'
-
-module.exports = render-image
-**/
-
-},{"imageBuffer":14}]},{},[177]);
+},{"imageBuffer":14}]},{},[178]);
