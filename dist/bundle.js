@@ -24940,8 +24940,8 @@ var Image = function Image() {
     min: 0,
     max: 0,
     scaleMin: 0,
-    scaleMax: 1000,
-    colors: ["red", "yellow", "orange", "white"],
+    scaleMax: 500,
+    colors: ["black", "red", "yellow"],
     ctx: ctx
   };
 };
@@ -24996,11 +24996,12 @@ var ImageActions = {
     new RenderImage(image, scale, callback, true); //true = isPreview
   },
 
-  updateScalingContext: function updateScalingContext(image, ctx) {
+  updateScaling: function updateScaling(image, min, max) {
     var imageCursor = images.select({ id: image.id }),
-        scalingCursor = imageCursor.select("scaling");
-
-    scalingCursor.set("ctx", ctx);
+        scaling = imageCursor.get().scaling;
+    scaling.scaleMin = min;
+    scaling.scaleMax = max;
+    imageCursor.select("scaling").edit(scaling);
   }
 
 };
@@ -25232,6 +25233,17 @@ var ImagePreview = (function (_React$Component) {
 		_classCallCheck(this, ImagePreview);
 
 		_get(Object.getPrototypeOf(ImagePreview.prototype), "constructor", this).call(this, props);
+		this.state = {
+			isMouseDown: false,
+			lastPosition: {
+				x: 0,
+				y: 0
+			},
+			offset: {
+				x: 0,
+				y: 0
+			}
+		};
 	}
 
 	_inherits(ImagePreview, _React$Component);
@@ -25239,14 +25251,23 @@ var ImagePreview = (function (_React$Component) {
 	_createClass(ImagePreview, {
 		componentDidMount: {
 			value: function componentDidMount() {
+				//Attach mouse up events to
+				document.addEventListener("mousedown", this.setMouseDown.bind(this));
+				document.addEventListener("mouseup", this.setMouseUp.bind(this));
+
 				var el = document.getElementById(canvasId);
 				this.ctx = el.getContext("2d");
 				this.renderPreview();
 			}
 		},
+		componentWillUnmount: {
+			value: function componentWillUnmount() {
+				document.removeEventListener("mousedown", this.setMouseDown.bind(this));
+				document.removeEventListener("mouseup", this.setMouseUp.bind(this));
+			}
+		},
 		componentDidUpdate: {
-			value: function componentDidUpdate(prevProps) {
-				console.info("TODO: WORK OUT UPDATE LOGIC!");
+			value: function componentDidUpdate() {
 				this.renderPreview();
 			}
 		},
@@ -25258,13 +25279,50 @@ var ImagePreview = (function (_React$Component) {
 				}).bind(this));
 			}
 		},
+		mouseMove: {
+			value: function mouseMove(e) {
+				if (this.state.isMouseDown) {
+
+					var x = this.state.lastPosition.x,
+					    y = this.state.lastPosition.y,
+					    deltaX = e.clientX - this.state.lastPosition.x,
+					    deltaY = e.clientY - this.state.lastPosition.y,
+					    min = this.props.image.scaling.scaleMin,
+					    max = this.props.image.scaling.scaleMax;
+
+					//adjust x
+					min = min + deltaX;
+					max = max + deltaX;
+
+					//adust y
+					min = min - deltaY;
+					max = max + deltaY;
+
+					this.setState({ lastPosition: { x: e.clientX, y: e.clientY } });
+					ImageActions.updateScaling(this.props.image, min, max);
+				}
+			}
+		},
+		setMouseDown: {
+			value: function setMouseDown(e) {
+				var lastPosition = { x: e.clientX, y: e.clientY };
+				var isMouseDown = true;
+				this.setState({ isMouseDown: isMouseDown, lastPosition: lastPosition });
+			}
+		},
+		setMouseUp: {
+			value: function setMouseUp(e) {
+				this.setState({ isMouseDown: false });
+			}
+		},
 		render: {
 			value: function render() {
 
 				return React.createElement(
 					"div",
 					{ className: "preview" },
-					React.createElement("canvas", { width: size, height: size, className: "preview__canvas", id: canvasId }),
+					React.createElement("canvas", { width: size, height: size, className: "preview__canvas", id: canvasId,
+						onMouseMove: this.mouseMove.bind(this) }),
 					React.createElement(ScaleBar, { image: this.props.image })
 				);
 			}
@@ -25273,11 +25331,6 @@ var ImagePreview = (function (_React$Component) {
 
 	return ImagePreview;
 })(React.Component);
-
-/**
- * 
- * <input type="range" min="0" max="10000" valueLink={valueLink} />
- */
 
 module.exports = ImagePreview;
 
@@ -25315,9 +25368,12 @@ var ScaleBar = (function (_React$Component) {
         this.canvas = document.getElementById("scaleBar");
         this.ctx = this.canvas.getContext("2d");
         this.ctx.drawImage(this.props.image.scaling.ctx.canvas, 0, 0);
-
-        //ImageActions.updateScalingContext(this.props.image, this.ctx);
-        //gradient.render(this.props.);
+      }
+    },
+    componentDidUpdate: {
+      value: function componentDidUpdate() {
+        gradient.render(this.props.image.scaling);
+        this.ctx.drawImage(this.props.image.scaling.ctx.canvas, 0, 0);
       }
     },
     render: {
@@ -25507,8 +25563,6 @@ function render(opts) {
 
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, width, height);
-
-  console.log(grad, width, height);
 }
 
 function normalize(v, min, max, newMax) {

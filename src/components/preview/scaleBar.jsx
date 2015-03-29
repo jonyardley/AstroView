@@ -12,9 +12,11 @@ class ScaleBar extends React.Component {
     this.canvas = document.getElementById('scaleBar');
     this.ctx = this.canvas.getContext('2d');
     this.ctx.drawImage(this.props.image.scaling.ctx.canvas,0,0);
+  }
 
-    //ImageActions.updateScalingContext(this.props.image, this.ctx);
-    //gradient.render(this.props.);
+  componentDidUpdate(){
+    gradient.render(this.props.image.scaling);
+    this.ctx.drawImage(this.props.image.scaling.ctx.canvas,0,0);
   }
 
   render(){

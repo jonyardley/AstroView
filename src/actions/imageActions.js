@@ -45,8 +45,8 @@ class Image {
       min: 0,
       max: 0,
       scaleMin: 0,
-      scaleMax: 1000,
-      colors: ['red', 'yellow', 'orange', 'white'],
+      scaleMax: 500,
+      colors: ['black', 'red', 'yellow'],
       ctx: ctx
     };
 
@@ -103,11 +103,12 @@ let ImageActions = {
     new RenderImage(image, scale, callback, true); //true = isPreview
   },
 
-  updateScalingContext: function(image, ctx){
+  updateScaling: function(image, min, max){
     let imageCursor = images.select({id: image.id}),
-        scalingCursor = imageCursor.select('scaling');
-
-    scalingCursor.set('ctx', ctx);
+        scaling = imageCursor.get().scaling;
+    scaling.scaleMin = min;
+    scaling.scaleMax = max;
+    imageCursor.select('scaling').edit(scaling);
   }
 
 };
