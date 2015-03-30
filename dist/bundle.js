@@ -25009,12 +25009,134 @@ var ImageActions = {
 
 module.exports = ImageActions;
 
-// DEV
-//let imagePath = 'fits/656nmos.fits';
-var imagePath = "fits/6008B000.fits";
-ImageActions.addImage(imagePath);
+},{"../state":180,"../utils/gradient":182,"../utils/loadImage":183,"../utils/renderImage":184}],172:[function(require,module,exports){
+"use strict";
 
-},{"../state":179,"../utils/gradient":180,"../utils/loadImage":181,"../utils/renderImage":182}],172:[function(require,module,exports){
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var state = _interopRequire(require("../state"));
+
+var LoadImage = _interopRequire(require("../utils/loadImage"));
+
+var RenderImage = _interopRequire(require("../utils/renderImage"));
+
+var gradient = _interopRequire(require("../utils/gradient"));
+
+var data = state({
+  images: ["images"],
+  previewImage: ["previewImage"]
+});
+var images = data.images;
+var previewImage = data.prevewImage;
+var _id = 0;
+
+function getId() {
+  var id = _id;
+  _id++;
+  return id;
+}
+
+function getMax(imageData) {
+  var length = imageData.length,
+      max = 0;
+  while (length--) {
+    var value = imageData[length];
+    if (value > max) {
+      max = value;
+    }
+  }
+  return max;
+}
+
+var Image = function Image() {
+  _classCallCheck(this, Image);
+
+  this.id = getId();
+  this.isLoaded = false;
+  this.isDirty = true;
+  //create scalebar canvas
+  var el = document.createElement("canvas"),
+      ctx = el.getContext("2d");
+
+  el.width = 500;
+  el.height = 1;
+
+  this.scaling = {
+    min: 0,
+    max: 0,
+    scaleMin: 0,
+    scaleMax: 0,
+    colors: ["black", "red", "orange", "yellow", "white"],
+    ctx: ctx
+  };
+};
+
+function imageLoaded(data) {
+
+  var imageCursor = images.select({ id: this.id });
+  imageCursor.merge(data);
+
+  var scaling = imageCursor.select("scaling");
+  scaling.set("max", getMax(data.imageData));
+  scaling.set("scaleMax", getMax(data.imageData));
+
+  var image = imageCursor.get();
+
+  gradient.render(image.scaling);
+
+  new RenderImage(image, 1, imageRendered.bind(this));
+}
+
+function imageRendered(data) {
+  var image = images.select({ id: this.id });
+  image.merge({
+    imgRaw: data,
+    isDirty: false
+  });
+
+  //DEV
+  ImageActions.showPreview(image.get());
+}
+
+var ImageActions = {
+
+  addImage: function addImage(file) {
+    var newImage = new Image();
+    images.push(newImage);
+    LoadImage(file, imageLoaded.bind(newImage));
+  },
+  removeImage: function () {
+    return console.log("Remove Image");
+  },
+
+  updateImage: function updateImage(image) {
+    var imageCursor = images.select({ id: image.id });
+    imageCursor.edit(image);
+  },
+
+  showPreview: function showPreview(image) {
+    data.previewImage.edit(image);
+  },
+
+  renderPreview: function renderPreview(image, scale, callback) {
+    new RenderImage(image, scale, callback, true); //true = isPreview
+  },
+
+  updateScaling: function updateScaling(image, min, max) {
+    var imageCursor = images.select({ id: image.id }),
+        scaling = imageCursor.get().scaling;
+    scaling.scaleMin = min;
+    scaling.scaleMax = max;
+    imageCursor.select("scaling").edit(scaling);
+  }
+
+};
+
+module.exports = ImageActions;
+
+},{"../state":180,"../utils/gradient":182,"../utils/loadImage":183,"../utils/renderImage":184}],173:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25068,7 +25190,7 @@ var AddImage = (function (_React$Component) {
 module.exports = AddImage;
 /**Load Props here**/
 
-},{"../../actions/imageActions":171,"react":169}],173:[function(require,module,exports){
+},{"../../actions/imageActions":172,"react":169}],174:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25146,7 +25268,7 @@ var App = (function (_React$Component) {
 
 module.exports = App;
 
-},{"../../state":179,"../preview/imagePreview.jsx":175,"../sidebar/sidebar.jsx":177,"react":169}],174:[function(require,module,exports){
+},{"../../state":180,"../preview/imagePreview.jsx":176,"../sidebar/sidebar.jsx":178,"react":169}],175:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25208,7 +25330,7 @@ var ImageThumb = (function (_React$Component) {
 
 module.exports = ImageThumb;
 
-},{"../../actions/imageActions":171,"react":169}],175:[function(require,module,exports){
+},{"../../actions/imageActions":172,"react":169}],176:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25338,7 +25460,7 @@ var ImagePreview = (function (_React$Component) {
 
 module.exports = ImagePreview;
 
-},{"../../actions/imageActions":171,"./scaleBar.jsx":176,"react":169}],176:[function(require,module,exports){
+},{"../../actions/imageActions":172,"./scaleBar.jsx":177,"react":169}],177:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25396,7 +25518,7 @@ var ScaleBar = (function (_React$Component) {
 
 module.exports = ScaleBar;
 
-},{"../../actions/imageActions":171,"../../utils/gradient":180,"react":169}],177:[function(require,module,exports){
+},{"../../actions/imageActions":172,"../../utils/gradient":182,"react":169}],178:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25450,7 +25572,7 @@ var Sidebar = (function (_React$Component) {
 
 module.exports = Sidebar;
 
-},{"../add-image/addImage.jsx":172,"../image-thumb/imageThumb.jsx":174,"react":169}],178:[function(require,module,exports){
+},{"../add-image/addImage.jsx":173,"../image-thumb/imageThumb.jsx":175,"react":169}],179:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25459,9 +25581,13 @@ var React = _interopRequire(require("react"));
 
 var App = _interopRequire(require("./components/app/app.jsx"));
 
-React.render(React.createElement(App, null), document.getElementById("main"));
+React.render(React.createElement(App, null), document.getElementById("main"), function () {
+  if (window.location.hostname) {
+    require("./utils/dev");
+  };
+});
 
-},{"./components/app/app.jsx":173,"react":169}],179:[function(require,module,exports){
+},{"./components/app/app.jsx":174,"./utils/dev":181,"react":169}],180:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25541,7 +25667,21 @@ function state(opts) {
 
 module.exports = state;
 
-},{"baobab":2,"react":169}],180:[function(require,module,exports){
+},{"baobab":2,"react":169}],181:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var ImageActions = _interopRequire(require("../actions/ImageActions"));
+
+console.log("--- DEV MODE ---");
+
+// DEV
+//let imagePath = 'fits/656nmos.fits';
+var imagePath = "fits/6008B000.fits";
+ImageActions.addImage(imagePath);
+
+},{"../actions/ImageActions":171}],182:[function(require,module,exports){
 "use strict";
 
 function render(opts) {
@@ -25575,7 +25715,7 @@ function normalize(v, min, max, newMax) {
 
 module.exports = { render: render };
 
-},{}],181:[function(require,module,exports){
+},{}],183:[function(require,module,exports){
 "use strict";
 
 var astro = require("fitsjs").astro;
@@ -25609,7 +25749,7 @@ module.exports = function LoadImage(file, callback) {
   var fits = new FITS(file, onLoad);
 };
 
-},{"fitsjs":13}],182:[function(require,module,exports){
+},{"fitsjs":13}],184:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25694,4 +25834,4 @@ function renderPixels() {
 
 module.exports = RenderImage;
 
-},{"imageBuffer":14}]},{},[178]);
+},{"imageBuffer":14}]},{},[179]);

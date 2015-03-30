@@ -20,7 +20,7 @@
     "reload": "./node_modules/.bin/livereload dist",
     "watch": "./node_modules/.bin/watchify src/main.jsx -t babelify -o dist/bundle.js",
     "static": "./node_modules/.bin/http-server dist",
-    "sass": "./node_modules/.bin/stylus -w -o dist/styles src/styles/main.styl"
+    "sass": "./node_modules/.bin/stylus -w -r -o dist/styles src/styles/main.styl"
   },
   "repository": {
     "type": "git",
