@@ -20,12 +20,13 @@ class ImagePreview extends React.Component {
 				y:0
 			}
 		};
+		this.hasScalingChanged = (this.props.image.imgRaw) ? false : true;
 	}
 
 	componentDidMount(){
 		//Attach mouse up events to 
-		document.addEventListener('mousedown', this.setMouseDown.bind(this));
-		document.addEventListener('mouseup', this.setMouseUp.bind(this));
+		document.body.onmousedown = this.setMouseDown.bind(this);
+		document.body.onmouseup = this.setMouseUp.bind(this);
 
 		let el = document.getElementById(canvasId);
 		this.ctx = el.getContext('2d');
@@ -33,12 +34,15 @@ class ImagePreview extends React.Component {
 	}
 
 	componentWillUnmount(){
-		document.removeEventListener('mousedown', this.setMouseDown.bind(this));
-		document.removeEventListener('mouseup', this.setMouseUp.bind(this));
+		document.body.onmousedown = null;
+		document.body.onmouseup = null;
 	}
 
 	componentDidUpdate(prevProps){
 		this.renderPreview();
+		if(!this.hasScalingChanged){
+			this.hasScalingChanged = true;
+		}
 	}
 
 	renderPreview(){
@@ -46,10 +50,6 @@ class ImagePreview extends React.Component {
 		ImageActions.renderPreview(this.props.image, scale, function(data){
 			this.ctx.putImageData(data.imageData,0,0);
 		}.bind(this));
-	}
-
-	componentDidUpdate(){
-		this.renderPreview();
 	}
 
 	mouseMove(e){
@@ -78,22 +78,35 @@ class ImagePreview extends React.Component {
 	}
 
 	setMouseDown(e){
-		let lastPosition = {x:e.clientX, y: e.clientY};
-		let isMouseDown = true;
-		this.setState({isMouseDown, lastPosition});
+		if(e.target.id == canvasId){
+			let lastPosition = {x:e.clientX, y: e.clientY};
+			let isMouseDown = true;
+			this.setState({isMouseDown, lastPosition});
+		}
 	}
 
 	setMouseUp(e){
-		this.setState({isMouseDown: false});
+		if(this.state.isMouseDown){
+			this.setState({isMouseDown: false});
+		}
+	}
+
+	save(){
+		if(this.hasScalingChanged){
+			ImageActions.updateImage(this.props.image);
+		}
+		ImageActions.showPreview(null);
 	}
 
 	render(){
 
 		return (
 			<div className="preview">
+			<h2>{this.props.image.name}</h2>
 				<canvas width={size} height={size} className="preview__canvas" id={canvasId}
 						onMouseMove={this.mouseMove.bind(this)} />
 				<ScaleBar image={this.props.image}/>
+				<button onClick={this.save.bind(this)}>Done</button>
 			</div>
 		);
 	}

@@ -1,8 +1,17 @@
-import ImageActions from '../actions/ImageActions';
+import ImageActions from '../actions/imageActions';
 
-console.log('--- DEV MODE ---');
+function initDev(){
 
-// DEV
-//let imagePath = 'fits/656nmos.fits';
-let imagePath = 'fits/6008B000.fits';
-ImageActions.addImage(imagePath);
+  console.log('--- DEV MODE ---');
+
+  // DEV
+  //let imagePath = 'fits/656nmos.fits';
+  let imagePath = 'fits/6008B000.fits';
+  ImageActions.addImage(imagePath);
+
+}
+
+module.exports = initDev;
+
+
+

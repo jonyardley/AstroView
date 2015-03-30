@@ -1,12 +1,8 @@
 .add-image__button
-  display: block
+  display: inline-block
   position: relative
   overflow: hidden
   cursor: pointer !important
-
-.add-image--sidebar
-  text-align: center
-  margin: 20px 0
 
 .add-image__input
   cursor: pointer !important
@@ -16,3 +12,30 @@
   left: 0
   right: 0
   opacity: 0.001
+  
+.add-image--sidebar
+  text-align: center
+  
+  button.add-image__button
+    background: $t-grey
+    
+  i
+    font-size: 13px
+    padding: $padding-small
+  
+.add-image--intro
+  
+  button.add-image__button
+    margin-top: 8px;
+    background: $t-secondary
+    color: #FFF
+  
+  i
+    padding: $padding-small
+    font-size: 15px
+
+  .add-image__label
+    font-size: 18px
+    padding-right: $padding-small
+    font-weight: bold
+  

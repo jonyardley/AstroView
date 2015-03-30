@@ -15,11 +15,13 @@ class Sidebar extends React.Component {
       )
     });
 
+    let addImage = this.props.images < 1 ? '' : <AddImage classMod="sidebar" /> ;
+
     return (
       <div className="sidebar">
         <div className="sidebar__logo"></div>
         {images}
-        <AddImage/>
+        {addImage}
       </div>
     )
   }

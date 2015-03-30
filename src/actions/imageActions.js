@@ -30,8 +30,9 @@ function getMax(imageData){
 }
 
 class Image {
-  constructor(){
-    this.id = getId()
+  constructor(name){
+    this.id = getId();
+    this.name = name;
     this.isLoaded = false;
     this.isDirty = true;
       //create scalebar canvas
@@ -66,14 +67,16 @@ function imageLoaded(data) {
   let image = imageCursor.get();
 
   gradient.render(image.scaling);
+  
+  let scale = Math.floor(60/image.metaData.width);
 
-  new RenderImage(image, 1, imageRendered.bind(this));
+  new RenderImage(image, scale, thumbRendered.bind(this));
 }
 
-function imageRendered(data) {
+function thumbRendered(data) {
   let image = images.select({id: this.id});
   image.merge({
-    imgRaw: data,
+    imgThumb: data,
     isDirty: false
   });
 
@@ -81,19 +84,43 @@ function imageRendered(data) {
   ImageActions.showPreview(image.get());
 }
 
+function getFileName(file){
+
+  if(typeof file == 'string'){
+    return file;
+  }else{
+    return file.name;
+  }
+
+}
+
 
 let ImageActions = {
 
   addImage: function addImage(file){
-    let newImage = new Image();
+    let newImage = new Image(getFileName(file));
     images.push(newImage);
     LoadImage(file, imageLoaded.bind(newImage));
   },
   removeImage: () => console.log('Remove Image'),
   
   updateImage: function(image){
-    let imageCursor = images.select({id: image.id});
-    imageCursor.edit(image);
+    let imageCursor = images.select({id: image.id}),
+    image = imageCursor.get();
+
+    imageCursor.merge({isDirty: true});
+
+    let scale = Math.floor(60/image.metaData.width);
+    new RenderImage(image, scale, function(thumb){
+      new RenderImage(image, 1, function(raw){
+        imageCursor.merge({
+          imgThumb: thumb,
+          imgRaw: raw,
+          isDirty: false
+        });
+      });
+    });
+
   },
 
   showPreview: function showPreview(image){

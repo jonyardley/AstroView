@@ -14,9 +14,9 @@ class ImageThumb extends React.Component {
         imageThumb;
 
     if (loading){
-      imageThumb = <span className="thumb__image">loading...</span>;
+      imageThumb = <div className="thumb__image"><div className="image__thumb--loading"></div></div>;
     }else{
-      imageThumb = <img src={image.imgRaw.src} style={{width: 50, height: 50}} className="thumb__image" onClick={showPreview.bind(this)}/>;
+      imageThumb = <img src={image.imgThumb.src} className="thumb__image" onClick={showPreview.bind(this)}/>;
     }
 
     return(

@@ -2,6 +2,8 @@ import React from 'react';
 import state from '../../state';
 import Sidebar from '../sidebar/sidebar.jsx';
 import ImagePreview from '../preview/imagePreview.jsx'
+import Intro from '../intro/intro.jsx';
+import Stage from '../stage/stage.jsx';
 
 var data = state({
   images: ['images'],
@@ -28,12 +30,20 @@ class App extends React.Component {
     let images = this.state.images,
         previewImage = this.state.previewImage;
 
-    let imagePreview = previewImage ? <ImagePreview image={previewImage}/> : '';
+    let imagePreview = previewImage ? <ImagePreview image={previewImage} key={previewImage.id}/> : '' ,
+        stageContents = images.length ? <Stage image={this.state.images[0]}/> : <Intro /> ;
 
     return (
       <div className="main-inner">
-        <Sidebar images={images} />
+        
+        <div className="stage-wrapper">
+          {stageContents}
+        </div>
+
         {imagePreview}
+
+        <Sidebar images={images} />
+
       </div>
     )
   }

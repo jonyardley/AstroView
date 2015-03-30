@@ -936,6 +936,52 @@ table {
 .gi-menu-up:before {
   content: "\e260";
 }
+@import url("http://fonts.googleapis.com/css?family=Monda:400,700");
+body {
+  font-family: 'Monda', 'Arial', 'Sans-serif';
+  color: #e6e6e6;
+}
+h1 {
+  font-size: 60px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+h2 {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+h3 {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+h4 {
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+a,
+a:link,
+a:visited,
+a:active {
+  color: #3040ee;
+  text-decoration: none;
+}
+a:hover,
+a:link:hover,
+a:visited:hover,
+a:active:hover {
+  text-decoration: underline;
+}
+p {
+  margin-bottom: 12px;
+}
+.panel {
+  padding: 32px;
+  background: #505050;
+  margin: 0 20px 20px 20px;
+}
 .button,
 button {
   display: block;
@@ -954,17 +1000,28 @@ button:hover {
 button:active {
   background: #bbb;
 }
+.stage-wrapper {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 61px;
+  bottom: 0;
+}
 #main {
   position: absolute;
   top: 0;
   bottom: 0;
   right: 0;
   left: 0;
-  background: #222;
+  background: #202020;
+}
+.stage-wrapper {
+  background: url("../img/Helix_Nebula.png") no-repeat center center;
+  background-size: cover;
 }
 .sidebar {
   position: absolute;
-  width: 60px;
+  width: 61px;
   top: 0;
   bottom: 0;
   left: 0;
@@ -988,14 +1045,10 @@ button:active {
   border-bottom: 1px solid rgba(0,0,0,0.3);
 }
 .add-image__button {
-  display: block;
+  display: inline-block;
   position: relative;
   overflow: hidden;
   cursor: pointer !important;
-}
-.add-image--sidebar {
-  text-align: center;
-  margin: 20px 0;
 }
 .add-image__input {
   cursor: pointer !important;
@@ -1006,9 +1059,29 @@ button:active {
   right: 0;
   opacity: 0.001;
 }
-.thumb {
-  width: 60px;
-  height: 60px;
+.add-image--sidebar {
+  text-align: center;
+}
+.add-image--sidebar button.add-image__button {
+  background: #505050;
+}
+.add-image--sidebar i {
+  font-size: 13px;
+  padding: 12px;
+}
+.add-image--intro button.add-image__button {
+  margin-top: 8px;
+  background: #df691a;
+  color: #fff;
+}
+.add-image--intro i {
+  padding: 12px;
+  font-size: 15px;
+}
+.add-image--intro .add-image__label {
+  font-size: 18px;
+  padding-right: 12px;
+  font-weight: bold;
 }
 .thumb__image {
   display: block;
@@ -1016,17 +1089,57 @@ button:active {
   border: 1px solid #000;
   width: 51px;
   height: 51px;
-  margin: 3px 3px 0 3px;
+  margin: 8px 4px;
+}
+.image__thumb--loading {
+  width: 100%;
+  height: 100%;
+  background: url("../img/loading.gif") no-repeat center;
+  background-size: 50%;
 }
 .preview {
   position: absolute;
-  left: 60px;
+  left: 61px;
   width: 500px;
   top: 0;
   bottom: 0;
-  background: #000;
+  background: #0d0d0d;
   color: #fff;
+  padding: 20px;
+  border-right: 1px solid #1a1a1a;
 }
-.preview__canvas {
-  border-bottom: 1px solid #ccc;
+.intro {
+  width: 80%;
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+  height: 100%;
+}
+.intro__inner {
+  position: relative;
+  top: 50%;
+  transform: translateY(-55%);
+}
+.intro__logo {
+  opacity: 0.8;
+  width: 30%;
+}
+.intro__info {
+  margin: 32px;
+}
+.intro__panel {
+  background: rgba(0,0,0,0.8);
+  margin: 32px 64px;
+}
+.stage {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #000;
+}
+.stage img {
+  width: 100%;
+  height: 100%;
 }

@@ -12,7 +12,7 @@
     "napa": "1.2.0",
     "react": "^0.13.1",
     "stylus": "^0.50.0",
-    "watchify": "^2.3.0"
+    "watchify": "^2.6.2"
   },
   "scripts": {
     "install": "./node_modules/.bin/napa",

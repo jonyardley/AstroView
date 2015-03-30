@@ -1,7 +1,8 @@
 import imageBuffer from 'imageBuffer';
 
-const MPV = 255;
+console.info('TODO: Make this non blocking!');
 
+const MPV = 255;
 
 function RenderImage(image, scale, callback, isPreview){
 

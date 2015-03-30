@@ -24923,10 +24923,11 @@ function getMax(imageData) {
   return max;
 }
 
-var Image = function Image() {
+var Image = function Image(name) {
   _classCallCheck(this, Image);
 
   this.id = getId();
+  this.name = name;
   this.isLoaded = false;
   this.isDirty = true;
   //create scalebar canvas
@@ -24959,13 +24960,15 @@ function imageLoaded(data) {
 
   gradient.render(image.scaling);
 
-  new RenderImage(image, 1, imageRendered.bind(this));
+  var scale = Math.floor(60 / image.metaData.width);
+
+  new RenderImage(image, scale, thumbRendered.bind(this));
 }
 
-function imageRendered(data) {
+function thumbRendered(data) {
   var image = images.select({ id: this.id });
   image.merge({
-    imgRaw: data,
+    imgThumb: data,
     isDirty: false
   });
 
@@ -24973,10 +24976,19 @@ function imageRendered(data) {
   ImageActions.showPreview(image.get());
 }
 
+function getFileName(file) {
+
+  if (typeof file == "string") {
+    return file;
+  } else {
+    return file.name;
+  }
+}
+
 var ImageActions = {
 
   addImage: function addImage(file) {
-    var newImage = new Image();
+    var newImage = new Image(getFileName(file));
     images.push(newImage);
     LoadImage(file, imageLoaded.bind(newImage));
   },
@@ -24985,8 +24997,21 @@ var ImageActions = {
   },
 
   updateImage: function updateImage(image) {
-    var imageCursor = images.select({ id: image.id });
-    imageCursor.edit(image);
+    var imageCursor = images.select({ id: image.id }),
+        image = imageCursor.get();
+
+    imageCursor.merge({ isDirty: true });
+
+    var scale = Math.floor(60 / image.metaData.width);
+    new RenderImage(image, scale, function (thumb) {
+      new RenderImage(image, 1, function (raw) {
+        imageCursor.merge({
+          imgThumb: thumb,
+          imgRaw: raw,
+          isDirty: false
+        });
+      });
+    });
   },
 
   showPreview: function showPreview(image) {
@@ -25009,134 +25034,7 @@ var ImageActions = {
 
 module.exports = ImageActions;
 
-},{"../state":180,"../utils/gradient":182,"../utils/loadImage":183,"../utils/renderImage":184}],172:[function(require,module,exports){
-"use strict";
-
-var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
-
-var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
-
-var state = _interopRequire(require("../state"));
-
-var LoadImage = _interopRequire(require("../utils/loadImage"));
-
-var RenderImage = _interopRequire(require("../utils/renderImage"));
-
-var gradient = _interopRequire(require("../utils/gradient"));
-
-var data = state({
-  images: ["images"],
-  previewImage: ["previewImage"]
-});
-var images = data.images;
-var previewImage = data.prevewImage;
-var _id = 0;
-
-function getId() {
-  var id = _id;
-  _id++;
-  return id;
-}
-
-function getMax(imageData) {
-  var length = imageData.length,
-      max = 0;
-  while (length--) {
-    var value = imageData[length];
-    if (value > max) {
-      max = value;
-    }
-  }
-  return max;
-}
-
-var Image = function Image() {
-  _classCallCheck(this, Image);
-
-  this.id = getId();
-  this.isLoaded = false;
-  this.isDirty = true;
-  //create scalebar canvas
-  var el = document.createElement("canvas"),
-      ctx = el.getContext("2d");
-
-  el.width = 500;
-  el.height = 1;
-
-  this.scaling = {
-    min: 0,
-    max: 0,
-    scaleMin: 0,
-    scaleMax: 0,
-    colors: ["black", "red", "orange", "yellow", "white"],
-    ctx: ctx
-  };
-};
-
-function imageLoaded(data) {
-
-  var imageCursor = images.select({ id: this.id });
-  imageCursor.merge(data);
-
-  var scaling = imageCursor.select("scaling");
-  scaling.set("max", getMax(data.imageData));
-  scaling.set("scaleMax", getMax(data.imageData));
-
-  var image = imageCursor.get();
-
-  gradient.render(image.scaling);
-
-  new RenderImage(image, 1, imageRendered.bind(this));
-}
-
-function imageRendered(data) {
-  var image = images.select({ id: this.id });
-  image.merge({
-    imgRaw: data,
-    isDirty: false
-  });
-
-  //DEV
-  ImageActions.showPreview(image.get());
-}
-
-var ImageActions = {
-
-  addImage: function addImage(file) {
-    var newImage = new Image();
-    images.push(newImage);
-    LoadImage(file, imageLoaded.bind(newImage));
-  },
-  removeImage: function () {
-    return console.log("Remove Image");
-  },
-
-  updateImage: function updateImage(image) {
-    var imageCursor = images.select({ id: image.id });
-    imageCursor.edit(image);
-  },
-
-  showPreview: function showPreview(image) {
-    data.previewImage.edit(image);
-  },
-
-  renderPreview: function renderPreview(image, scale, callback) {
-    new RenderImage(image, scale, callback, true); //true = isPreview
-  },
-
-  updateScaling: function updateScaling(image, min, max) {
-    var imageCursor = images.select({ id: image.id }),
-        scaling = imageCursor.get().scaling;
-    scaling.scaleMin = min;
-    scaling.scaleMax = max;
-    imageCursor.select("scaling").edit(scaling);
-  }
-
-};
-
-module.exports = ImageActions;
-
-},{"../state":180,"../utils/gradient":182,"../utils/loadImage":183,"../utils/renderImage":184}],173:[function(require,module,exports){
+},{"../state":181,"../utils/gradient":183,"../utils/loadImage":184,"../utils/renderImage":185}],172:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25172,12 +25070,17 @@ var AddImage = (function (_React$Component) {
       value: function render() {
         return React.createElement(
           "div",
-          { className: "add-image add-image--sidebar" },
+          { className: "add-image add-image--" + this.props.classMod },
           React.createElement(
             "button",
-            { className: "add-image__button gi gi-plus" },
-            React.createElement("input", { className: "add-image__input", type: "file", onChange: attemptFileLoad.bind(this) }),
-            React.createElement("span", { className: "add-image_label" })
+            { className: "add-image__button" },
+            React.createElement("i", { className: "gi gi-plus" }),
+            React.createElement(
+              "span",
+              { className: "add-image__label" },
+              this.props.label
+            ),
+            React.createElement("input", { className: "add-image__input", type: "file", onChange: attemptFileLoad.bind(this) })
           )
         );
       }
@@ -25188,9 +25091,8 @@ var AddImage = (function (_React$Component) {
 })(React.Component);
 
 module.exports = AddImage;
-/**Load Props here**/
 
-},{"../../actions/imageActions":172,"react":169}],174:[function(require,module,exports){
+},{"../../actions/imageActions":171,"react":169}],173:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25210,6 +25112,10 @@ var state = _interopRequire(require("../../state"));
 var Sidebar = _interopRequire(require("../sidebar/sidebar.jsx"));
 
 var ImagePreview = _interopRequire(require("../preview/imagePreview.jsx"));
+
+var Intro = _interopRequire(require("../intro/intro.jsx"));
+
+var Stage = _interopRequire(require("../stage/stage.jsx"));
 
 var data = state({
   images: ["images"],
@@ -25251,13 +25157,19 @@ var App = (function (_React$Component) {
         var images = this.state.images,
             previewImage = this.state.previewImage;
 
-        var imagePreview = previewImage ? React.createElement(ImagePreview, { image: previewImage }) : "";
+        var imagePreview = previewImage ? React.createElement(ImagePreview, { image: previewImage, key: previewImage.id }) : "",
+            stageContents = images.length ? React.createElement(Stage, { image: this.state.images[0] }) : React.createElement(Intro, null);
 
         return React.createElement(
           "div",
           { className: "main-inner" },
-          React.createElement(Sidebar, { images: images }),
-          imagePreview
+          React.createElement(
+            "div",
+            { className: "stage-wrapper" },
+            stageContents
+          ),
+          imagePreview,
+          React.createElement(Sidebar, { images: images })
         );
       }
     }
@@ -25268,7 +25180,7 @@ var App = (function (_React$Component) {
 
 module.exports = App;
 
-},{"../../state":180,"../preview/imagePreview.jsx":176,"../sidebar/sidebar.jsx":178,"react":169}],175:[function(require,module,exports){
+},{"../../state":181,"../intro/intro.jsx":175,"../preview/imagePreview.jsx":176,"../sidebar/sidebar.jsx":178,"../stage/stage.jsx":179,"react":169}],174:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25308,12 +25220,12 @@ var ImageThumb = (function (_React$Component) {
 
         if (loading) {
           imageThumb = React.createElement(
-            "span",
+            "div",
             { className: "thumb__image" },
-            "loading..."
+            React.createElement("div", { className: "image__thumb--loading" })
           );
         } else {
-          imageThumb = React.createElement("img", { src: image.imgRaw.src, style: { width: 50, height: 50 }, className: "thumb__image", onClick: showPreview.bind(this) });
+          imageThumb = React.createElement("img", { src: image.imgThumb.src, className: "thumb__image", onClick: showPreview.bind(this) });
         }
 
         return React.createElement(
@@ -25330,7 +25242,100 @@ var ImageThumb = (function (_React$Component) {
 
 module.exports = ImageThumb;
 
-},{"../../actions/imageActions":172,"react":169}],176:[function(require,module,exports){
+},{"../../actions/imageActions":171,"react":169}],175:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var React = _interopRequire(require("react"));
+
+var AddImage = _interopRequire(require("../add-image/addImage.jsx"));
+
+var Intro = (function (_React$Component) {
+  function Intro() {
+    _classCallCheck(this, Intro);
+
+    if (_React$Component != null) {
+      _React$Component.apply(this, arguments);
+    }
+  }
+
+  _inherits(Intro, _React$Component);
+
+  _createClass(Intro, {
+    render: {
+      value: function render() {
+        return React.createElement(
+          "div",
+          { className: "intro" },
+          React.createElement(
+            "div",
+            { className: "intro__inner" },
+            React.createElement("img", { className: "intro__logo", src: "img/logo-white-large.png" }),
+            React.createElement(
+              "h1",
+              null,
+              "AstroView"
+            ),
+            React.createElement(
+              "h2",
+              null,
+              "View, compsite & analyse astronomical images in your browser"
+            ),
+            React.createElement(
+              "div",
+              { className: "intro__panel panel" },
+              React.createElement(
+                "p",
+                null,
+                "Load an image to get started!"
+              ),
+              React.createElement(AddImage, { label: "Add Image", classMod: "intro" }),
+              React.createElement(
+                "div",
+                { className: "intro__info" },
+                React.createElement(
+                  "p",
+                  null,
+                  "Don't have one? Try one of these:"
+                ),
+                React.createElement(
+                  "a",
+                  { href: "#" },
+                  "Link to image"
+                ),
+                React.createElement("br", null),
+                React.createElement(
+                  "a",
+                  { href: "#" },
+                  "Link to another image"
+                ),
+                React.createElement("br", null)
+              ),
+              React.createElement(
+                "a",
+                { href: "http://en.wikipedia.org/wiki/FITS" },
+                "Learn more about FITS images here"
+              )
+            )
+          )
+        );
+      }
+    }
+  });
+
+  return Intro;
+})(React.Component);
+
+module.exports = Intro;
+
+},{"../add-image/addImage.jsx":172,"react":169}],176:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25368,6 +25373,7 @@ var ImagePreview = (function (_React$Component) {
 				y: 0
 			}
 		};
+		this.hasScalingChanged = this.props.image.imgRaw ? false : true;
 	}
 
 	_inherits(ImagePreview, _React$Component);
@@ -25376,8 +25382,8 @@ var ImagePreview = (function (_React$Component) {
 		componentDidMount: {
 			value: function componentDidMount() {
 				//Attach mouse up events to
-				document.addEventListener("mousedown", this.setMouseDown.bind(this));
-				document.addEventListener("mouseup", this.setMouseUp.bind(this));
+				document.body.onmousedown = this.setMouseDown.bind(this);
+				document.body.onmouseup = this.setMouseUp.bind(this);
 
 				var el = document.getElementById(canvasId);
 				this.ctx = el.getContext("2d");
@@ -25386,13 +25392,16 @@ var ImagePreview = (function (_React$Component) {
 		},
 		componentWillUnmount: {
 			value: function componentWillUnmount() {
-				document.removeEventListener("mousedown", this.setMouseDown.bind(this));
-				document.removeEventListener("mouseup", this.setMouseUp.bind(this));
+				document.body.onmousedown = null;
+				document.body.onmouseup = null;
 			}
 		},
 		componentDidUpdate: {
-			value: function componentDidUpdate() {
+			value: function componentDidUpdate(prevProps) {
 				this.renderPreview();
+				if (!this.hasScalingChanged) {
+					this.hasScalingChanged = true;
+				}
 			}
 		},
 		renderPreview: {
@@ -25431,14 +25440,26 @@ var ImagePreview = (function (_React$Component) {
 		},
 		setMouseDown: {
 			value: function setMouseDown(e) {
-				var lastPosition = { x: e.clientX, y: e.clientY };
-				var isMouseDown = true;
-				this.setState({ isMouseDown: isMouseDown, lastPosition: lastPosition });
+				if (e.target.id == canvasId) {
+					var lastPosition = { x: e.clientX, y: e.clientY };
+					var isMouseDown = true;
+					this.setState({ isMouseDown: isMouseDown, lastPosition: lastPosition });
+				}
 			}
 		},
 		setMouseUp: {
 			value: function setMouseUp(e) {
-				this.setState({ isMouseDown: false });
+				if (this.state.isMouseDown) {
+					this.setState({ isMouseDown: false });
+				}
+			}
+		},
+		save: {
+			value: function save() {
+				if (this.hasScalingChanged) {
+					ImageActions.updateImage(this.props.image);
+				}
+				ImageActions.showPreview(null);
 			}
 		},
 		render: {
@@ -25447,9 +25468,19 @@ var ImagePreview = (function (_React$Component) {
 				return React.createElement(
 					"div",
 					{ className: "preview" },
+					React.createElement(
+						"h2",
+						null,
+						this.props.image.name
+					),
 					React.createElement("canvas", { width: size, height: size, className: "preview__canvas", id: canvasId,
 						onMouseMove: this.mouseMove.bind(this) }),
-					React.createElement(ScaleBar, { image: this.props.image })
+					React.createElement(ScaleBar, { image: this.props.image }),
+					React.createElement(
+						"button",
+						{ onClick: this.save.bind(this) },
+						"Done"
+					)
 				);
 			}
 		}
@@ -25460,7 +25491,7 @@ var ImagePreview = (function (_React$Component) {
 
 module.exports = ImagePreview;
 
-},{"../../actions/imageActions":172,"./scaleBar.jsx":177,"react":169}],177:[function(require,module,exports){
+},{"../../actions/imageActions":171,"./scaleBar.jsx":177,"react":169}],177:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25518,7 +25549,7 @@ var ScaleBar = (function (_React$Component) {
 
 module.exports = ScaleBar;
 
-},{"../../actions/imageActions":172,"../../utils/gradient":182,"react":169}],178:[function(require,module,exports){
+},{"../../actions/imageActions":171,"../../utils/gradient":183,"react":169}],178:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25556,12 +25587,14 @@ var Sidebar = (function (_React$Component) {
           images.push(React.createElement(ImageThumb, { key: image.id, image: image }));
         });
 
+        var addImage = this.props.images < 1 ? "" : React.createElement(AddImage, { classMod: "sidebar" });
+
         return React.createElement(
           "div",
           { className: "sidebar" },
           React.createElement("div", { className: "sidebar__logo" }),
           images,
-          React.createElement(AddImage, null)
+          addImage
         );
       }
     }
@@ -25572,7 +25605,55 @@ var Sidebar = (function (_React$Component) {
 
 module.exports = Sidebar;
 
-},{"../add-image/addImage.jsx":173,"../image-thumb/imageThumb.jsx":175,"react":169}],179:[function(require,module,exports){
+},{"../add-image/addImage.jsx":172,"../image-thumb/imageThumb.jsx":174,"react":169}],179:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var React = _interopRequire(require("react"));
+
+var Stage = (function (_React$Component) {
+  function Stage() {
+    _classCallCheck(this, Stage);
+
+    if (_React$Component != null) {
+      _React$Component.apply(this, arguments);
+    }
+  }
+
+  _inherits(Stage, _React$Component);
+
+  _createClass(Stage, {
+    render: {
+      value: function render() {
+
+        var image = undefined;
+
+        if (!this.props.image.isDirty && this.props.image.imgRaw) {
+          image = React.createElement("img", { src: this.props.image.imgRaw.src });
+        }
+
+        return React.createElement(
+          "div",
+          { className: "stage" },
+          image
+        );
+      }
+    }
+  });
+
+  return Stage;
+})(React.Component);
+
+module.exports = Stage;
+
+},{"react":169}],180:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25581,13 +25662,15 @@ var React = _interopRequire(require("react"));
 
 var App = _interopRequire(require("./components/app/app.jsx"));
 
+var dev = _interopRequire(require("./utils/dev"));
+
 React.render(React.createElement(App, null), document.getElementById("main"), function () {
   if (window.location.hostname) {
-    require("./utils/dev");
+    dev();
   };
 });
 
-},{"./components/app/app.jsx":174,"./utils/dev":181,"react":169}],180:[function(require,module,exports){
+},{"./components/app/app.jsx":173,"./utils/dev":182,"react":169}],181:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25667,21 +25750,26 @@ function state(opts) {
 
 module.exports = state;
 
-},{"baobab":2,"react":169}],181:[function(require,module,exports){
+},{"baobab":2,"react":169}],182:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
-var ImageActions = _interopRequire(require("../actions/ImageActions"));
+var ImageActions = _interopRequire(require("../actions/imageActions"));
 
-console.log("--- DEV MODE ---");
+function initDev() {
 
-// DEV
-//let imagePath = 'fits/656nmos.fits';
-var imagePath = "fits/6008B000.fits";
-ImageActions.addImage(imagePath);
+  console.log("--- DEV MODE ---");
 
-},{"../actions/ImageActions":171}],182:[function(require,module,exports){
+  // DEV
+  //let imagePath = 'fits/656nmos.fits';
+  var imagePath = "fits/6008B000.fits";
+  ImageActions.addImage(imagePath);
+}
+
+module.exports = initDev;
+
+},{"../actions/imageActions":171}],183:[function(require,module,exports){
 "use strict";
 
 function render(opts) {
@@ -25715,7 +25803,7 @@ function normalize(v, min, max, newMax) {
 
 module.exports = { render: render };
 
-},{}],183:[function(require,module,exports){
+},{}],184:[function(require,module,exports){
 "use strict";
 
 var astro = require("fitsjs").astro;
@@ -25749,12 +25837,14 @@ module.exports = function LoadImage(file, callback) {
   var fits = new FITS(file, onLoad);
 };
 
-},{"fitsjs":13}],184:[function(require,module,exports){
+},{"fitsjs":13}],185:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
 var imageBuffer = _interopRequire(require("imageBuffer"));
+
+console.info("TODO: Make this non blocking!");
 
 var MPV = 255;
 
@@ -25834,4 +25924,4 @@ function renderPixels() {
 
 module.exports = RenderImage;
 
-},{"imageBuffer":14}]},{},[179]);
+},{"imageBuffer":14}]},{},[180]);
