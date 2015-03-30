@@ -8,11 +8,10 @@
     "babelify": "^5.0.4",
     "baobab": "^0.4.2",
     "http-server": "^0.7.5",
-    "live-reload": "^1.1.0",
     "livereload": "^0.3.6",
     "napa": "1.2.0",
-    "node-sass": "^2.0.1",
     "react": "^0.13.1",
+    "stylus": "^0.50.0",
     "watchify": "^2.3.0"
   },
   "scripts": {
@@ -21,7 +20,7 @@
     "reload": "./node_modules/.bin/livereload dist",
     "watch": "./node_modules/.bin/watchify src/main.jsx -t babelify -o dist/bundle.js",
     "static": "./node_modules/.bin/http-server dist",
-    "sass": "./node_modules/.bin/node-sass -wr -o dist/styles src/styles/main.sass"
+    "sass": "./node_modules/.bin/stylus -w -o dist/styles src/styles/main.styl"
   },
   "repository": {
     "type": "git",

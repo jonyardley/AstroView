@@ -1,62 +1,156 @@
-@import url(./icons.css);
-/* http://meyerweb.com/eric/tools/css/reset/ 
-   v2.0 | 20110126
-   License: none (public domain)
-*/
-html, body, div, span, applet, object, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre, a, abbr, acronym, address, big, cite, code, del, dfn, em, img, ins, kbd, q, s, samp, small, strike, strong, sub, sup, tt, var, b, u, i, center, dl, dt, dd, ol, ul, li, fieldset, form, label, legend, table, caption, tbody, tfoot, thead, tr, th, td, article, aside, canvas, details, embed, figure, figcaption, footer, header, hgroup, menu, nav, output, ruby, section, summary, time, mark, audio, video {
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video {
   margin: 0;
   padding: 0;
   border: 0;
   font-size: 100%;
   font: inherit;
-  vertical-align: baseline; }
-
-/* HTML5 display-role reset for older browsers */
-article, aside, details, figcaption, figure, footer, header, hgroup, menu, nav, section {
-  display: block; }
-
+  vertical-align: baseline;
+}
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+menu,
+nav,
+section {
+  display: block;
+}
 body {
-  line-height: 1; }
-
-ol, ul {
-  list-style: none; }
-
-blockquote, q {
-  quotes: none; }
-
-blockquote:before, blockquote:after {
+  line-height: 1;
+}
+ol,
+ul {
+  list-style: none;
+}
+blockquote,
+q {
+  quotes: none;
+}
+blockquote:before,
+blockquote:after {
   content: '';
-  content: none; }
-
-q:before, q:after {
+  content: none;
+}
+q:before,
+q:after {
   content: '';
-  content: none; }
-
+  content: none;
+}
 table {
   border-collapse: collapse;
-  border-spacing: 0; }
-
-.button, button {
+  border-spacing: 0;
+}
+@import './icons.css';
+.button,
+button {
   display: block;
   border: 0;
   padding: 8px;
   margin: 0;
   outline: 0;
   cursor: pointer;
-  background: #FFF; }
-  .button:hover, button:hover {
-    background: #DDD; }
-  .button:active, button:active {
-    background: #BBB; }
-
+  background: #fff;
+}
+.button:hover,
+button:hover {
+  background: #ddd;
+}
+.button:active,
+button:active {
+  background: #bbb;
+}
 #main {
   position: absolute;
   top: 0;
   bottom: 0;
   right: 0;
   left: 0;
-  background: #222; }
-
+  background: #222;
+}
 .sidebar {
   position: absolute;
   width: 60px;
@@ -64,33 +158,34 @@ table {
   bottom: 0;
   left: 0;
   background: #333;
-  color: #FFF;
-  border-right: 1px solid rgba(255, 255, 255, 0.1); }
-  .sidebar:after {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: rgba(0, 0, 0, 0.3);
-    right: 0; }
-
+  color: #fff;
+  border-right: 1px solid rgba(255,255,255,0.1);
+}
+.sidebar:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(0,0,0,0.3);
+  right: 0;
+}
 .sidebar__logo {
   width: 60px;
   height: 60px;
-  background: url(../img/logo-white-transparent-40.png) no-repeat center center;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.3); }
-
+  background: url("../img/logo-white-transparent-40.png") no-repeat center center;
+  border-bottom: 1px solid rgba(0,0,0,0.3);
+}
 .add-image__button {
   display: block;
   position: relative;
   overflow: hidden;
-  cursor: pointer !important; }
-
+  cursor: pointer !important;
+}
 .add-image--sidebar {
   text-align: center;
-  margin: 20px 0; }
-
+  margin: 20px 0;
+}
 .add-image__input {
   cursor: pointer !important;
   position: absolute;
@@ -98,20 +193,20 @@ table {
   bottom: 0;
   left: 0;
   right: 0;
-  opacity: 0.001; }
-
+  opacity: 0.001;
+}
 .thumb {
   width: 60px;
-  height: 60px; }
-
+  height: 60px;
+}
 .thumb__image {
   display: block;
   background: #000;
   border: 1px solid #000;
   width: 51px;
   height: 51px;
-  margin: 3px 3px 0 3px; }
-
+  margin: 3px 3px 0 3px;
+}
 .preview {
   position: absolute;
   left: 60px;
@@ -119,7 +214,8 @@ table {
   top: 0;
   bottom: 0;
   background: #000;
-  color: #FFF; }
-
+  color: #fff;
+}
 .preview__canvas {
-  border: 1px solid #CCC; }
+  border-bottom: 1px solid #ccc;
+}
