@@ -12,8 +12,8 @@ function RenderImage(image, scale, callback, isPreview){
   this.scaleMin = image.scaling.scaleMin;
   this.scaleMax = image.scaling.scaleMax;
   this.sample = Math.floor(1 / this.scale);
-  this.targetWidth = this.width * this.scale;
-  this.targetHeight = this.height * this.scale;
+  this.targetWidth = Math.floor(this.width * this.scale);
+  this.targetHeight = Math.floor(this.height * this.scale);
 
   this.canvas = document.createElement('canvas');
   this.canvas.width = this.targetWidth;
@@ -35,7 +35,7 @@ function RenderImage(image, scale, callback, isPreview){
 
 function renderPixels() {
 
-  let area = this.targetWidth * this.targetHeight,
+  let area = Math.floor(this.targetWidth * this.targetHeight),
       min = this.scaleMin,
       max = this.scaleMax,
       x = this.width,
@@ -51,7 +51,7 @@ function renderPixels() {
 
   for(let i = 0;i<area;i++){
 
-    let pixelIndex = (x * this.sample) + ((y * this.sample) * this.width),
+    let pixelIndex = (x * this.sample) + (y * this.sample * this.width),
         value = this.image.imageData[pixelIndex],
         v = ((value - min) * (pixelValues.length / (max - min))) || 0
         v = Math.floor(v);

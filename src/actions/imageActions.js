@@ -45,8 +45,8 @@ class Image {
       min: 0,
       max: 0,
       scaleMin: 0,
-      scaleMax: 500,
-      colors: ['black', 'red', 'yellow'],
+      scaleMax: 0,
+      colors: ['black', 'red', 'orange', 'yellow', 'white'],
       ctx: ctx
     };
 
@@ -61,6 +61,7 @@ function imageLoaded(data) {
 
   var scaling = imageCursor.select('scaling');
   scaling.set('max', getMax(data.imageData));
+  scaling.set('scaleMax', getMax(data.imageData));
 
   let image = imageCursor.get();
 
@@ -116,6 +117,7 @@ let ImageActions = {
 module.exports = ImageActions;
 
 // DEV
-let imagePath = '/fits/656nmos.fits';
+//let imagePath = 'fits/656nmos.fits';
+let imagePath = 'fits/6008B000.fits';
 ImageActions.addImage(imagePath);
 

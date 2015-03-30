@@ -3,7 +3,7 @@ import ImageActions from '../../actions/imageActions';
 import ScaleBar from './scaleBar.jsx';
 
 var canvasId = 'previewCanvas',
-		size = 400;
+		size = 500;
 
 class ImagePreview extends React.Component {
 
@@ -42,7 +42,7 @@ class ImagePreview extends React.Component {
 	}
 
 	renderPreview(){
-		let scale = size / this.props.image.metaData.width
+		let scale = size / this.props.image.metaData.width;
 		ImageActions.renderPreview(this.props.image, scale, function(data){
 			this.ctx.putImageData(data.imageData,0,0);
 		}.bind(this));
@@ -62,13 +62,15 @@ class ImagePreview extends React.Component {
 					min = this.props.image.scaling.scaleMin,
 					max = this.props.image.scaling.scaleMax;
 
+			let scale = e.shiftKey ? 1 : (this.props.image.scaling.max / e.target.width);
+
 			//adjust x
-			min = min + deltaX;
-			max = max + deltaX;
+			min = min + (deltaX * scale);
+			max = max + (deltaX * scale);
 
 			//adust y
-			min = min - deltaY;
-			max = max + deltaY;
+			min = min - (deltaY * scale);
+			max = max + (deltaY * scale);
 
 			this.setState({lastPosition: {x: e.clientX, y: e.clientY}});
 			ImageActions.updateScaling(this.props.image, min, max);

@@ -24940,8 +24940,8 @@ var Image = function Image() {
     min: 0,
     max: 0,
     scaleMin: 0,
-    scaleMax: 500,
-    colors: ["black", "red", "yellow"],
+    scaleMax: 0,
+    colors: ["black", "red", "orange", "yellow", "white"],
     ctx: ctx
   };
 };
@@ -24953,6 +24953,7 @@ function imageLoaded(data) {
 
   var scaling = imageCursor.select("scaling");
   scaling.set("max", getMax(data.imageData));
+  scaling.set("scaleMax", getMax(data.imageData));
 
   var image = imageCursor.get();
 
@@ -25009,7 +25010,8 @@ var ImageActions = {
 module.exports = ImageActions;
 
 // DEV
-var imagePath = "/fits/656nmos.fits";
+//let imagePath = 'fits/656nmos.fits';
+var imagePath = "fits/6008B000.fits";
 ImageActions.addImage(imagePath);
 
 },{"../state":179,"../utils/gradient":180,"../utils/loadImage":181,"../utils/renderImage":182}],172:[function(require,module,exports){
@@ -25226,7 +25228,7 @@ var ImageActions = _interopRequire(require("../../actions/imageActions"));
 var ScaleBar = _interopRequire(require("./scaleBar.jsx"));
 
 var canvasId = "previewCanvas",
-    size = 400;
+    size = 500;
 
 var ImagePreview = (function (_React$Component) {
 	function ImagePreview(props) {
@@ -25290,13 +25292,15 @@ var ImagePreview = (function (_React$Component) {
 					    min = this.props.image.scaling.scaleMin,
 					    max = this.props.image.scaling.scaleMax;
 
+					var scale = e.shiftKey ? 1 : this.props.image.scaling.max / e.target.width;
+
 					//adjust x
-					min = min + deltaX;
-					max = max + deltaX;
+					min = min + deltaX * scale;
+					max = max + deltaX * scale;
 
 					//adust y
-					min = min - deltaY;
-					max = max + deltaY;
+					min = min - deltaY * scale;
+					max = max + deltaY * scale;
 
 					this.setState({ lastPosition: { x: e.clientX, y: e.clientY } });
 					ImageActions.updateScaling(this.props.image, min, max);
@@ -25623,8 +25627,8 @@ function RenderImage(image, scale, callback, isPreview) {
   this.scaleMin = image.scaling.scaleMin;
   this.scaleMax = image.scaling.scaleMax;
   this.sample = Math.floor(1 / this.scale);
-  this.targetWidth = this.width * this.scale;
-  this.targetHeight = this.height * this.scale;
+  this.targetWidth = Math.floor(this.width * this.scale);
+  this.targetHeight = Math.floor(this.height * this.scale);
 
   this.canvas = document.createElement("canvas");
   this.canvas.width = this.targetWidth;
@@ -25645,7 +25649,7 @@ function RenderImage(image, scale, callback, isPreview) {
 
 function renderPixels() {
 
-  var area = this.targetWidth * this.targetHeight,
+  var area = Math.floor(this.targetWidth * this.targetHeight),
       min = this.scaleMin,
       max = this.scaleMax,
       x = this.width,
