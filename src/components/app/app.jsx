@@ -5,9 +5,10 @@ import ImagePreview from '../preview/imagePreview.jsx'
 import Intro from '../intro/intro.jsx';
 import Stage from '../stage/stage.jsx';
 
-var data = state({
+let data = state({
   images: ['images'],
-  previewImage: ['previewImage']
+  isPreviewVisible: ['isPreviewVisible'],
+  activeImageId: ['activeImageId']
 });
 
 class App extends React.Component {
@@ -28,9 +29,9 @@ class App extends React.Component {
   render() {
 
     let images = this.state.images,
-        previewImage = this.state.previewImage;
+        previewImage = data.images.select({id: this.state.activeImageId}).get();
 
-    let imagePreview = previewImage ? <ImagePreview image={previewImage} key={previewImage.id}/> : '' ,
+    let imagePreview = this.state.isPreviewVisible ? <ImagePreview image={previewImage} key={previewImage.id}/> : '' ,
         stageContents = images.length ? <Stage image={this.state.images[0]}/> : <Intro /> ;
 
     return (

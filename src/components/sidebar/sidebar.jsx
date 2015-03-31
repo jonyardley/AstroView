@@ -10,8 +10,13 @@ class Sidebar extends React.Component {
     let images = [];
 
     this.props.images.forEach(function(image){
+      let imageProps = {
+        id: image.id,
+        imgThumb: image.imgThumb,
+        isDirty: image.isDirty
+      };
       images.push (
-        <ImageThumb key={image.id} image={image} />
+        <ImageThumb key={image.id} image={imageProps} />
       )
     });
 

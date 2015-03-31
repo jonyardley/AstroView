@@ -24899,7 +24899,8 @@ var gradient = _interopRequire(require("../utils/gradient"));
 
 var data = state({
   images: ["images"],
-  previewImage: ["previewImage"]
+  isPreviewVisible: ["isPreviewVisible"],
+  activeImageId: ["activeImageId"]
 });
 var images = data.images;
 var previewImage = data.prevewImage;
@@ -24957,11 +24958,9 @@ function imageLoaded(data) {
   scaling.set("scaleMax", getMax(data.imageData));
 
   var image = imageCursor.get();
-
   gradient.render(image.scaling);
 
   var scale = Math.floor(60 / image.metaData.width);
-
   new RenderImage(image, scale, thumbRendered.bind(this));
 }
 
@@ -24973,13 +24972,15 @@ function thumbRendered(data) {
   });
 
   //DEV
-  ImageActions.showPreview(image.get());
+  ImageActions.setActiveImageId(this.id);
+  ImageActions.showPreview(true);
 }
 
 function getFileName(file) {
 
   if (typeof file == "string") {
-    return file;
+    var strArray = file.split("/");
+    return strArray[strArray.length - 1];
   } else {
     return file.name;
   }
@@ -24992,6 +24993,7 @@ var ImageActions = {
     images.push(newImage);
     LoadImage(file, imageLoaded.bind(newImage));
   },
+
   removeImage: function () {
     return console.log("Remove Image");
   },
@@ -25014,8 +25016,16 @@ var ImageActions = {
     });
   },
 
-  showPreview: function showPreview(image) {
-    data.previewImage.edit(image);
+  showPreview: function showPreview(state) {
+    data.isPreviewVisible.edit(state);
+  },
+
+  setActiveImageId: function setActiveImageId(id) {
+    data.activeImageId.edit(id);
+  },
+
+  isImageActive: function isImageActive(id) {
+    return id === data.activeImageId.get();
   },
 
   renderPreview: function renderPreview(image, scale, callback) {
@@ -25119,7 +25129,8 @@ var Stage = _interopRequire(require("../stage/stage.jsx"));
 
 var data = state({
   images: ["images"],
-  previewImage: ["previewImage"]
+  isPreviewVisible: ["isPreviewVisible"],
+  activeImageId: ["activeImageId"]
 });
 
 var App = (function (_React$Component) {
@@ -25155,9 +25166,9 @@ var App = (function (_React$Component) {
       value: function render() {
 
         var images = this.state.images,
-            previewImage = this.state.previewImage;
+            previewImage = data.images.select({ id: this.state.activeImageId }).get();
 
-        var imagePreview = previewImage ? React.createElement(ImagePreview, { image: previewImage, key: previewImage.id }) : "",
+        var imagePreview = this.state.isPreviewVisible ? React.createElement(ImagePreview, { image: previewImage, key: previewImage.id }) : "",
             stageContents = images.length ? React.createElement(Stage, { image: this.state.images[0] }) : React.createElement(Intro, null);
 
         return React.createElement(
@@ -25195,10 +25206,6 @@ var React = _interopRequire(require("react"));
 
 var ImageActions = _interopRequire(require("../../actions/imageActions"));
 
-function showPreview(event) {
-  ImageActions.showPreview(this.props.image);
-}
-
 var ImageThumb = (function (_React$Component) {
   function ImageThumb() {
     _classCallCheck(this, ImageThumb);
@@ -25211,11 +25218,22 @@ var ImageThumb = (function (_React$Component) {
   _inherits(ImageThumb, _React$Component);
 
   _createClass(ImageThumb, {
+    showPreview: {
+      value: function showPreview(event) {
+        var id = this.props.image.id;
+        if (ImageActions.isImageActive(id)) {
+          ImageActions.showPreview(true);
+        } else {
+          ImageActions.setActiveImageId(id);
+        }
+      }
+    },
     render: {
       value: function render() {
 
         var image = this.props.image,
             loading = image.isDirty,
+            active = ImageActions.isImageActive(this.props.image.id) ? "thumb--active" : "",
             imageThumb = undefined;
 
         if (loading) {
@@ -25225,7 +25243,7 @@ var ImageThumb = (function (_React$Component) {
             React.createElement("div", { className: "image__thumb--loading" })
           );
         } else {
-          imageThumb = React.createElement("img", { src: image.imgThumb.src, className: "thumb__image", onClick: showPreview.bind(this) });
+          imageThumb = React.createElement("img", { src: image.imgThumb.src, className: "thumb__image " + active, onClick: this.showPreview.bind(this) });
         }
 
         return React.createElement(
@@ -25584,7 +25602,12 @@ var Sidebar = (function (_React$Component) {
         var images = [];
 
         this.props.images.forEach(function (image) {
-          images.push(React.createElement(ImageThumb, { key: image.id, image: image }));
+          var imageProps = {
+            id: image.id,
+            imgThumb: image.imgThumb,
+            isDirty: image.isDirty
+          };
+          images.push(React.createElement(ImageThumb, { key: image.id, image: imageProps }));
         });
 
         var addImage = this.props.images < 1 ? "" : React.createElement(AddImage, { classMod: "sidebar" });
@@ -25682,7 +25705,8 @@ var Boabab = _interopRequire(require("baobab"));
 var data = {
   mode: "view",
   maxImages: 8,
-  previewImage: null,
+  isPreviewVisible: false,
+  activeImageId: null,
   images: []
 };
 

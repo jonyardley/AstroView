@@ -4,7 +4,8 @@ import Boabab from 'baobab';
 var data = {
   mode: 'view',
   maxImages: 8,
-  previewImage: null,
+  isPreviewVisible: false,
+  activeImageId: null,
   images: []
 };
 

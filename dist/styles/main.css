@@ -1097,6 +1097,9 @@ button:active {
   background: url("../img/loading.gif") no-repeat center;
   background-size: 50%;
 }
+.thumb--active {
+  border: 1px solid #fff;
+}
 .preview {
   position: absolute;
   left: 61px;

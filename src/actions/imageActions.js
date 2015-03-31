@@ -5,7 +5,8 @@ import gradient from '../utils/gradient';
 
 let data = state({
   images: ['images'],
-  previewImage: ['previewImage']
+  isPreviewVisible: ['isPreviewVisible'],
+  activeImageId: ['activeImageId']
 });
 let images = data.images;
 let previewImage = data.prevewImage;
@@ -65,11 +66,9 @@ function imageLoaded(data) {
   scaling.set('scaleMax', getMax(data.imageData));
 
   let image = imageCursor.get();
-
   gradient.render(image.scaling);
   
   let scale = Math.floor(60/image.metaData.width);
-
   new RenderImage(image, scale, thumbRendered.bind(this));
 }
 
@@ -81,13 +80,15 @@ function thumbRendered(data) {
   });
 
   //DEV
-  ImageActions.showPreview(image.get());
+  ImageActions.setActiveImageId(this.id);
+  ImageActions.showPreview(true);
 }
 
 function getFileName(file){
 
   if(typeof file == 'string'){
-    return file;
+    let strArray = file.split('/');
+    return strArray[strArray.length-1];
   }else{
     return file.name;
   }
@@ -102,6 +103,7 @@ let ImageActions = {
     images.push(newImage);
     LoadImage(file, imageLoaded.bind(newImage));
   },
+
   removeImage: () => console.log('Remove Image'),
   
   updateImage: function(image){
@@ -123,8 +125,16 @@ let ImageActions = {
 
   },
 
-  showPreview: function showPreview(image){
-    data.previewImage.edit(image);
+  showPreview: function showPreview(state){
+    data.isPreviewVisible.edit(state);
+  },
+
+  setActiveImageId: function(id){
+    data.activeImageId.edit(id);
+  },
+
+  isImageActive: function(id){
+    return id === data.activeImageId.get();
   },
 
   renderPreview: function renderPreview(image, scale, callback){
