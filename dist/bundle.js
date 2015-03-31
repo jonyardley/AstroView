@@ -24883,6 +24883,9 @@ process.chdir = function (dir) {
 process.umask = function() { return 0; };
 
 },{}],171:[function(require,module,exports){
+module.exports = window.Worker;
+
+},{}],172:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -24961,7 +24964,8 @@ function imageLoaded(data) {
   var image = imageCursor.get();
   gradient.render(image.scaling);
 
-  var scale = Math.floor(60 / image.metaData.width);
+  var scale = 60 / image.metaData.width;
+  console.log(scale);
   new RenderImage(image, scale, thumbRendered.bind(this));
 }
 
@@ -25043,7 +25047,7 @@ var ImageActions = {
 
 module.exports = ImageActions;
 
-},{"../state":181,"../utils/gradient":183,"../utils/loadImage":184,"../utils/renderImage":185}],172:[function(require,module,exports){
+},{"../state":182,"../utils/gradient":184,"../utils/loadImage":185,"../utils/renderImage":186}],173:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25101,7 +25105,7 @@ var AddImage = (function (_React$Component) {
 
 module.exports = AddImage;
 
-},{"../../actions/imageActions":171,"react":169}],173:[function(require,module,exports){
+},{"../../actions/imageActions":172,"react":169}],174:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25168,7 +25172,7 @@ var App = (function (_React$Component) {
             previewImage = data.images.select({ id: this.state.activeImageId }).get(),
             activeImage = data.images.select({ id: this.state.activeImageId }).get();
 
-        var imagePreview = this.state.isPreviewVisible ? React.createElement(ImagePreview, { image: previewImage, key: previewImage.id }) : "",
+        var imagePreview = /**this.state.isPreviewVisible**/false ? React.createElement(ImagePreview, { image: previewImage, key: previewImage.id }) : "",
             stageContents = activeImage ? React.createElement(Stage, { image: activeImage }) : React.createElement(Intro, null);
 
         return React.createElement(
@@ -25191,7 +25195,7 @@ var App = (function (_React$Component) {
 
 module.exports = App;
 
-},{"../../state":181,"../intro/intro.jsx":175,"../preview/imagePreview.jsx":176,"../sidebar/sidebar.jsx":178,"../stage/stage.jsx":179,"react":169}],174:[function(require,module,exports){
+},{"../../state":182,"../intro/intro.jsx":176,"../preview/imagePreview.jsx":177,"../sidebar/sidebar.jsx":179,"../stage/stage.jsx":180,"react":169}],175:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25260,7 +25264,7 @@ var ImageThumb = (function (_React$Component) {
 
 module.exports = ImageThumb;
 
-},{"../../actions/imageActions":171,"react":169}],175:[function(require,module,exports){
+},{"../../actions/imageActions":172,"react":169}],176:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25353,7 +25357,7 @@ var Intro = (function (_React$Component) {
 
 module.exports = Intro;
 
-},{"../add-image/addImage.jsx":172,"react":169}],176:[function(require,module,exports){
+},{"../add-image/addImage.jsx":173,"react":169}],177:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25509,7 +25513,7 @@ var ImagePreview = (function (_React$Component) {
 
 module.exports = ImagePreview;
 
-},{"../../actions/imageActions":171,"./scaleBar.jsx":177,"react":169}],177:[function(require,module,exports){
+},{"../../actions/imageActions":172,"./scaleBar.jsx":178,"react":169}],178:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25567,7 +25571,7 @@ var ScaleBar = (function (_React$Component) {
 
 module.exports = ScaleBar;
 
-},{"../../actions/imageActions":171,"../../utils/gradient":183,"react":169}],178:[function(require,module,exports){
+},{"../../actions/imageActions":172,"../../utils/gradient":184,"react":169}],179:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25628,7 +25632,7 @@ var Sidebar = (function (_React$Component) {
 
 module.exports = Sidebar;
 
-},{"../add-image/addImage.jsx":172,"../image-thumb/imageThumb.jsx":174,"react":169}],179:[function(require,module,exports){
+},{"../add-image/addImage.jsx":173,"../image-thumb/imageThumb.jsx":175,"react":169}],180:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25676,7 +25680,7 @@ var Stage = (function (_React$Component) {
 
 module.exports = Stage;
 
-},{"react":169}],180:[function(require,module,exports){
+},{"react":169}],181:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25693,7 +25697,7 @@ React.render(React.createElement(App, null), document.getElementById("main"), fu
   };
 });
 
-},{"./components/app/app.jsx":173,"./utils/dev":182,"react":169}],181:[function(require,module,exports){
+},{"./components/app/app.jsx":174,"./utils/dev":183,"react":169}],182:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25774,7 +25778,7 @@ function state(opts) {
 
 module.exports = state;
 
-},{"baobab":2,"react":169}],182:[function(require,module,exports){
+},{"baobab":2,"react":169}],183:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25793,7 +25797,7 @@ function initDev() {
 
 module.exports = initDev;
 
-},{"../actions/imageActions":171}],183:[function(require,module,exports){
+},{"../actions/imageActions":172}],184:[function(require,module,exports){
 "use strict";
 
 function render(opts) {
@@ -25827,7 +25831,7 @@ function normalize(v, min, max, newMax) {
 
 module.exports = { render: render };
 
-},{}],184:[function(require,module,exports){
+},{}],185:[function(require,module,exports){
 "use strict";
 
 var astro = require("fitsjs").astro;
@@ -25861,12 +25865,14 @@ module.exports = function LoadImage(file, callback) {
   var fits = new FITS(file, onLoad);
 };
 
-},{"fitsjs":13}],185:[function(require,module,exports){
+},{"fitsjs":13}],186:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
 var imageBuffer = _interopRequire(require("imageBuffer"));
+
+var Worker = _interopRequire(require("workerjs"));
 
 console.info("TODO: Make this non blocking!");
 
@@ -25892,23 +25898,19 @@ function RenderImage(image, scale, callback, isPreview) {
   this.imageData = this.ctx.createImageData(this.targetWidth, this.targetHeight);
   this.buffer = new imageBuffer(this.imageData);
 
-  renderPixels.apply(this);
+  renderPixels.call(this, (function (result) {
 
-  if (isPreview) {
-    callback(this.buffer);
-  } else {
-    callback(this.buffer.createImage());
-  }
+    if (isPreview) {
+      callback(this.buffer);
+    } else {
+      callback(result);
+    }
+  }).bind(this));
 }
 
-function renderPixels() {
+function renderPixels(done) {
 
-  var area = Math.floor(this.targetWidth * this.targetHeight),
-      min = this.scaleMin,
-      max = this.scaleMax,
-      x = this.width,
-      y = 0,
-      ctx = this.image.scaling.ctx,
+  var ctx = this.image.scaling.ctx,
       ctxWidth = ctx.canvas.width;
 
   var pixelValues = [];
@@ -25917,35 +25919,71 @@ function renderPixels() {
     pixelValues.push(ctx.getImageData(i, 0, 1, 1).data);
   }
 
-  for (var i = 0; i < area; i++) {
+  //RENDER PIXEL LOOP
+  //TO BE REPLACED WITH WORKER!
+  //***************************
 
-    var pixelIndex = x * this.sample + y * this.sample * this.width,
+  console.log(this);
+
+  var worker = new Worker(window.URL.createObjectURL(new Blob(['(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module \'"+o+"\'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){\n\nfunction transformBuffer(data){\n\n  var sample = data.sample,\n      targetWidth = data.targetWidth,\n      targetHeight = data.targetHeight,\n      scaleMin = data.scaleMin,\n      scaleMax = data.scaleMax,\n      area = Math.floor(targetWidth * targetHeight),\n      width = data.width,\n      height = data.height,\n      imageData = data.imageData,\n      pixelValues = data.pixelValues,\n      x = width,\n      y = 0,\n      imageData = data.imageData,\n      pixels = data.targetArray;\n\n  for(var i = 0; i<area; i++){\n\n    var pixelIndex = (x * sample) + (y * sample * width),\n        value = imageData[pixelIndex],\n        v = ((value - scaleMin) * (pixelValues.length / (scaleMax - scaleMin))) || 0\n        v = Math.floor(v);\n\n        console.log(imageData[pixelIndex]);\n    //clamp\n    v = (v < 0) ? 0 : v;\n    v = (v > (pixelValues.length - 1) || isNaN(v)) ? (pixelValues.length - 1) : v;\n    var data = pixelValues[v];\n\n    var r = data[0],\n        g = data[1],\n        b = data[2],\n        a = data[3];\n\n    // set the pixel, using original alpha\n    //buffer.setPixel(area - i, r, g, b, a);\n    pixels[(i*4)+0] = a;\n    pixels[(i*4)+1] = a;\n    pixels[(i*4)+2] = a;\n    pixels[(i*4)+3] = a;\n\n    //if where at the start of a new row...\n    if (i % targetWidth === 0){\n      x = width; //reset x\n      y++; // increase the row value\n    }else{\n      x--; // move to next column\n    }\n  }\n\n  return pixels;\n}\n\n\nonmessage = function (msg) {\n  var data = msg.data,\n      newImageData = transformBuffer(data);\n\n  postMessage(newImageData);\n};\n},{}]},{},[1])'],{type:"text/javascript"})));
+
+  var imageData = this.ctx.createImageData(this.targetWidth, this.targetHeight);
+
+  worker.onmessage = (function (e) {
+
+    var imageDataArray = e.data;
+
+    this.ctx.putImageData(imageDataArray, 0, 0);
+
+    var url = this.ctx.canvas.toDataURL();
+    var img = new Image();
+    img.src = url;
+    console.log(img.src);
+    done(img);
+  }).bind(this);
+
+  worker.postMessage({
+    width: this.width,
+    height: this.height,
+    targetWidth: this.targetWidth,
+    targetHeight: this.targetHeight,
+    sample: this.sample,
+    scaleMin: this.scaleMin,
+    scaleMax: this.scaleMax,
+    imageData: this.image.imageData,
+    pixelValues: pixelValues,
+    targetArray: imageData
+  });
+
+  //***************************
+  //
+  //
+  /**
+  for(let i = 0;i<area;i++){
+     let pixelIndex = (x * this.sample) + (y * this.sample * this.width),
         value = this.image.imageData[pixelIndex],
-        v = (value - min) * (pixelValues.length / (max - min)) || 0;
-    v = Math.floor(v);
+        v = ((value - min) * (pixelValues.length / (max - min))) || 0
+        v = Math.floor(v);
     //clamp
-    v = v < 0 ? 0 : v;
-    v = v > pixelValues.length - 1 || isNaN(v) ? pixelValues.length - 1 : v;
-    var data = pixelValues[v];
-
-    var r = data[0],
+    v = (v < 0) ? 0 : v;
+    v = (v > (pixelValues.length - 1) || isNaN(v)) ? (pixelValues.length - 1) : v;
+    let data = pixelValues[v];
+     let r = data[0],
         g = data[1],
         b = data[2],
         a = data[3];
-
-    // set the pixel, using original alpha
+     // set the pixel, using original alpha
     this.buffer.setPixel(area - i, r, g, b, a);
-
-    //if where at the start of a new row...
-    if (i % this.targetWidth === 0) {
+     //if where at the start of a new row...
+    if (i % this.targetWidth === 0){
       x = this.width; //reset x
       y++; // increase the row value
-    } else {
+    }else{
       x--; // move to next column
     }
-  }
+   }**/
 }
 
 module.exports = RenderImage;
 
-},{"imageBuffer":14}]},{},[180]);
+},{"imageBuffer":14,"workerjs":171}]},{},[181]);

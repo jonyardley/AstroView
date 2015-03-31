@@ -69,7 +69,8 @@ function imageLoaded(data) {
   let image = imageCursor.get();
   gradient.render(image.scaling);
   
-  let scale = Math.floor(60/image.metaData.width);
+  let scale = 60/image.metaData.width;
+  console.log(scale);
   new RenderImage(image, scale, thumbRendered.bind(this));
 }
 

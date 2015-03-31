@@ -1,4 +1,5 @@
 import imageBuffer from 'imageBuffer';
+import Worker from 'workerjs';
 
 console.info('TODO: Make this non blocking!');
 
@@ -24,24 +25,21 @@ function RenderImage(image, scale, callback, isPreview){
   this.imageData = this.ctx.createImageData(this.targetWidth, this.targetHeight);
   this.buffer = new imageBuffer(this.imageData);
 
-  renderPixels.apply(this);
+  renderPixels.call(this, function(result){
 
-  if(isPreview){
-    callback(this.buffer);
-  }else{
-    callback(this.buffer.createImage());
-  }
+    if(isPreview){
+      callback(this.buffer);
+    }else{
+      callback(result);
+    }
+  }.bind(this));
 
 }
 
-function renderPixels() {
 
-  let area = Math.floor(this.targetWidth * this.targetHeight),
-      min = this.scaleMin,
-      max = this.scaleMax,
-      x = this.width,
-      y = 0,
-      ctx = this.image.scaling.ctx,
+function renderPixels(done) {
+
+  let ctx = this.image.scaling.ctx,
       ctxWidth = ctx.canvas.width;
       
   var pixelValues = [];
@@ -50,6 +48,49 @@ function renderPixels() {
     pixelValues.push(ctx.getImageData(i, 0, 1, 1).data);
   }
 
+  //RENDER PIXEL LOOP
+  //TO BE REPLACED WITH WORKER!
+  //***************************
+  
+  console.log(this);
+
+  var worker = new Worker('./renderImageWorker.js');
+
+  let imageData = this.ctx.createImageData(this.targetWidth, this.targetHeight);
+
+  worker.onmessage = function(e){
+    
+    let imageDataArray = e.data;
+    
+    this.ctx.putImageData(imageDataArray, 0, 0);
+
+    var url = this.ctx.canvas.toDataURL();
+    var img = new Image();
+    img.src = url;
+    console.log(img.src);
+    done(img);
+
+  }.bind(this);
+
+  worker.postMessage({
+    width: this.width,
+    height: this.height,
+    targetWidth: this.targetWidth,
+    targetHeight: this.targetHeight,
+    sample: this.sample,
+    scaleMin: this.scaleMin,
+    scaleMax: this.scaleMax,
+    imageData: this.image.imageData,
+    pixelValues: pixelValues,
+    targetArray: imageData
+  });
+
+
+
+  //***************************
+  //
+  //
+  /**
   for(let i = 0;i<area;i++){
 
     let pixelIndex = (x * this.sample) + (y * this.sample * this.width),
@@ -77,7 +118,7 @@ function renderPixels() {
       x--; // move to next column
     }
 
-  }
+  }**/
 
 }
 
