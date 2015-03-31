@@ -29,10 +29,11 @@ class App extends React.Component {
   render() {
 
     let images = this.state.images,
-        previewImage = data.images.select({id: this.state.activeImageId}).get();
+        previewImage = data.images.select({id: this.state.activeImageId}).get(),
+        activeImage = data.images.select({id: this.state.activeImageId}).get();
 
     let imagePreview = this.state.isPreviewVisible ? <ImagePreview image={previewImage} key={previewImage.id}/> : '' ,
-        stageContents = images.length ? <Stage image={this.state.images[0]}/> : <Intro /> ;
+        stageContents = activeImage ? <Stage image={activeImage}/> : <Intro /> ;
 
     return (
       <div className="main-inner">

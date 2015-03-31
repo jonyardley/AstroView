@@ -24952,6 +24952,7 @@ function imageLoaded(data) {
 
   var imageCursor = images.select({ id: this.id });
   imageCursor.merge(data);
+  ImageActions.setActiveImageId(this.id);
 
   var scaling = imageCursor.select("scaling");
   scaling.set("max", getMax(data.imageData));
@@ -24971,8 +24972,6 @@ function thumbRendered(data) {
     isDirty: false
   });
 
-  //DEV
-  ImageActions.setActiveImageId(this.id);
   ImageActions.showPreview(true);
 }
 
@@ -25166,10 +25165,11 @@ var App = (function (_React$Component) {
       value: function render() {
 
         var images = this.state.images,
-            previewImage = data.images.select({ id: this.state.activeImageId }).get();
+            previewImage = data.images.select({ id: this.state.activeImageId }).get(),
+            activeImage = data.images.select({ id: this.state.activeImageId }).get();
 
         var imagePreview = this.state.isPreviewVisible ? React.createElement(ImagePreview, { image: previewImage, key: previewImage.id }) : "",
-            stageContents = images.length ? React.createElement(Stage, { image: this.state.images[0] }) : React.createElement(Intro, null);
+            stageContents = activeImage ? React.createElement(Stage, { image: activeImage }) : React.createElement(Intro, null);
 
         return React.createElement(
           "div",

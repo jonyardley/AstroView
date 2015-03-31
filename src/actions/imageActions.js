@@ -60,6 +60,7 @@ function imageLoaded(data) {
 
   let imageCursor = images.select({id: this.id});
   imageCursor.merge(data);
+  ImageActions.setActiveImageId(this.id);
 
   var scaling = imageCursor.select('scaling');
   scaling.set('max', getMax(data.imageData));
@@ -79,8 +80,6 @@ function thumbRendered(data) {
     isDirty: false
   });
 
-  //DEV
-  ImageActions.setActiveImageId(this.id);
   ImageActions.showPreview(true);
 }
 
