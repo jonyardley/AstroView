@@ -9,7 +9,6 @@ function transformBuffer(data){
       area = Math.floor(targetWidth * targetHeight),
       width = data.width,
       height = data.height,
-      imageData = data.imageData,
       pixelValues = data.pixelValues,
       x = width,
       y = 0,
@@ -23,7 +22,6 @@ function transformBuffer(data){
         v = ((value - scaleMin) * (pixelValues.length / (scaleMax - scaleMin))) || 0
         v = Math.floor(v);
 
-        console.log(imageData[pixelIndex]);
     //clamp
     v = (v < 0) ? 0 : v;
     v = (v > (pixelValues.length - 1) || isNaN(v)) ? (pixelValues.length - 1) : v;
@@ -32,14 +30,14 @@ function transformBuffer(data){
     var r = data[0],
         g = data[1],
         b = data[2],
-        a = data[3];
+        a = 255;
 
     // set the pixel, using original alpha
     //buffer.setPixel(area - i, r, g, b, a);
-    pixels[(i*4)+0] = a;
-    pixels[(i*4)+1] = a;
-    pixels[(i*4)+2] = a;
-    pixels[(i*4)+3] = a;
+    pixels.data[(i*4)+0] = r;
+    pixels.data[(i*4)+1] = g;
+    pixels.data[(i*4)+2] = b;
+    pixels.data[(i*4)+3] = a;
 
     //if where at the start of a new row...
     if (i % targetWidth === 0){

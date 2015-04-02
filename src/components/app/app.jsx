@@ -32,7 +32,7 @@ class App extends React.Component {
         previewImage = data.images.select({id: this.state.activeImageId}).get(),
         activeImage = data.images.select({id: this.state.activeImageId}).get();
 
-    let imagePreview = /**this.state.isPreviewVisible**/ false ? <ImagePreview image={previewImage} key={previewImage.id}/> : '' ,
+    let imagePreview = this.state.isPreviewVisible ? <ImagePreview image={previewImage} key={previewImage.id}/> : '' ,
         stageContents = activeImage ? <Stage image={activeImage}/> : <Intro /> ;
 
     return (

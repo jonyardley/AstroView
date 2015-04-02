@@ -48,7 +48,7 @@ class ImagePreview extends React.Component {
 	renderPreview(){
 		let scale = size / this.props.image.metaData.width;
 		ImageActions.renderPreview(this.props.image, scale, function(data){
-			this.ctx.putImageData(data.imageData,0,0);
+			this.ctx.putImageData(data,0,0);
 		}.bind(this));
 	}
 
