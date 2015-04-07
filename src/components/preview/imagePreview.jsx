@@ -101,13 +101,17 @@ class ImagePreview extends React.Component {
 	render(){
 
 		return (
-			<div className="preview">
-			<h2>{this.props.image.name}</h2>
-				<canvas width={size} height={size} className="preview__canvas" id={canvasId}
-						onMouseMove={this.mouseMove.bind(this)} />
-				<ScaleBar image={this.props.image}/>
-				<button onClick={this.save.bind(this)}>Done</button>
-			</div>
+			<div>
+				<div className="overlay"></div>
+				<div className="preview">
+					<h2>{this.props.image.name}</h2>
+					<canvas width={size} height={size} className="preview__canvas" id={canvasId}
+							onMouseMove={this.mouseMove.bind(this)} />
+					<ScaleBar image={this.props.image}/>
+					<button type="button" className="btn btn-primary" onClick={this.save.bind(this)}>Done</button>
+					<button type="button" className="btn btn-danger" onClick={() => console.log('TODO: CANCEL')}>Cancel</button>
+				</div>
+				</div>
 		);
 	}
 

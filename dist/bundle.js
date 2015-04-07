@@ -24409,9 +24409,11 @@ var Image = function Image(name) {
 
 function imageLoaded(data) {
 
-  var imageCursor = images.select({ id: this.id });
+  var id = this.id;
+
+  var imageCursor = images.select({ id: id });
   imageCursor.merge(data);
-  ImageActions.setActiveImageId(this.id);
+  ImageActions.setActiveImageId(id);
 
   var scaling = imageCursor.select("scaling");
   scaling.set("max", getMax(data.imageData));
@@ -24421,17 +24423,19 @@ function imageLoaded(data) {
   gradient.render(image.scaling);
 
   var scale = 60 / image.metaData.width;
-  new RenderImage(image, scale, thumbRendered.bind(this));
-}
 
-function thumbRendered(data) {
-  var image = images.select({ id: this.id });
-  image.merge({
-    imgThumb: data,
-    isDirty: false
+  new RenderImage(image, scale, function (thumb) {
+    new RenderImage(image, 1, function (raw) {
+      var image = images.select({ id: id });
+      image.merge({
+        imgRaw: raw,
+        imgThumb: thumb,
+        isDirty: false
+      });
+
+      ImageActions.showPreview(true);
+    });
   });
-
-  ImageActions.showPreview(true);
 }
 
 function getFileName(file) {
@@ -24945,19 +24949,31 @@ var ImagePreview = (function (_React$Component) {
 
 				return React.createElement(
 					"div",
-					{ className: "preview" },
+					null,
+					React.createElement("div", { className: "overlay" }),
 					React.createElement(
-						"h2",
-						null,
-						this.props.image.name
-					),
-					React.createElement("canvas", { width: size, height: size, className: "preview__canvas", id: canvasId,
-						onMouseMove: this.mouseMove.bind(this) }),
-					React.createElement(ScaleBar, { image: this.props.image }),
-					React.createElement(
-						"button",
-						{ onClick: this.save.bind(this) },
-						"Done"
+						"div",
+						{ className: "preview" },
+						React.createElement(
+							"h2",
+							null,
+							this.props.image.name
+						),
+						React.createElement("canvas", { width: size, height: size, className: "preview__canvas", id: canvasId,
+							onMouseMove: this.mouseMove.bind(this) }),
+						React.createElement(ScaleBar, { image: this.props.image }),
+						React.createElement(
+							"button",
+							{ type: "button", className: "btn btn-primary", onClick: this.save.bind(this) },
+							"Done"
+						),
+						React.createElement(
+							"button",
+							{ type: "button", className: "btn btn-danger", onClick: function () {
+									return console.log("TODO: CANCEL");
+								} },
+							"Cancel"
+						)
 					)
 				);
 			}
@@ -25247,8 +25263,8 @@ function initDev() {
 
   // DEV
   //let imagePath = 'fits/656nmos.fits';
-  //let imagePath = 'fits/6008B000.fits';
-  //ImageActions.addImage(imagePath);
+  var imagePath = "fits/6008B000.fits";
+  ImageActions.addImage(imagePath);
 }
 
 module.exports = initDev;
