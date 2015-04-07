@@ -12,8 +12,8 @@ class Intro extends React.Component{
           <h1>AstroView</h1>
           <h2>View, compsite & analyse astronomical images in your browser</h2>
 
-          <div className="intro__panel panel">
-            <p>Load an image to get started!</p>
+          <div className="well">
+            <h4>Load an image to get started!</h4>
             <AddImage label="Add Image" classMod="intro" />
 
             <div className="intro__info">

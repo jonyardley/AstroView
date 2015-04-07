@@ -70,7 +70,6 @@ function imageLoaded(data) {
   gradient.render(image.scaling);
   
   let scale = 60/image.metaData.width;
-  console.log(scale);
   new RenderImage(image, scale, thumbRendered.bind(this));
 }
 
@@ -113,6 +112,7 @@ let ImageActions = {
     imageCursor.merge({isDirty: true});
 
     let scale = Math.floor(60/image.metaData.width);
+    
     new RenderImage(image, scale, function(thumb){
       new RenderImage(image, 1, function(raw){
         imageCursor.merge({

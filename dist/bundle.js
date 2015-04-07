@@ -24421,7 +24421,6 @@ function imageLoaded(data) {
   gradient.render(image.scaling);
 
   var scale = 60 / image.metaData.width;
-  console.log(scale);
   new RenderImage(image, scale, thumbRendered.bind(this));
 }
 
@@ -24464,6 +24463,7 @@ var ImageActions = {
     imageCursor.merge({ isDirty: true });
 
     var scale = Math.floor(60 / image.metaData.width);
+
     new RenderImage(image, scale, function (thumb) {
       new RenderImage(image, 1, function (raw) {
         imageCursor.merge({
@@ -24542,8 +24542,8 @@ var AddImage = (function (_React$Component) {
           { className: "add-image add-image--" + this.props.classMod },
           React.createElement(
             "button",
-            { className: "add-image__button" },
-            React.createElement("i", { className: "gi gi-plus" }),
+            { type: "button", className: "add-image__button btn btn-primary" },
+            React.createElement("i", { className: "glyphicon glyphicon-plus-sign" }),
             React.createElement(
               "span",
               { className: "add-image__label" },
@@ -24768,9 +24768,9 @@ var Intro = (function (_React$Component) {
             ),
             React.createElement(
               "div",
-              { className: "intro__panel panel" },
+              { className: "well" },
               React.createElement(
-                "p",
+                "h4",
                 null,
                 "Load an image to get started!"
               ),
@@ -25247,8 +25247,8 @@ function initDev() {
 
   // DEV
   //let imagePath = 'fits/656nmos.fits';
-  var imagePath = "fits/6008B000.fits";
-  ImageActions.addImage(imagePath);
+  //let imagePath = 'fits/6008B000.fits';
+  //ImageActions.addImage(imagePath);
 }
 
 module.exports = initDev;
@@ -25326,79 +25326,157 @@ module.exports = function LoadImage(file, callback) {
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
 var Worker = _interopRequire(require("workerjs"));
+
+var transformPixels = _interopRequire(require("./transformPixels"));
 
 var MPV = 255;
 
-function RenderImage(image, scale, callback, isPreview) {
+var RenderImage = (function () {
 
-  this.image = image;
-  this.width = image.metaData.width;
-  this.height = image.metaData.height;
-  this.scale = scale || 1;
-  this.scaleMin = image.scaling.scaleMin;
-  this.scaleMax = image.scaling.scaleMax;
-  this.sample = Math.floor(1 / this.scale);
-  this.targetWidth = Math.floor(this.width * this.scale);
-  this.targetHeight = Math.floor(this.height * this.scale);
+  // opts: image, scale, callback, isPreview
 
-  this.canvas = document.createElement("canvas");
-  this.canvas.width = this.targetWidth;
-  this.canvas.height = this.targetHeight;
-  this.ctx = this.canvas.getContext("2d");
+  function RenderImage(image, scale, callback, isPreview) {
+    _classCallCheck(this, RenderImage);
 
-  renderPixels.call(this, renderDone.bind(this));
+    this.image = image;
+    this.isPreview = isPreview;
+    this.scale = scale || 1;
 
-  function renderDone(imageData) {
+    this.width = this.image.metaData.width;
+    this.height = this.image.metaData.height;
+    this.scaleMin = this.image.scaling.scaleMin;
+    this.scaleMax = this.image.scaling.scaleMax;
+    this.sample = Math.floor(1 / this.scale);
+    this.targetWidth = Math.floor(this.width * this.scale);
+    this.targetHeight = Math.floor(this.height * this.scale);
+
+    var tmpCanvas = document.createElement("canvas");
+    tmpCanvas.width = this.targetWidth;
+    tmpCanvas.height = this.targetHeight;
+
+    var tmpCtx = this.tmpCtx = tmpCanvas.getContext("2d");
+
+    var data = {
+      width: this.width,
+      height: this.height,
+      targetWidth: this.targetWidth,
+      targetHeight: this.targetHeight,
+      sample: this.sample,
+      scaleMin: this.scaleMin,
+      scaleMax: this.scaleMax,
+      imageData: this.image.imageData,
+      pixelValueMap: this.getPixelValueMap(),
+      tmpContext: this.tmpCtx.getImageData(0, 0, this.targetWidth, this.targetHeight)
+    };
 
     if (isPreview) {
-      callback(imageData);
+      this.render(data, callback);
     } else {
-      this.ctx.putImageData(imageData, 0, 0);
-      var url = this.ctx.canvas.toDataURL(),
-          img = new Image();
-      img.src = url;
-      callback(img);
+      this.workerRender(data, function (imageData) {
+        tmpCtx.putImageData(imageData, 0, 0);
+        var url = tmpCtx.canvas.toDataURL(),
+            img = new Image();
+        img.src = url;
+        callback(img);
+      });
     }
   }
-}
 
-function renderPixels(done) {
+  _createClass(RenderImage, {
+    getPixelValueMap: {
+      value: function getPixelValueMap() {
+        var scaleCtx = this.image.scaling.ctx,
+            ctxWidth = scaleCtx.canvas.width,
+            pixelValueMap = [];
 
-  //SET SCALING CANVAS AND GET ARRAY OF VALUES
-  var scaleCtx = this.image.scaling.ctx,
-      ctxWidth = scaleCtx.canvas.width,
-      pixelValues = [];
+        for (var i = 0; i < ctxWidth; i++) {
+          pixelValueMap.push(scaleCtx.getImageData(i, 0, 1, 1).data);
+        }
 
-  for (var i = 0; i < ctxWidth; i++) {
-    pixelValues.push(scaleCtx.getImageData(i, 0, 1, 1).data);
-  }
+        return pixelValueMap;
+      }
+    },
+    workerRender: {
+      value: function workerRender(data, done) {
+        var worker = new Worker(window.URL.createObjectURL(new Blob(['(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module \'"+o+"\'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){\nvar transformPixels = require(\'./transformPixels\');\n\nonmessage = function (msg) {\n  var data = msg.data,\n      newImageData = transformPixels(data);\n  postMessage(newImageData);\n};\n},{"./transformPixels":2}],2:[function(require,module,exports){\nfunction transformPixels(data){\n\n  var sample = data.sample,\n      targetWidth = data.targetWidth,\n      targetHeight = data.targetHeight,\n      scaleMin = data.scaleMin,\n      scaleMax = data.scaleMax,\n      area = Math.floor(targetWidth * targetHeight),\n      width = data.width,\n      height = data.height,\n      pixelValueMap = data.pixelValueMap,\n      x = width,\n      y = 0,\n      imageData = data.imageData,\n      context = data.tmpContext;\n\n  for(var i = 0; i<area; i++){\n\n    var pixelIndex = (x * sample) + (y * sample * width),\n        value = imageData[pixelIndex],\n        v = ((value - scaleMin) * (pixelValueMap.length / (scaleMax - scaleMin))) || 0\n        v = Math.floor(v);\n\n    //clamp\n    v = (v < 0) ? 0 : v;\n    v = (v > (pixelValueMap.length - 1) || isNaN(v)) ? (pixelValueMap.length - 1) : v;\n    var data = pixelValueMap[v];\n\n    var pi = area - i;\n    // set the pixel values\n    context.data[(pi*4)+0] = data[0];\n    context.data[(pi*4)+1] = data[1];\n    context.data[(pi*4)+2] = data[2];\n    context.data[(pi*4)+3] = data[3];\n\n    //if where at the start of a new row...\n    if (i % targetWidth === 0){\n      x = width; //reset x\n      y++; // increase the row value\n    }else{\n      x--; // move to next column\n    }\n  }\n\n  return context;\n}\n\nmodule.exports = transformPixels;\n},{}]},{},[1])'],{type:"text/javascript"})));
 
-  //RENDER PIXEL LOOP
-  //TO BE REPLACED WITH WORKER!
-  //***************************
+        worker.onmessage = (function (e) {
+          //TODO: Handle Errors here!
+          var canvasData = e.data;
+          done(canvasData);
+        }).bind(this);
 
-  var worker = new Worker(window.URL.createObjectURL(new Blob(['(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module \'"+o+"\'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){\n\nfunction transformBuffer(data){\n\n  var sample = data.sample,\n      targetWidth = data.targetWidth,\n      targetHeight = data.targetHeight,\n      scaleMin = data.scaleMin,\n      scaleMax = data.scaleMax,\n      area = Math.floor(targetWidth * targetHeight),\n      width = data.width,\n      height = data.height,\n      pixelValues = data.pixelValues,\n      x = width,\n      y = 0,\n      imageData = data.imageData,\n      pixels = data.targetArray;\n\n  for(var i = 0; i<area; i++){\n\n    var pixelIndex = (x * sample) + (y * sample * width),\n        value = imageData[pixelIndex],\n        v = ((value - scaleMin) * (pixelValues.length / (scaleMax - scaleMin))) || 0\n        v = Math.floor(v);\n\n    //clamp\n    v = (v < 0) ? 0 : v;\n    v = (v > (pixelValues.length - 1) || isNaN(v)) ? (pixelValues.length - 1) : v;\n    var data = pixelValues[v];\n\n    var r = data[0],\n        g = data[1],\n        b = data[2],\n        a = 255;\n\n    // set the pixel, using original alpha\n    //buffer.setPixel(area - i, r, g, b, a);\n    pixels.data[(i*4)+0] = r;\n    pixels.data[(i*4)+1] = g;\n    pixels.data[(i*4)+2] = b;\n    pixels.data[(i*4)+3] = a;\n\n    //if where at the start of a new row...\n    if (i % targetWidth === 0){\n      x = width; //reset x\n      y++; // increase the row value\n    }else{\n      x--; // move to next column\n    }\n  }\n\n  return pixels;\n}\n\n\nonmessage = function (msg) {\n  var data = msg.data,\n      newImageData = transformBuffer(data);\n\n  postMessage(newImageData);\n};\n},{}]},{},[1])'],{type:"text/javascript"})));
-
-  worker.onmessage = (function (e) {
-    var canvasData = e.data;
-    done(canvasData);
-  }).bind(this);
-
-  worker.postMessage({
-    width: this.width,
-    height: this.height,
-    targetWidth: this.targetWidth,
-    targetHeight: this.targetHeight,
-    sample: this.sample,
-    scaleMin: this.scaleMin,
-    scaleMax: this.scaleMax,
-    imageData: this.image.imageData,
-    pixelValues: pixelValues,
-    targetArray: this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height)
+        worker.postMessage(data);
+      }
+    },
+    render: {
+      value: function render(data, done) {
+        var imageData = transformPixels(data);
+        done(imageData);
+      }
+    }
   });
-}
+
+  return RenderImage;
+})();
 
 module.exports = RenderImage;
 
-},{"workerjs":170}]},{},[180]);
+},{"./transformPixels":186,"workerjs":170}],186:[function(require,module,exports){
+"use strict";
+
+function transformPixels(data) {
+
+  var sample = data.sample,
+      targetWidth = data.targetWidth,
+      targetHeight = data.targetHeight,
+      scaleMin = data.scaleMin,
+      scaleMax = data.scaleMax,
+      area = Math.floor(targetWidth * targetHeight),
+      width = data.width,
+      height = data.height,
+      pixelValueMap = data.pixelValueMap,
+      x = width,
+      y = 0,
+      imageData = data.imageData,
+      context = data.tmpContext;
+
+  for (var i = 0; i < area; i++) {
+
+    var pixelIndex = x * sample + y * sample * width,
+        value = imageData[pixelIndex],
+        v = (value - scaleMin) * (pixelValueMap.length / (scaleMax - scaleMin)) || 0;
+    v = Math.floor(v);
+
+    //clamp
+    v = v < 0 ? 0 : v;
+    v = v > pixelValueMap.length - 1 || isNaN(v) ? pixelValueMap.length - 1 : v;
+    var data = pixelValueMap[v];
+
+    var pi = area - i;
+    // set the pixel values
+    context.data[pi * 4 + 0] = data[0];
+    context.data[pi * 4 + 1] = data[1];
+    context.data[pi * 4 + 2] = data[2];
+    context.data[pi * 4 + 3] = data[3];
+
+    //if where at the start of a new row...
+    if (i % targetWidth === 0) {
+      x = width; //reset x
+      y++; // increase the row value
+    } else {
+      x--; // move to next column
+    }
+  }
+
+  return context;
+}
+
+module.exports = transformPixels;
+
+},{}]},{},[180]);

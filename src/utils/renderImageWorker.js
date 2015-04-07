@@ -1,60 +1,7 @@
-
-function transformBuffer(data){
-
-  var sample = data.sample,
-      targetWidth = data.targetWidth,
-      targetHeight = data.targetHeight,
-      scaleMin = data.scaleMin,
-      scaleMax = data.scaleMax,
-      area = Math.floor(targetWidth * targetHeight),
-      width = data.width,
-      height = data.height,
-      pixelValues = data.pixelValues,
-      x = width,
-      y = 0,
-      imageData = data.imageData,
-      pixels = data.targetArray;
-
-  for(var i = 0; i<area; i++){
-
-    var pixelIndex = (x * sample) + (y * sample * width),
-        value = imageData[pixelIndex],
-        v = ((value - scaleMin) * (pixelValues.length / (scaleMax - scaleMin))) || 0
-        v = Math.floor(v);
-
-    //clamp
-    v = (v < 0) ? 0 : v;
-    v = (v > (pixelValues.length - 1) || isNaN(v)) ? (pixelValues.length - 1) : v;
-    var data = pixelValues[v];
-
-    var r = data[0],
-        g = data[1],
-        b = data[2],
-        a = 255;
-
-    // set the pixel, using original alpha
-    //buffer.setPixel(area - i, r, g, b, a);
-    pixels.data[(i*4)+0] = r;
-    pixels.data[(i*4)+1] = g;
-    pixels.data[(i*4)+2] = b;
-    pixels.data[(i*4)+3] = a;
-
-    //if where at the start of a new row...
-    if (i % targetWidth === 0){
-      x = width; //reset x
-      y++; // increase the row value
-    }else{
-      x--; // move to next column
-    }
-  }
-
-  return pixels;
-}
-
+var transformPixels = require('./transformPixels');
 
 onmessage = function (msg) {
   var data = msg.data,
-      newImageData = transformBuffer(data);
-
+      newImageData = transformPixels(data);
   postMessage(newImageData);
 };
