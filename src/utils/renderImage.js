@@ -1,82 +1,85 @@
-import imageBuffer from 'imageBuffer';
-
-console.info('TODO: Make this non blocking!');
-
+import Worker from 'workerjs';
+import transformPixels from './transformPixels';
 const MPV = 255;
 
-function RenderImage(image, scale, callback, isPreview){
+class RenderImage {
 
-  this.image = image;
-  this.width = image.metaData.width;
-  this.height = image.metaData.height;
-  this.scale = scale || 1;
-  this.scaleMin = image.scaling.scaleMin;
-  this.scaleMax = image.scaling.scaleMax;
-  this.sample = Math.floor(1 / this.scale);
-  this.targetWidth = Math.floor(this.width * this.scale);
-  this.targetHeight = Math.floor(this.height * this.scale);
+  // opts: image, scale, callback, isPreview
+  constructor(image, scale, callback, isPreview){
 
-  this.canvas = document.createElement('canvas');
-  this.canvas.width = this.targetWidth;
-  this.canvas.height = this.targetHeight;
-  this.ctx = this.canvas.getContext('2d');
+    this.image = image;
+    this.isPreview = isPreview;
+    this.scale = scale || 1;
 
-  this.imageData = this.ctx.createImageData(this.targetWidth, this.targetHeight);
-  this.buffer = new imageBuffer(this.imageData);
+    this.width = this.image.metaData.width;
+    this.height = this.image.metaData.height;
+    this.scaleMin = this.image.scaling.scaleMin;
+    this.scaleMax = this.image.scaling.scaleMax;
+    this.sample = Math.floor(1 / this.scale);
+    this.targetWidth = Math.floor(this.width * this.scale);
+    this.targetHeight = Math.floor(this.height * this.scale);
 
-  renderPixels.apply(this);
+    let tmpCanvas = document.createElement('canvas');
+    tmpCanvas.width = this.targetWidth;
+    tmpCanvas.height = this.targetHeight;
 
-  if(isPreview){
-    callback(this.buffer);
-  }else{
-    callback(this.buffer.createImage());
-  }
+    let tmpCtx = this.tmpCtx = tmpCanvas.getContext('2d');
 
-}
+    let data = {
+      width: this.width,
+      height: this.height,
+      targetWidth: this.targetWidth,
+      targetHeight: this.targetHeight,
+      sample: this.sample,
+      scaleMin: this.scaleMin,
+      scaleMax: this.scaleMax,
+      imageData: this.image.imageData,
+      pixelValueMap: this.getPixelValueMap(),
+      tmpContext: this.tmpCtx.getImageData(0,0,this.targetWidth, this.targetHeight)
+    };
 
-function renderPixels() {
-
-  let area = Math.floor(this.targetWidth * this.targetHeight),
-      min = this.scaleMin,
-      max = this.scaleMax,
-      x = this.width,
-      y = 0,
-      ctx = this.image.scaling.ctx,
-      ctxWidth = ctx.canvas.width;
-      
-  var pixelValues = [];
-
-  for(let i = 0;i<ctxWidth;i++){
-    pixelValues.push(ctx.getImageData(i, 0, 1, 1).data);
-  }
-
-  for(let i = 0;i<area;i++){
-
-    let pixelIndex = (x * this.sample) + (y * this.sample * this.width),
-        value = this.image.imageData[pixelIndex],
-        v = ((value - min) * (pixelValues.length / (max - min))) || 0
-        v = Math.floor(v);
-    //clamp
-    v = (v < 0) ? 0 : v;
-    v = (v > (pixelValues.length - 1) || isNaN(v)) ? (pixelValues.length - 1) : v;
-    let data = pixelValues[v];
-
-    let r = data[0],
-        g = data[1],
-        b = data[2],
-        a = data[3];
-
-    // set the pixel, using original alpha
-    this.buffer.setPixel(area - i, r, g, b, a);
-
-    //if where at the start of a new row...
-    if (i % this.targetWidth === 0){
-      x = this.width; //reset x
-      y++; // increase the row value
+    if(isPreview){
+      this.render(data, callback);
     }else{
-      x--; // move to next column
+      this.workerRender(data, function(imageData){
+        tmpCtx.putImageData(imageData, 0, 0);
+        let url = tmpCtx.canvas.toDataURL(),
+            img = new Image();
+        img.src = url;
+        callback(img);
+      });
     }
 
+  }
+
+  getPixelValueMap(){
+    let scaleCtx = this.image.scaling.ctx,
+        ctxWidth = scaleCtx.canvas.width,
+        pixelValueMap = [];
+
+    for(let i = 0; i<ctxWidth; i++){
+      pixelValueMap.push(scaleCtx.getImageData(i, 0, 1, 1).data);
+    }
+
+    return pixelValueMap;
+  }
+
+  workerRender(data, done){
+    var worker = new Worker('./renderImageWorker.js', true);
+
+    worker.onmessage = function(e){ 
+      //TODO: Handle Errors here!
+      let canvasData = e.data;
+      done(canvasData);
+    }.bind(this);
+
+    worker.postMessage(data);
+
+  }
+
+  render(data, done){
+    var imageData = transformPixels(data);
+    done(imageData);
   }
 
 }

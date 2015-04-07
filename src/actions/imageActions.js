@@ -58,9 +58,11 @@ class Image {
 
 function imageLoaded(data) {
 
-  let imageCursor = images.select({id: this.id});
+  let id = this.id;
+
+  let imageCursor = images.select({id: id});
   imageCursor.merge(data);
-  ImageActions.setActiveImageId(this.id);
+  ImageActions.setActiveImageId(id);
 
   var scaling = imageCursor.select('scaling');
   scaling.set('max', getMax(data.imageData));
@@ -69,18 +71,20 @@ function imageLoaded(data) {
   let image = imageCursor.get();
   gradient.render(image.scaling);
   
-  let scale = Math.floor(60/image.metaData.width);
-  new RenderImage(image, scale, thumbRendered.bind(this));
-}
+  let scale = 60/image.metaData.width;
 
-function thumbRendered(data) {
-  let image = images.select({id: this.id});
-  image.merge({
-    imgThumb: data,
-    isDirty: false
+  new RenderImage(image, scale, function(thumb){
+    new RenderImage(image, 1, function(raw){
+      let image = images.select({id: id});
+      image.merge({
+        imgRaw: raw,
+        imgThumb: thumb,
+        isDirty: false
+      });
+
+      ImageActions.showPreview(true);
+    });
   });
-
-  ImageActions.showPreview(true);
 }
 
 function getFileName(file){
@@ -112,6 +116,7 @@ let ImageActions = {
     imageCursor.merge({isDirty: true});
 
     let scale = Math.floor(60/image.metaData.width);
+    
     new RenderImage(image, scale, function(thumb){
       new RenderImage(image, 1, function(raw){
         imageCursor.merge({

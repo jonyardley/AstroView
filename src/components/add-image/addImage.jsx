@@ -13,11 +13,11 @@ class AddImage extends React.Component {
   render(){
     return (
       <div className={ "add-image add-image--" + this.props.classMod } >
-        <button className="add-image__button">
-          <i className="gi gi-plus"></i>
+        <button type="button" className="add-image__button btn btn-primary">
+          <i className="glyphicon glyphicon-plus-sign"></i>
           <span className="add-image__label">{this.props.label}</span>
           <input className="add-image__input" type="file" onChange={attemptFileLoad.bind(this)} />
-        </button>
+          </button>
       </div>
     )
   }

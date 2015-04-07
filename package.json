@@ -12,13 +12,15 @@
     "napa": "1.2.0",
     "react": "^0.13.1",
     "stylus": "^0.50.0",
-    "watchify": "^2.6.2"
+    "watchify": "^2.6.2",
+    "workerify": "^0.3.0",
+    "workerjs": "^0.1.1"
   },
   "scripts": {
     "install": "./node_modules/.bin/napa",
     "start": "npm run watch & npm run static & npm run sass & npm run reload",
     "reload": "./node_modules/.bin/livereload dist",
-    "watch": "./node_modules/.bin/watchify src/main.jsx -t babelify -o dist/bundle.js",
+    "watch": "./node_modules/.bin/watchify src/main.jsx -t babelify -t workerify -o dist/bundle.js",
     "static": "./node_modules/.bin/http-server dist",
     "sass": "./node_modules/.bin/stylus -w -r -o dist/styles src/styles/main.styl"
   },
