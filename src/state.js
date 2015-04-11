@@ -6,7 +6,8 @@ var data = {
   maxImages: 8,
   isPreviewVisible: false,
   activeImageId: null,
-  images: []
+  images: [],
+  canvasImages: []
 };
 
 var options = {
@@ -30,7 +31,7 @@ function getAll (opts) {
     let output = {};
 
     Object.keys(opts).forEach(function (key) {
-      
+
       let cursor = opts[key];
 
       output[key] = cursor.get();
@@ -48,17 +49,17 @@ function getAll (opts) {
  * @return {[type]}      [description]
  */
 function state (opts){
-  
+
   let _cursors = {},
       listen;
 
   Object.keys(opts).forEach(function (key) {
-    
+
     let obj = opts[key];
-    
+
     let cursor = cursors.select.apply(cursors, obj);
     _cursors[key] = cursor;
-    
+
     if(!listen){
       listen = cursor;
     }else{

@@ -4,13 +4,15 @@ import RenderImage from '../utils/renderImage';
 import generateGradient from '../utils/gradient';
 
 let data = state({
-  images: ['images'],
-  isPreviewVisible: ['isPreviewVisible'],
-  activeImageId: ['activeImageId']
-});
-let images = data.images;
-let previewImage = data.prevewImage;
-let _id = 0;
+    images: ['images'],
+    isPreviewVisible: ['isPreviewVisible'],
+    activeImageId: ['activeImageId'],
+    canvasImages: ['canvasImages']
+  }),
+  images = data.images,
+  canvasImages = data.canvasImages,
+  previewImage = data.prevewImage,
+  _id = 0;
 
 function getId (){
   let id = _id;
@@ -57,6 +59,16 @@ class Image {
 }
 
 
+function updateCanvasImages(image){
+  let ciArray = canvasImages.get();
+
+  ciArray[image.id] = image.imgRaw;
+  
+  canvasImages.edit(ciArray)
+
+}
+
+
 function imageLoaded(data) {
 
   let id = this.id;
@@ -67,6 +79,7 @@ function imageLoaded(data) {
 
   let scaling = imageCursor.select('scaling'),
       max = getMax(data.imageData);
+
   scaling.set('max', max);
   scaling.set('scaleMax', max);
 
@@ -75,6 +88,7 @@ function imageLoaded(data) {
 
   let scale = 60/image.metaData.width;
 
+  //TODO: USE ASYNC TO MAKE THIS NICER!
   new RenderImage(image, scale, function(thumb){
     new RenderImage(image, 1, function(raw){
       let image = images.select({id: id});
@@ -84,7 +98,10 @@ function imageLoaded(data) {
         isDirty: false
       });
 
-      ImageActions.showPreview(true);
+      updateCanvasImages({id: id, imgRaw: raw});
+
+      //TODO: RE-ADD THIS FOR PRODUCTION!
+      //ImageActions.showPreview(true);
     });
   });
 }
@@ -119,6 +136,7 @@ let ImageActions = {
 
     let scale = Math.floor(60/image.metaData.width);
 
+    //TODO: USE ASYNC TO MAKE THIS NICER!
     new RenderImage(image, scale, function(thumb){
       new RenderImage(image, 1, function(raw){
         imageCursor.merge({
@@ -126,6 +144,8 @@ let ImageActions = {
           imgRaw: raw,
           isDirty: false
         });
+
+        updateCanvasImages(image);
       });
     });
 

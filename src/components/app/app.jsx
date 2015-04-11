@@ -8,7 +8,8 @@ import Stage from '../stage/stage.jsx';
 let data = state({
   images: ['images'],
   isPreviewVisible: ['isPreviewVisible'],
-  activeImageId: ['activeImageId']
+  activeImageId: ['activeImageId'],
+  canvasImages: ['canvasImages']
 });
 
 class App extends React.Component {
@@ -33,7 +34,7 @@ class App extends React.Component {
         activeImage = data.images.select({id: this.state.activeImageId}).get();
 
     let imagePreview = this.state.isPreviewVisible ? <ImagePreview image={previewImage} key={previewImage.id}/> : '' ,
-        stageContents = activeImage ? <Stage /> : <Intro /> ;
+        stageContents = activeImage ? <Stage images={this.state.canvasImages}/> : <Intro /> ;
 
     return (
       <div className="main-inner">
