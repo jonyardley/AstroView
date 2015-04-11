@@ -2,6 +2,7 @@ import React from 'react';
 import ImageActions from '../../actions/imageActions';
 import ScaleBar from './scaleBar.jsx';
 import scaleFunctions from '../../utils/scaleFunctions';
+import _ from 'underscore';
 
 var canvasId = 'previewCanvas',
 		size = 500;
@@ -54,7 +55,7 @@ class ImagePreview extends React.Component {
 	}
 
 	mouseMove(e){
-		if(this.state.isMouseDown){
+		if(this.state.isMouseDown && e.target){
 
 			let x = this.state.lastPosition.x,
 					y = this.state.lastPosition.y,
@@ -70,11 +71,12 @@ class ImagePreview extends React.Component {
 			max = max + (deltaX * scale);
 
 			//adust y
-			min = min - (deltaY * scale);
-			max = max + (deltaY * scale);
+			min = min + (deltaY * scale);
+			max = max - (deltaY * scale);
 
 			this.setState({lastPosition: {x: e.clientX, y: e.clientY}});
 			ImageActions.updateScaling(this.props.image, min, max);
+
 		}
 	}
 
@@ -116,7 +118,7 @@ class ImagePreview extends React.Component {
 				<div className="preview">
 					<h2>{this.props.image.name}</h2>
 					<canvas width={size} height={size} className="preview__canvas" id={canvasId}
-							onMouseMove={this.mouseMove.bind(this)} />
+							onMouseMove={_.throttle(this.mouseMove.bind(this), 300)} />
 					<ScaleBar image={this.props.image}/>
 					<div>
 						<select onChange={this.updateScaleFunction.bind(this)}>
