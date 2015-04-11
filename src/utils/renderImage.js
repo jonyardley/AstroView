@@ -34,7 +34,7 @@ class RenderImage {
       scaleMin: this.scaleMin,
       scaleMax: this.scaleMax,
       imageData: this.image.imageData,
-      pixelValueMap: this.getPixelValueMap(),
+      colors: this.image.scaling.colors,
       tmpContext: this.tmpCtx.getImageData(0,0,this.targetWidth, this.targetHeight)
     };
 
@@ -52,22 +52,10 @@ class RenderImage {
 
   }
 
-  getPixelValueMap(){
-    let scaleCtx = this.image.scaling.ctx,
-        ctxWidth = scaleCtx.canvas.width,
-        pixelValueMap = [];
-
-    for(let i = 0; i<ctxWidth; i++){
-      pixelValueMap.push(scaleCtx.getImageData(i, 0, 1, 1).data);
-    }
-
-    return pixelValueMap;
-  }
-
   workerRender(data, done){
     var worker = new Worker('./renderImageWorker.js', true);
 
-    worker.onmessage = function(e){ 
+    worker.onmessage = function(e){
       //TODO: Handle Errors here!
       let canvasData = e.data;
       done(canvasData);

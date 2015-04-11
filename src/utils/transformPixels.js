@@ -1,3 +1,20 @@
+var Color = require('color');
+var scaleFunction = require('./scaleFunctions').scale;
+var Gradient = require('interpolation-arrays');
+
+function generateGradient(colors){
+
+  var colorArray = colors.map(function(colorValue){
+    var color = Color(colorValue);
+
+    return color.rgbArray();
+
+  });
+
+  return Gradient(colorArray);
+
+}
+
 function transformPixels(data){
 
   var sample = data.sample,
@@ -8,30 +25,35 @@ function transformPixels(data){
       area = Math.floor(targetWidth * targetHeight),
       width = data.width,
       height = data.height,
-      pixelValueMap = data.pixelValueMap,
       x = width,
       y = 0,
       imageData = data.imageData,
-      context = data.tmpContext;
+      context = data.tmpContext,
+      gradient = generateGradient(data.colors);
 
   for(var i = 0; i<area; i++){
 
     var pixelIndex = (x * sample) + (y * sample * width),
         value = imageData[pixelIndex],
-        v = ((value - scaleMin) * (pixelValueMap.length / (scaleMax - scaleMin))) || 0
-        v = Math.floor(v);
+        //v = ((value - scaleMin) * (1 / (scaleMax - scaleMin))) || 0
+        v = scaleFunction('log', value, scaleMin, scaleMax, 1);
+        //v = Math.floor(v);
 
     //clamp
-    v = (v < 0) ? 0 : v;
-    v = (v > (pixelValueMap.length - 1) || isNaN(v)) ? (pixelValueMap.length - 1) : v;
-    var data = pixelValueMap[v];
+    v = (v < 0 || isNaN(v)) ? 0 : v;
+    v = (v > 1) ? 1 : v;
+
+    //normalize
+    //v = (v - scaleMin) * (1 / (scaleMax - scaleMin));
+
+    var pv = gradient(v);
 
     var pi = area - i;
     // set the pixel values
-    context.data[(pi*4)+0] = data[0];
-    context.data[(pi*4)+1] = data[1];
-    context.data[(pi*4)+2] = data[2];
-    context.data[(pi*4)+3] = data[3];
+    context.data[(pi*4)+0] = pv[0];
+    context.data[(pi*4)+1] = pv[1];
+    context.data[(pi*4)+2] = pv[2];
+    context.data[(pi*4)+3] = 255;
 
     //if where at the start of a new row...
     if (i % targetWidth === 0){

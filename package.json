@@ -7,7 +7,9 @@
   "devDependencies": {
     "babelify": "^5.0.4",
     "baobab": "^0.4.2",
+    "color": "^0.8.0",
     "http-server": "^0.7.5",
+    "interpolation-arrays": "0.0.0",
     "livereload": "^0.3.6",
     "napa": "1.2.0",
     "react": "^0.13.1",

@@ -1,7 +1,7 @@
 import state from '../state';
 import LoadImage from '../utils/loadImage';
 import RenderImage from '../utils/renderImage';
-import gradient from '../utils/gradient';
+import generateGradient from '../utils/gradient';
 
 let data = state({
   images: ['images'],
@@ -15,7 +15,7 @@ let _id = 0;
 function getId (){
   let id = _id;
   _id++;
-  return id; 
+  return id;
 }
 
 function getMax(imageData){
@@ -39,7 +39,7 @@ class Image {
       //create scalebar canvas
     let el = document.createElement('canvas'),
         ctx = el.getContext('2d');
-  
+
     el.width = 500;
     el.height = 1;
 
@@ -64,13 +64,14 @@ function imageLoaded(data) {
   imageCursor.merge(data);
   ImageActions.setActiveImageId(id);
 
-  var scaling = imageCursor.select('scaling');
-  scaling.set('max', getMax(data.imageData));
-  scaling.set('scaleMax', getMax(data.imageData));
+  let scaling = imageCursor.select('scaling'),
+      max = getMax(data.imageData);
+  scaling.set('max', max);
+  scaling.set('scaleMax', max);
 
   let image = imageCursor.get();
-  gradient.render(image.scaling);
-  
+  generateGradient.render(image.scaling);
+
   let scale = 60/image.metaData.width;
 
   new RenderImage(image, scale, function(thumb){
@@ -108,7 +109,7 @@ let ImageActions = {
   },
 
   removeImage: () => console.log('Remove Image'),
-  
+
   updateImage: function(image){
     let imageCursor = images.select({id: image.id}),
     image = imageCursor.get();
@@ -116,7 +117,7 @@ let ImageActions = {
     imageCursor.merge({isDirty: true});
 
     let scale = Math.floor(60/image.metaData.width);
-    
+
     new RenderImage(image, scale, function(thumb){
       new RenderImage(image, 1, function(raw){
         imageCursor.merge({
@@ -156,4 +157,3 @@ let ImageActions = {
 };
 
 module.exports = ImageActions;
-

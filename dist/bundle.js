@@ -2907,6 +2907,1601 @@ function update(target, spec, opts) {
 module.exports = update;
 
 },{"./helpers.js":8,"./type.js":11}],13:[function(require,module,exports){
+/* MIT license */
+var convert = require("color-convert"),
+    string = require("color-string");
+
+var Color = function(obj) {
+  if (obj instanceof Color) return obj;
+  if (! (this instanceof Color)) return new Color(obj);
+
+   this.values = {
+      rgb: [0, 0, 0],
+      hsl: [0, 0, 0],
+      hsv: [0, 0, 0],
+      hwb: [0, 0, 0],
+      cmyk: [0, 0, 0, 0],
+      alpha: 1
+   }
+
+   // parse Color() argument
+   if (typeof obj == "string") {
+      var vals = string.getRgba(obj);
+      if (vals) {
+         this.setValues("rgb", vals);
+      }
+      else if(vals = string.getHsla(obj)) {
+         this.setValues("hsl", vals);
+      }
+      else if(vals = string.getHwb(obj)) {
+         this.setValues("hwb", vals);
+      }
+      else {
+        throw new Error("Unable to parse color from string \"" + obj + "\"");
+      }
+   }
+   else if (typeof obj == "object") {
+      var vals = obj;
+      if(vals["r"] !== undefined || vals["red"] !== undefined) {
+         this.setValues("rgb", vals)
+      }
+      else if(vals["l"] !== undefined || vals["lightness"] !== undefined) {
+         this.setValues("hsl", vals)
+      }
+      else if(vals["v"] !== undefined || vals["value"] !== undefined) {
+         this.setValues("hsv", vals)
+      }
+      else if(vals["w"] !== undefined || vals["whiteness"] !== undefined) {
+         this.setValues("hwb", vals)
+      }
+      else if(vals["c"] !== undefined || vals["cyan"] !== undefined) {
+         this.setValues("cmyk", vals)
+      }
+      else {
+        throw new Error("Unable to parse color from object " + JSON.stringify(obj));
+      }
+   }
+}
+
+Color.prototype = {
+   rgb: function (vals) {
+      return this.setSpace("rgb", arguments);
+   },
+   hsl: function(vals) {
+      return this.setSpace("hsl", arguments);
+   },
+   hsv: function(vals) {
+      return this.setSpace("hsv", arguments);
+   },
+   hwb: function(vals) {
+      return this.setSpace("hwb", arguments);
+   },
+   cmyk: function(vals) {
+      return this.setSpace("cmyk", arguments);
+   },
+
+   rgbArray: function() {
+      return this.values.rgb;
+   },
+   hslArray: function() {
+      return this.values.hsl;
+   },
+   hsvArray: function() {
+      return this.values.hsv;
+   },
+   hwbArray: function() {
+      if (this.values.alpha !== 1) {
+        return this.values.hwb.concat([this.values.alpha])
+      }
+      return this.values.hwb;
+   },
+   cmykArray: function() {
+      return this.values.cmyk;
+   },
+   rgbaArray: function() {
+      var rgb = this.values.rgb;
+      return rgb.concat([this.values.alpha]);
+   },
+   hslaArray: function() {
+      var hsl = this.values.hsl;
+      return hsl.concat([this.values.alpha]);
+   },
+   alpha: function(val) {
+      if (val === undefined) {
+         return this.values.alpha;
+      }
+      this.setValues("alpha", val);
+      return this;
+   },
+
+   red: function(val) {
+      return this.setChannel("rgb", 0, val);
+   },
+   green: function(val) {
+      return this.setChannel("rgb", 1, val);
+   },
+   blue: function(val) {
+      return this.setChannel("rgb", 2, val);
+   },
+   hue: function(val) {
+      return this.setChannel("hsl", 0, val);
+   },
+   saturation: function(val) {
+      return this.setChannel("hsl", 1, val);
+   },
+   lightness: function(val) {
+      return this.setChannel("hsl", 2, val);
+   },
+   saturationv: function(val) {
+      return this.setChannel("hsv", 1, val);
+   },
+   whiteness: function(val) {
+      return this.setChannel("hwb", 1, val);
+   },
+   blackness: function(val) {
+      return this.setChannel("hwb", 2, val);
+   },
+   value: function(val) {
+      return this.setChannel("hsv", 2, val);
+   },
+   cyan: function(val) {
+      return this.setChannel("cmyk", 0, val);
+   },
+   magenta: function(val) {
+      return this.setChannel("cmyk", 1, val);
+   },
+   yellow: function(val) {
+      return this.setChannel("cmyk", 2, val);
+   },
+   black: function(val) {
+      return this.setChannel("cmyk", 3, val);
+   },
+
+   hexString: function() {
+      return string.hexString(this.values.rgb);
+   },
+   rgbString: function() {
+      return string.rgbString(this.values.rgb, this.values.alpha);
+   },
+   rgbaString: function() {
+      return string.rgbaString(this.values.rgb, this.values.alpha);
+   },
+   percentString: function() {
+      return string.percentString(this.values.rgb, this.values.alpha);
+   },
+   hslString: function() {
+      return string.hslString(this.values.hsl, this.values.alpha);
+   },
+   hslaString: function() {
+      return string.hslaString(this.values.hsl, this.values.alpha);
+   },
+   hwbString: function() {
+      return string.hwbString(this.values.hwb, this.values.alpha);
+   },
+   keyword: function() {
+      return string.keyword(this.values.rgb, this.values.alpha);
+   },
+
+   rgbNumber: function() {
+      return (this.values.rgb[0] << 16) | (this.values.rgb[1] << 8) | this.values.rgb[2];
+   },
+
+   luminosity: function() {
+      // http://www.w3.org/TR/WCAG20/#relativeluminancedef
+      var rgb = this.values.rgb;
+      var lum = [];
+      for (var i = 0; i < rgb.length; i++) {
+         var chan = rgb[i] / 255;
+         lum[i] = (chan <= 0.03928) ? chan / 12.92
+                  : Math.pow(((chan + 0.055) / 1.055), 2.4)
+      }
+      return 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2];
+   },
+
+   contrast: function(color2) {
+      // http://www.w3.org/TR/WCAG20/#contrast-ratiodef
+      var lum1 = this.luminosity();
+      var lum2 = color2.luminosity();
+      if (lum1 > lum2) {
+         return (lum1 + 0.05) / (lum2 + 0.05)
+      };
+      return (lum2 + 0.05) / (lum1 + 0.05);
+   },
+
+   level: function(color2) {
+     var contrastRatio = this.contrast(color2);
+     return (contrastRatio >= 7.1)
+       ? 'AAA'
+       : (contrastRatio >= 4.5)
+        ? 'AA'
+        : '';
+   },
+
+   dark: function() {
+      // YIQ equation from http://24ways.org/2010/calculating-color-contrast
+      var rgb = this.values.rgb,
+          yiq = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
+      return yiq < 128;
+   },
+
+   light: function() {
+      return !this.dark();
+   },
+
+   negate: function() {
+      var rgb = []
+      for (var i = 0; i < 3; i++) {
+         rgb[i] = 255 - this.values.rgb[i];
+      }
+      this.setValues("rgb", rgb);
+      return this;
+   },
+
+   lighten: function(ratio) {
+      this.values.hsl[2] += this.values.hsl[2] * ratio;
+      this.setValues("hsl", this.values.hsl);
+      return this;
+   },
+
+   darken: function(ratio) {
+      this.values.hsl[2] -= this.values.hsl[2] * ratio;
+      this.setValues("hsl", this.values.hsl);
+      return this;
+   },
+
+   saturate: function(ratio) {
+      this.values.hsl[1] += this.values.hsl[1] * ratio;
+      this.setValues("hsl", this.values.hsl);
+      return this;
+   },
+
+   desaturate: function(ratio) {
+      this.values.hsl[1] -= this.values.hsl[1] * ratio;
+      this.setValues("hsl", this.values.hsl);
+      return this;
+   },
+
+   whiten: function(ratio) {
+      this.values.hwb[1] += this.values.hwb[1] * ratio;
+      this.setValues("hwb", this.values.hwb);
+      return this;
+   },
+
+   blacken: function(ratio) {
+      this.values.hwb[2] += this.values.hwb[2] * ratio;
+      this.setValues("hwb", this.values.hwb);
+      return this;
+   },
+
+   greyscale: function() {
+      var rgb = this.values.rgb;
+      // http://en.wikipedia.org/wiki/Grayscale#Converting_color_to_grayscale
+      var val = rgb[0] * 0.3 + rgb[1] * 0.59 + rgb[2] * 0.11;
+      this.setValues("rgb", [val, val, val]);
+      return this;
+   },
+
+   clearer: function(ratio) {
+      this.setValues("alpha", this.values.alpha - (this.values.alpha * ratio));
+      return this;
+   },
+
+   opaquer: function(ratio) {
+      this.setValues("alpha", this.values.alpha + (this.values.alpha * ratio));
+      return this;
+   },
+
+   rotate: function(degrees) {
+      var hue = this.values.hsl[0];
+      hue = (hue + degrees) % 360;
+      hue = hue < 0 ? 360 + hue : hue;
+      this.values.hsl[0] = hue;
+      this.setValues("hsl", this.values.hsl);
+      return this;
+   },
+
+   mix: function(color2, weight) {
+      weight = 1 - (weight == null ? 0.5 : weight);
+
+      // algorithm from Sass's mix(). Ratio of first color in mix is
+      // determined by the alphas of both colors and the weight
+      var t1 = weight * 2 - 1,
+          d = this.alpha() - color2.alpha();
+
+      var weight1 = (((t1 * d == -1) ? t1 : (t1 + d) / (1 + t1 * d)) + 1) / 2;
+      var weight2 = 1 - weight1;
+
+      var rgb = this.rgbArray();
+      var rgb2 = color2.rgbArray();
+
+      for (var i = 0; i < rgb.length; i++) {
+         rgb[i] = rgb[i] * weight1 + rgb2[i] * weight2;
+      }
+      this.setValues("rgb", rgb);
+
+      var alpha = this.alpha() * weight + color2.alpha() * (1 - weight);
+      this.setValues("alpha", alpha);
+
+      return this;
+   },
+
+   toJSON: function() {
+     return this.rgb();
+   },
+
+   clone: function() {
+     return new Color(this.rgb());
+   }
+}
+
+
+Color.prototype.getValues = function(space) {
+   var vals = {};
+   for (var i = 0; i < space.length; i++) {
+      vals[space.charAt(i)] = this.values[space][i];
+   }
+   if (this.values.alpha != 1) {
+      vals["a"] = this.values.alpha;
+   }
+   // {r: 255, g: 255, b: 255, a: 0.4}
+   return vals;
+}
+
+Color.prototype.setValues = function(space, vals) {
+   var spaces = {
+      "rgb": ["red", "green", "blue"],
+      "hsl": ["hue", "saturation", "lightness"],
+      "hsv": ["hue", "saturation", "value"],
+      "hwb": ["hue", "whiteness", "blackness"],
+      "cmyk": ["cyan", "magenta", "yellow", "black"]
+   };
+
+   var maxes = {
+      "rgb": [255, 255, 255],
+      "hsl": [360, 100, 100],
+      "hsv": [360, 100, 100],
+      "hwb": [360, 100, 100],
+      "cmyk": [100, 100, 100, 100]
+   };
+
+   var alpha = 1;
+   if (space == "alpha") {
+      alpha = vals;
+   }
+   else if (vals.length) {
+      // [10, 10, 10]
+      this.values[space] = vals.slice(0, space.length);
+      alpha = vals[space.length];
+   }
+   else if (vals[space.charAt(0)] !== undefined) {
+      // {r: 10, g: 10, b: 10}
+      for (var i = 0; i < space.length; i++) {
+        this.values[space][i] = vals[space.charAt(i)];
+      }
+      alpha = vals.a;
+   }
+   else if (vals[spaces[space][0]] !== undefined) {
+      // {red: 10, green: 10, blue: 10}
+      var chans = spaces[space];
+      for (var i = 0; i < space.length; i++) {
+        this.values[space][i] = vals[chans[i]];
+      }
+      alpha = vals.alpha;
+   }
+   this.values.alpha = Math.max(0, Math.min(1, (alpha !== undefined ? alpha : this.values.alpha) ));
+   if (space == "alpha") {
+      return;
+   }
+
+   // cap values of the space prior converting all values
+   for (var i = 0; i < space.length; i++) {
+      var capped = Math.max(0, Math.min(maxes[space][i], this.values[space][i]));
+      this.values[space][i] = Math.round(capped);
+   }
+
+   // convert to all the other color spaces
+   for (var sname in spaces) {
+      if (sname != space) {
+         this.values[sname] = convert[space][sname](this.values[space])
+      }
+
+      // cap values
+      for (var i = 0; i < sname.length; i++) {
+         var capped = Math.max(0, Math.min(maxes[sname][i], this.values[sname][i]));
+         this.values[sname][i] = Math.round(capped);
+      }
+   }
+   return true;
+}
+
+Color.prototype.setSpace = function(space, args) {
+   var vals = args[0];
+   if (vals === undefined) {
+      // color.rgb()
+      return this.getValues(space);
+   }
+   // color.rgb(10, 10, 10)
+   if (typeof vals == "number") {
+      vals = Array.prototype.slice.call(args);
+   }
+   this.setValues(space, vals);
+   return this;
+}
+
+Color.prototype.setChannel = function(space, index, val) {
+   if (val === undefined) {
+      // color.red()
+      return this.values[space][index];
+   }
+   // color.red(100)
+   this.values[space][index] = val;
+   this.setValues(space, this.values[space]);
+   return this;
+}
+
+module.exports = Color;
+
+},{"color-convert":15,"color-string":16}],14:[function(require,module,exports){
+/* MIT license */
+
+module.exports = {
+  rgb2hsl: rgb2hsl,
+  rgb2hsv: rgb2hsv,
+  rgb2hwb: rgb2hwb,
+  rgb2cmyk: rgb2cmyk,
+  rgb2keyword: rgb2keyword,
+  rgb2xyz: rgb2xyz,
+  rgb2lab: rgb2lab,
+  rgb2lch: rgb2lch,
+
+  hsl2rgb: hsl2rgb,
+  hsl2hsv: hsl2hsv,
+  hsl2hwb: hsl2hwb,
+  hsl2cmyk: hsl2cmyk,
+  hsl2keyword: hsl2keyword,
+
+  hsv2rgb: hsv2rgb,
+  hsv2hsl: hsv2hsl,
+  hsv2hwb: hsv2hwb,
+  hsv2cmyk: hsv2cmyk,
+  hsv2keyword: hsv2keyword,
+
+  hwb2rgb: hwb2rgb,
+  hwb2hsl: hwb2hsl,
+  hwb2hsv: hwb2hsv,
+  hwb2cmyk: hwb2cmyk,
+  hwb2keyword: hwb2keyword,
+
+  cmyk2rgb: cmyk2rgb,
+  cmyk2hsl: cmyk2hsl,
+  cmyk2hsv: cmyk2hsv,
+  cmyk2hwb: cmyk2hwb,
+  cmyk2keyword: cmyk2keyword,
+
+  keyword2rgb: keyword2rgb,
+  keyword2hsl: keyword2hsl,
+  keyword2hsv: keyword2hsv,
+  keyword2hwb: keyword2hwb,
+  keyword2cmyk: keyword2cmyk,
+  keyword2lab: keyword2lab,
+  keyword2xyz: keyword2xyz,
+
+  xyz2rgb: xyz2rgb,
+  xyz2lab: xyz2lab,
+  xyz2lch: xyz2lch,
+
+  lab2xyz: lab2xyz,
+  lab2rgb: lab2rgb,
+  lab2lch: lab2lch,
+
+  lch2lab: lch2lab,
+  lch2xyz: lch2xyz,
+  lch2rgb: lch2rgb
+}
+
+
+function rgb2hsl(rgb) {
+  var r = rgb[0]/255,
+      g = rgb[1]/255,
+      b = rgb[2]/255,
+      min = Math.min(r, g, b),
+      max = Math.max(r, g, b),
+      delta = max - min,
+      h, s, l;
+
+  if (max == min)
+    h = 0;
+  else if (r == max)
+    h = (g - b) / delta;
+  else if (g == max)
+    h = 2 + (b - r) / delta;
+  else if (b == max)
+    h = 4 + (r - g)/ delta;
+
+  h = Math.min(h * 60, 360);
+
+  if (h < 0)
+    h += 360;
+
+  l = (min + max) / 2;
+
+  if (max == min)
+    s = 0;
+  else if (l <= 0.5)
+    s = delta / (max + min);
+  else
+    s = delta / (2 - max - min);
+
+  return [h, s * 100, l * 100];
+}
+
+function rgb2hsv(rgb) {
+  var r = rgb[0],
+      g = rgb[1],
+      b = rgb[2],
+      min = Math.min(r, g, b),
+      max = Math.max(r, g, b),
+      delta = max - min,
+      h, s, v;
+
+  if (max == 0)
+    s = 0;
+  else
+    s = (delta/max * 1000)/10;
+
+  if (max == min)
+    h = 0;
+  else if (r == max)
+    h = (g - b) / delta;
+  else if (g == max)
+    h = 2 + (b - r) / delta;
+  else if (b == max)
+    h = 4 + (r - g) / delta;
+
+  h = Math.min(h * 60, 360);
+
+  if (h < 0)
+    h += 360;
+
+  v = ((max / 255) * 1000) / 10;
+
+  return [h, s, v];
+}
+
+function rgb2hwb(rgb) {
+  var r = rgb[0],
+      g = rgb[1],
+      b = rgb[2],
+      h = rgb2hsl(rgb)[0],
+      w = 1/255 * Math.min(r, Math.min(g, b)),
+      b = 1 - 1/255 * Math.max(r, Math.max(g, b));
+
+  return [h, w * 100, b * 100];
+}
+
+function rgb2cmyk(rgb) {
+  var r = rgb[0] / 255,
+      g = rgb[1] / 255,
+      b = rgb[2] / 255,
+      c, m, y, k;
+
+  k = Math.min(1 - r, 1 - g, 1 - b);
+  c = (1 - r - k) / (1 - k) || 0;
+  m = (1 - g - k) / (1 - k) || 0;
+  y = (1 - b - k) / (1 - k) || 0;
+  return [c * 100, m * 100, y * 100, k * 100];
+}
+
+function rgb2keyword(rgb) {
+  return reverseKeywords[JSON.stringify(rgb)];
+}
+
+function rgb2xyz(rgb) {
+  var r = rgb[0] / 255,
+      g = rgb[1] / 255,
+      b = rgb[2] / 255;
+
+  // assume sRGB
+  r = r > 0.04045 ? Math.pow(((r + 0.055) / 1.055), 2.4) : (r / 12.92);
+  g = g > 0.04045 ? Math.pow(((g + 0.055) / 1.055), 2.4) : (g / 12.92);
+  b = b > 0.04045 ? Math.pow(((b + 0.055) / 1.055), 2.4) : (b / 12.92);
+
+  var x = (r * 0.4124) + (g * 0.3576) + (b * 0.1805);
+  var y = (r * 0.2126) + (g * 0.7152) + (b * 0.0722);
+  var z = (r * 0.0193) + (g * 0.1192) + (b * 0.9505);
+
+  return [x * 100, y *100, z * 100];
+}
+
+function rgb2lab(rgb) {
+  var xyz = rgb2xyz(rgb),
+        x = xyz[0],
+        y = xyz[1],
+        z = xyz[2],
+        l, a, b;
+
+  x /= 95.047;
+  y /= 100;
+  z /= 108.883;
+
+  x = x > 0.008856 ? Math.pow(x, 1/3) : (7.787 * x) + (16 / 116);
+  y = y > 0.008856 ? Math.pow(y, 1/3) : (7.787 * y) + (16 / 116);
+  z = z > 0.008856 ? Math.pow(z, 1/3) : (7.787 * z) + (16 / 116);
+
+  l = (116 * y) - 16;
+  a = 500 * (x - y);
+  b = 200 * (y - z);
+
+  return [l, a, b];
+}
+
+function rgb2lch(args) {
+  return lab2lch(rgb2lab(args));
+}
+
+function hsl2rgb(hsl) {
+  var h = hsl[0] / 360,
+      s = hsl[1] / 100,
+      l = hsl[2] / 100,
+      t1, t2, t3, rgb, val;
+
+  if (s == 0) {
+    val = l * 255;
+    return [val, val, val];
+  }
+
+  if (l < 0.5)
+    t2 = l * (1 + s);
+  else
+    t2 = l + s - l * s;
+  t1 = 2 * l - t2;
+
+  rgb = [0, 0, 0];
+  for (var i = 0; i < 3; i++) {
+    t3 = h + 1 / 3 * - (i - 1);
+    t3 < 0 && t3++;
+    t3 > 1 && t3--;
+
+    if (6 * t3 < 1)
+      val = t1 + (t2 - t1) * 6 * t3;
+    else if (2 * t3 < 1)
+      val = t2;
+    else if (3 * t3 < 2)
+      val = t1 + (t2 - t1) * (2 / 3 - t3) * 6;
+    else
+      val = t1;
+
+    rgb[i] = val * 255;
+  }
+
+  return rgb;
+}
+
+function hsl2hsv(hsl) {
+  var h = hsl[0],
+      s = hsl[1] / 100,
+      l = hsl[2] / 100,
+      sv, v;
+  l *= 2;
+  s *= (l <= 1) ? l : 2 - l;
+  v = (l + s) / 2;
+  sv = (2 * s) / (l + s);
+  return [h, sv * 100, v * 100];
+}
+
+function hsl2hwb(args) {
+  return rgb2hwb(hsl2rgb(args));
+}
+
+function hsl2cmyk(args) {
+  return rgb2cmyk(hsl2rgb(args));
+}
+
+function hsl2keyword(args) {
+  return rgb2keyword(hsl2rgb(args));
+}
+
+
+function hsv2rgb(hsv) {
+  var h = hsv[0] / 60,
+      s = hsv[1] / 100,
+      v = hsv[2] / 100,
+      hi = Math.floor(h) % 6;
+
+  var f = h - Math.floor(h),
+      p = 255 * v * (1 - s),
+      q = 255 * v * (1 - (s * f)),
+      t = 255 * v * (1 - (s * (1 - f))),
+      v = 255 * v;
+
+  switch(hi) {
+    case 0:
+      return [v, t, p];
+    case 1:
+      return [q, v, p];
+    case 2:
+      return [p, v, t];
+    case 3:
+      return [p, q, v];
+    case 4:
+      return [t, p, v];
+    case 5:
+      return [v, p, q];
+  }
+}
+
+function hsv2hsl(hsv) {
+  var h = hsv[0],
+      s = hsv[1] / 100,
+      v = hsv[2] / 100,
+      sl, l;
+
+  l = (2 - s) * v;
+  sl = s * v;
+  sl /= (l <= 1) ? l : 2 - l;
+  sl = sl || 0;
+  l /= 2;
+  return [h, sl * 100, l * 100];
+}
+
+function hsv2hwb(args) {
+  return rgb2hwb(hsv2rgb(args))
+}
+
+function hsv2cmyk(args) {
+  return rgb2cmyk(hsv2rgb(args));
+}
+
+function hsv2keyword(args) {
+  return rgb2keyword(hsv2rgb(args));
+}
+
+// http://dev.w3.org/csswg/css-color/#hwb-to-rgb
+function hwb2rgb(hwb) {
+  var h = hwb[0] / 360,
+      wh = hwb[1] / 100,
+      bl = hwb[2] / 100,
+      ratio = wh + bl,
+      i, v, f, n;
+
+  // wh + bl cant be > 1
+  if (ratio > 1) {
+    wh /= ratio;
+    bl /= ratio;
+  }
+
+  i = Math.floor(6 * h);
+  v = 1 - bl;
+  f = 6 * h - i;
+  if ((i & 0x01) != 0) {
+    f = 1 - f;
+  }
+  n = wh + f * (v - wh);  // linear interpolation
+
+  switch (i) {
+    default:
+    case 6:
+    case 0: r = v; g = n; b = wh; break;
+    case 1: r = n; g = v; b = wh; break;
+    case 2: r = wh; g = v; b = n; break;
+    case 3: r = wh; g = n; b = v; break;
+    case 4: r = n; g = wh; b = v; break;
+    case 5: r = v; g = wh; b = n; break;
+  }
+
+  return [r * 255, g * 255, b * 255];
+}
+
+function hwb2hsl(args) {
+  return rgb2hsl(hwb2rgb(args));
+}
+
+function hwb2hsv(args) {
+  return rgb2hsv(hwb2rgb(args));
+}
+
+function hwb2cmyk(args) {
+  return rgb2cmyk(hwb2rgb(args));
+}
+
+function hwb2keyword(args) {
+  return rgb2keyword(hwb2rgb(args));
+}
+
+function cmyk2rgb(cmyk) {
+  var c = cmyk[0] / 100,
+      m = cmyk[1] / 100,
+      y = cmyk[2] / 100,
+      k = cmyk[3] / 100,
+      r, g, b;
+
+  r = 1 - Math.min(1, c * (1 - k) + k);
+  g = 1 - Math.min(1, m * (1 - k) + k);
+  b = 1 - Math.min(1, y * (1 - k) + k);
+  return [r * 255, g * 255, b * 255];
+}
+
+function cmyk2hsl(args) {
+  return rgb2hsl(cmyk2rgb(args));
+}
+
+function cmyk2hsv(args) {
+  return rgb2hsv(cmyk2rgb(args));
+}
+
+function cmyk2hwb(args) {
+  return rgb2hwb(cmyk2rgb(args));
+}
+
+function cmyk2keyword(args) {
+  return rgb2keyword(cmyk2rgb(args));
+}
+
+
+function xyz2rgb(xyz) {
+  var x = xyz[0] / 100,
+      y = xyz[1] / 100,
+      z = xyz[2] / 100,
+      r, g, b;
+
+  r = (x * 3.2406) + (y * -1.5372) + (z * -0.4986);
+  g = (x * -0.9689) + (y * 1.8758) + (z * 0.0415);
+  b = (x * 0.0557) + (y * -0.2040) + (z * 1.0570);
+
+  // assume sRGB
+  r = r > 0.0031308 ? ((1.055 * Math.pow(r, 1.0 / 2.4)) - 0.055)
+    : r = (r * 12.92);
+
+  g = g > 0.0031308 ? ((1.055 * Math.pow(g, 1.0 / 2.4)) - 0.055)
+    : g = (g * 12.92);
+
+  b = b > 0.0031308 ? ((1.055 * Math.pow(b, 1.0 / 2.4)) - 0.055)
+    : b = (b * 12.92);
+
+  r = Math.min(Math.max(0, r), 1);
+  g = Math.min(Math.max(0, g), 1);
+  b = Math.min(Math.max(0, b), 1);
+
+  return [r * 255, g * 255, b * 255];
+}
+
+function xyz2lab(xyz) {
+  var x = xyz[0],
+      y = xyz[1],
+      z = xyz[2],
+      l, a, b;
+
+  x /= 95.047;
+  y /= 100;
+  z /= 108.883;
+
+  x = x > 0.008856 ? Math.pow(x, 1/3) : (7.787 * x) + (16 / 116);
+  y = y > 0.008856 ? Math.pow(y, 1/3) : (7.787 * y) + (16 / 116);
+  z = z > 0.008856 ? Math.pow(z, 1/3) : (7.787 * z) + (16 / 116);
+
+  l = (116 * y) - 16;
+  a = 500 * (x - y);
+  b = 200 * (y - z);
+
+  return [l, a, b];
+}
+
+function xyz2lch(args) {
+  return lab2lch(xyz2lab(args));
+}
+
+function lab2xyz(lab) {
+  var l = lab[0],
+      a = lab[1],
+      b = lab[2],
+      x, y, z, y2;
+
+  if (l <= 8) {
+    y = (l * 100) / 903.3;
+    y2 = (7.787 * (y / 100)) + (16 / 116);
+  } else {
+    y = 100 * Math.pow((l + 16) / 116, 3);
+    y2 = Math.pow(y / 100, 1/3);
+  }
+
+  x = x / 95.047 <= 0.008856 ? x = (95.047 * ((a / 500) + y2 - (16 / 116))) / 7.787 : 95.047 * Math.pow((a / 500) + y2, 3);
+
+  z = z / 108.883 <= 0.008859 ? z = (108.883 * (y2 - (b / 200) - (16 / 116))) / 7.787 : 108.883 * Math.pow(y2 - (b / 200), 3);
+
+  return [x, y, z];
+}
+
+function lab2lch(lab) {
+  var l = lab[0],
+      a = lab[1],
+      b = lab[2],
+      hr, h, c;
+
+  hr = Math.atan2(b, a);
+  h = hr * 360 / 2 / Math.PI;
+  if (h < 0) {
+    h += 360;
+  }
+  c = Math.sqrt(a * a + b * b);
+  return [l, c, h];
+}
+
+function lab2rgb(args) {
+  return xyz2rgb(lab2xyz(args));
+}
+
+function lch2lab(lch) {
+  var l = lch[0],
+      c = lch[1],
+      h = lch[2],
+      a, b, hr;
+
+  hr = h / 360 * 2 * Math.PI;
+  a = c * Math.cos(hr);
+  b = c * Math.sin(hr);
+  return [l, a, b];
+}
+
+function lch2xyz(args) {
+  return lab2xyz(lch2lab(args));
+}
+
+function lch2rgb(args) {
+  return lab2rgb(lch2lab(args));
+}
+
+function keyword2rgb(keyword) {
+  return cssKeywords[keyword];
+}
+
+function keyword2hsl(args) {
+  return rgb2hsl(keyword2rgb(args));
+}
+
+function keyword2hsv(args) {
+  return rgb2hsv(keyword2rgb(args));
+}
+
+function keyword2hwb(args) {
+  return rgb2hwb(keyword2rgb(args));
+}
+
+function keyword2cmyk(args) {
+  return rgb2cmyk(keyword2rgb(args));
+}
+
+function keyword2lab(args) {
+  return rgb2lab(keyword2rgb(args));
+}
+
+function keyword2xyz(args) {
+  return rgb2xyz(keyword2rgb(args));
+}
+
+var cssKeywords = {
+  aliceblue:  [240,248,255],
+  antiquewhite: [250,235,215],
+  aqua: [0,255,255],
+  aquamarine: [127,255,212],
+  azure:  [240,255,255],
+  beige:  [245,245,220],
+  bisque: [255,228,196],
+  black:  [0,0,0],
+  blanchedalmond: [255,235,205],
+  blue: [0,0,255],
+  blueviolet: [138,43,226],
+  brown:  [165,42,42],
+  burlywood:  [222,184,135],
+  cadetblue:  [95,158,160],
+  chartreuse: [127,255,0],
+  chocolate:  [210,105,30],
+  coral:  [255,127,80],
+  cornflowerblue: [100,149,237],
+  cornsilk: [255,248,220],
+  crimson:  [220,20,60],
+  cyan: [0,255,255],
+  darkblue: [0,0,139],
+  darkcyan: [0,139,139],
+  darkgoldenrod:  [184,134,11],
+  darkgray: [169,169,169],
+  darkgreen:  [0,100,0],
+  darkgrey: [169,169,169],
+  darkkhaki:  [189,183,107],
+  darkmagenta:  [139,0,139],
+  darkolivegreen: [85,107,47],
+  darkorange: [255,140,0],
+  darkorchid: [153,50,204],
+  darkred:  [139,0,0],
+  darksalmon: [233,150,122],
+  darkseagreen: [143,188,143],
+  darkslateblue:  [72,61,139],
+  darkslategray:  [47,79,79],
+  darkslategrey:  [47,79,79],
+  darkturquoise:  [0,206,209],
+  darkviolet: [148,0,211],
+  deeppink: [255,20,147],
+  deepskyblue:  [0,191,255],
+  dimgray:  [105,105,105],
+  dimgrey:  [105,105,105],
+  dodgerblue: [30,144,255],
+  firebrick:  [178,34,34],
+  floralwhite:  [255,250,240],
+  forestgreen:  [34,139,34],
+  fuchsia:  [255,0,255],
+  gainsboro:  [220,220,220],
+  ghostwhite: [248,248,255],
+  gold: [255,215,0],
+  goldenrod:  [218,165,32],
+  gray: [128,128,128],
+  green:  [0,128,0],
+  greenyellow:  [173,255,47],
+  grey: [128,128,128],
+  honeydew: [240,255,240],
+  hotpink:  [255,105,180],
+  indianred:  [205,92,92],
+  indigo: [75,0,130],
+  ivory:  [255,255,240],
+  khaki:  [240,230,140],
+  lavender: [230,230,250],
+  lavenderblush:  [255,240,245],
+  lawngreen:  [124,252,0],
+  lemonchiffon: [255,250,205],
+  lightblue:  [173,216,230],
+  lightcoral: [240,128,128],
+  lightcyan:  [224,255,255],
+  lightgoldenrodyellow: [250,250,210],
+  lightgray:  [211,211,211],
+  lightgreen: [144,238,144],
+  lightgrey:  [211,211,211],
+  lightpink:  [255,182,193],
+  lightsalmon:  [255,160,122],
+  lightseagreen:  [32,178,170],
+  lightskyblue: [135,206,250],
+  lightslategray: [119,136,153],
+  lightslategrey: [119,136,153],
+  lightsteelblue: [176,196,222],
+  lightyellow:  [255,255,224],
+  lime: [0,255,0],
+  limegreen:  [50,205,50],
+  linen:  [250,240,230],
+  magenta:  [255,0,255],
+  maroon: [128,0,0],
+  mediumaquamarine: [102,205,170],
+  mediumblue: [0,0,205],
+  mediumorchid: [186,85,211],
+  mediumpurple: [147,112,219],
+  mediumseagreen: [60,179,113],
+  mediumslateblue:  [123,104,238],
+  mediumspringgreen:  [0,250,154],
+  mediumturquoise:  [72,209,204],
+  mediumvioletred:  [199,21,133],
+  midnightblue: [25,25,112],
+  mintcream:  [245,255,250],
+  mistyrose:  [255,228,225],
+  moccasin: [255,228,181],
+  navajowhite:  [255,222,173],
+  navy: [0,0,128],
+  oldlace:  [253,245,230],
+  olive:  [128,128,0],
+  olivedrab:  [107,142,35],
+  orange: [255,165,0],
+  orangered:  [255,69,0],
+  orchid: [218,112,214],
+  palegoldenrod:  [238,232,170],
+  palegreen:  [152,251,152],
+  paleturquoise:  [175,238,238],
+  palevioletred:  [219,112,147],
+  papayawhip: [255,239,213],
+  peachpuff:  [255,218,185],
+  peru: [205,133,63],
+  pink: [255,192,203],
+  plum: [221,160,221],
+  powderblue: [176,224,230],
+  purple: [128,0,128],
+  rebeccapurple: [102, 51, 153],
+  red:  [255,0,0],
+  rosybrown:  [188,143,143],
+  royalblue:  [65,105,225],
+  saddlebrown:  [139,69,19],
+  salmon: [250,128,114],
+  sandybrown: [244,164,96],
+  seagreen: [46,139,87],
+  seashell: [255,245,238],
+  sienna: [160,82,45],
+  silver: [192,192,192],
+  skyblue:  [135,206,235],
+  slateblue:  [106,90,205],
+  slategray:  [112,128,144],
+  slategrey:  [112,128,144],
+  snow: [255,250,250],
+  springgreen:  [0,255,127],
+  steelblue:  [70,130,180],
+  tan:  [210,180,140],
+  teal: [0,128,128],
+  thistle:  [216,191,216],
+  tomato: [255,99,71],
+  turquoise:  [64,224,208],
+  violet: [238,130,238],
+  wheat:  [245,222,179],
+  white:  [255,255,255],
+  whitesmoke: [245,245,245],
+  yellow: [255,255,0],
+  yellowgreen:  [154,205,50]
+};
+
+var reverseKeywords = {};
+for (var key in cssKeywords) {
+  reverseKeywords[JSON.stringify(cssKeywords[key])] = key;
+}
+
+},{}],15:[function(require,module,exports){
+var conversions = require("./conversions");
+
+var convert = function() {
+   return new Converter();
+}
+
+for (var func in conversions) {
+  // export Raw versions
+  convert[func + "Raw"] =  (function(func) {
+    // accept array or plain args
+    return function(arg) {
+      if (typeof arg == "number")
+        arg = Array.prototype.slice.call(arguments);
+      return conversions[func](arg);
+    }
+  })(func);
+
+  var pair = /(\w+)2(\w+)/.exec(func),
+      from = pair[1],
+      to = pair[2];
+
+  // export rgb2hsl and ["rgb"]["hsl"]
+  convert[from] = convert[from] || {};
+
+  convert[from][to] = convert[func] = (function(func) { 
+    return function(arg) {
+      if (typeof arg == "number")
+        arg = Array.prototype.slice.call(arguments);
+      
+      var val = conversions[func](arg);
+      if (typeof val == "string" || val === undefined)
+        return val; // keyword
+
+      for (var i = 0; i < val.length; i++)
+        val[i] = Math.round(val[i]);
+      return val;
+    }
+  })(func);
+}
+
+
+/* Converter does lazy conversion and caching */
+var Converter = function() {
+   this.convs = {};
+};
+
+/* Either get the values for a space or
+  set the values for a space, depending on args */
+Converter.prototype.routeSpace = function(space, args) {
+   var values = args[0];
+   if (values === undefined) {
+      // color.rgb()
+      return this.getValues(space);
+   }
+   // color.rgb(10, 10, 10)
+   if (typeof values == "number") {
+      values = Array.prototype.slice.call(args);        
+   }
+
+   return this.setValues(space, values);
+};
+  
+/* Set the values for a space, invalidating cache */
+Converter.prototype.setValues = function(space, values) {
+   this.space = space;
+   this.convs = {};
+   this.convs[space] = values;
+   return this;
+};
+
+/* Get the values for a space. If there's already
+  a conversion for the space, fetch it, otherwise
+  compute it */
+Converter.prototype.getValues = function(space) {
+   var vals = this.convs[space];
+   if (!vals) {
+      var fspace = this.space,
+          from = this.convs[fspace];
+      vals = convert[fspace][space](from);
+
+      this.convs[space] = vals;
+   }
+  return vals;
+};
+
+["rgb", "hsl", "hsv", "cmyk", "keyword"].forEach(function(space) {
+   Converter.prototype[space] = function(vals) {
+      return this.routeSpace(space, arguments);
+   }
+});
+
+module.exports = convert;
+},{"./conversions":14}],16:[function(require,module,exports){
+/* MIT license */
+var colorNames = require('color-name');
+
+module.exports = {
+   getRgba: getRgba,
+   getHsla: getHsla,
+   getRgb: getRgb,
+   getHsl: getHsl,
+   getHwb: getHwb,
+   getAlpha: getAlpha,
+
+   hexString: hexString,
+   rgbString: rgbString,
+   rgbaString: rgbaString,
+   percentString: percentString,
+   percentaString: percentaString,
+   hslString: hslString,
+   hslaString: hslaString,
+   hwbString: hwbString,
+   keyword: keyword
+}
+
+function getRgba(string) {
+   if (!string) {
+      return;
+   }
+   var abbr =  /^#([a-fA-F0-9]{3})$/,
+       hex =  /^#([a-fA-F0-9]{6})$/,
+       rgba = /^rgba?\(\s*([+-]?\d+)\s*,\s*([+-]?\d+)\s*,\s*([+-]?\d+)\s*(?:,\s*([+-]?[\d\.]+)\s*)?\)$/,
+       per = /^rgba?\(\s*([+-]?[\d\.]+)\%\s*,\s*([+-]?[\d\.]+)\%\s*,\s*([+-]?[\d\.]+)\%\s*(?:,\s*([+-]?[\d\.]+)\s*)?\)$/,
+       keyword = /(\D+)/;
+
+   var rgb = [0, 0, 0],
+       a = 1,
+       match = string.match(abbr);
+   if (match) {
+      match = match[1];
+      for (var i = 0; i < rgb.length; i++) {
+         rgb[i] = parseInt(match[i] + match[i], 16);
+      }
+   }
+   else if (match = string.match(hex)) {
+      match = match[1];
+      for (var i = 0; i < rgb.length; i++) {
+         rgb[i] = parseInt(match.slice(i * 2, i * 2 + 2), 16);
+      }
+   }
+   else if (match = string.match(rgba)) {
+      for (var i = 0; i < rgb.length; i++) {
+         rgb[i] = parseInt(match[i + 1]);
+      }
+      a = parseFloat(match[4]);
+   }
+   else if (match = string.match(per)) {
+      for (var i = 0; i < rgb.length; i++) {
+         rgb[i] = Math.round(parseFloat(match[i + 1]) * 2.55);
+      }
+      a = parseFloat(match[4]);
+   }
+   else if (match = string.match(keyword)) {
+      if (match[1] == "transparent") {
+         return [0, 0, 0, 0];
+      }
+      rgb = colorNames[match[1]];
+      if (!rgb) {
+         return;
+      }
+   }
+
+   for (var i = 0; i < rgb.length; i++) {
+      rgb[i] = scale(rgb[i], 0, 255);
+   }
+   if (!a && a != 0) {
+      a = 1;
+   }
+   else {
+      a = scale(a, 0, 1);
+   }
+   rgb[3] = a;
+   return rgb;
+}
+
+function getHsla(string) {
+   if (!string) {
+      return;
+   }
+   var hsl = /^hsla?\(\s*([+-]?\d+)(?:deg)?\s*,\s*([+-]?[\d\.]+)%\s*,\s*([+-]?[\d\.]+)%\s*(?:,\s*([+-]?[\d\.]+)\s*)?\)/;
+   var match = string.match(hsl);
+   if (match) {
+      var alpha = parseFloat(match[4]);
+      var h = scale(parseInt(match[1]), 0, 360),
+          s = scale(parseFloat(match[2]), 0, 100),
+          l = scale(parseFloat(match[3]), 0, 100),
+          a = scale(isNaN(alpha) ? 1 : alpha, 0, 1);
+      return [h, s, l, a];
+   }
+}
+
+function getHwb(string) {
+   if (!string) {
+      return;
+   }
+   var hwb = /^hwb\(\s*([+-]?\d+)(?:deg)?\s*,\s*([+-]?[\d\.]+)%\s*,\s*([+-]?[\d\.]+)%\s*(?:,\s*([+-]?[\d\.]+)\s*)?\)/;
+   var match = string.match(hwb);
+   if (match) {
+    var alpha = parseFloat(match[4]);
+      var h = scale(parseInt(match[1]), 0, 360),
+          w = scale(parseFloat(match[2]), 0, 100),
+          b = scale(parseFloat(match[3]), 0, 100),
+          a = scale(isNaN(alpha) ? 1 : alpha, 0, 1);
+      return [h, w, b, a];
+   }
+}
+
+function getRgb(string) {
+   var rgba = getRgba(string);
+   return rgba && rgba.slice(0, 3);
+}
+
+function getHsl(string) {
+  var hsla = getHsla(string);
+  return hsla && hsla.slice(0, 3);
+}
+
+function getAlpha(string) {
+   var vals = getRgba(string);
+   if (vals) {
+      return vals[3];
+   }
+   else if (vals = getHsla(string)) {
+      return vals[3];
+   }
+   else if (vals = getHwb(string)) {
+      return vals[3];
+   }
+}
+
+// generators
+function hexString(rgb) {
+   return "#" + hexDouble(rgb[0]) + hexDouble(rgb[1])
+              + hexDouble(rgb[2]);
+}
+
+function rgbString(rgba, alpha) {
+   if (alpha < 1 || (rgba[3] && rgba[3] < 1)) {
+      return rgbaString(rgba, alpha);
+   }
+   return "rgb(" + rgba[0] + ", " + rgba[1] + ", " + rgba[2] + ")";
+}
+
+function rgbaString(rgba, alpha) {
+   if (alpha === undefined) {
+      alpha = (rgba[3] !== undefined ? rgba[3] : 1);
+   }
+   return "rgba(" + rgba[0] + ", " + rgba[1] + ", " + rgba[2]
+           + ", " + alpha + ")";
+}
+
+function percentString(rgba, alpha) {
+   if (alpha < 1 || (rgba[3] && rgba[3] < 1)) {
+      return percentaString(rgba, alpha);
+   }
+   var r = Math.round(rgba[0]/255 * 100),
+       g = Math.round(rgba[1]/255 * 100),
+       b = Math.round(rgba[2]/255 * 100);
+
+   return "rgb(" + r + "%, " + g + "%, " + b + "%)";
+}
+
+function percentaString(rgba, alpha) {
+   var r = Math.round(rgba[0]/255 * 100),
+       g = Math.round(rgba[1]/255 * 100),
+       b = Math.round(rgba[2]/255 * 100);
+   return "rgba(" + r + "%, " + g + "%, " + b + "%, " + (alpha || rgba[3] || 1) + ")";
+}
+
+function hslString(hsla, alpha) {
+   if (alpha < 1 || (hsla[3] && hsla[3] < 1)) {
+      return hslaString(hsla, alpha);
+   }
+   return "hsl(" + hsla[0] + ", " + hsla[1] + "%, " + hsla[2] + "%)";
+}
+
+function hslaString(hsla, alpha) {
+   if (alpha === undefined) {
+      alpha = (hsla[3] !== undefined ? hsla[3] : 1);
+   }
+   return "hsla(" + hsla[0] + ", " + hsla[1] + "%, " + hsla[2] + "%, "
+           + alpha + ")";
+}
+
+// hwb is a bit different than rgb(a) & hsl(a) since there is no alpha specific syntax
+// (hwb have alpha optional & 1 is default value)
+function hwbString(hwb, alpha) {
+   if (alpha === undefined) {
+      alpha = (hwb[3] !== undefined ? hwb[3] : 1);
+   }
+   return "hwb(" + hwb[0] + ", " + hwb[1] + "%, " + hwb[2] + "%"
+           + (alpha !== undefined && alpha !== 1 ? ", " + alpha : "") + ")";
+}
+
+function keyword(rgb) {
+  return reverseNames[rgb.slice(0, 3)];
+}
+
+// helpers
+function scale(num, min, max) {
+   return Math.min(Math.max(min, num), max);
+}
+
+function hexDouble(num) {
+  var str = num.toString(16).toUpperCase();
+  return (str.length < 2) ? "0" + str : str;
+}
+
+
+//create a list of reverse color names
+var reverseNames = {};
+for (var name in colorNames) {
+   reverseNames[colorNames[name]] = name;
+}
+
+},{"color-name":17}],17:[function(require,module,exports){
+module.exports={
+	"aliceblue": [240, 248, 255],
+	"antiquewhite": [250, 235, 215],
+	"aqua": [0, 255, 255],
+	"aquamarine": [127, 255, 212],
+	"azure": [240, 255, 255],
+	"beige": [245, 245, 220],
+	"bisque": [255, 228, 196],
+	"black": [0, 0, 0],
+	"blanchedalmond": [255, 235, 205],
+	"blue": [0, 0, 255],
+	"blueviolet": [138, 43, 226],
+	"brown": [165, 42, 42],
+	"burlywood": [222, 184, 135],
+	"cadetblue": [95, 158, 160],
+	"chartreuse": [127, 255, 0],
+	"chocolate": [210, 105, 30],
+	"coral": [255, 127, 80],
+	"cornflowerblue": [100, 149, 237],
+	"cornsilk": [255, 248, 220],
+	"crimson": [220, 20, 60],
+	"cyan": [0, 255, 255],
+	"darkblue": [0, 0, 139],
+	"darkcyan": [0, 139, 139],
+	"darkgoldenrod": [184, 134, 11],
+	"darkgray": [169, 169, 169],
+	"darkgreen": [0, 100, 0],
+	"darkgrey": [169, 169, 169],
+	"darkkhaki": [189, 183, 107],
+	"darkmagenta": [139, 0, 139],
+	"darkolivegreen": [85, 107, 47],
+	"darkorange": [255, 140, 0],
+	"darkorchid": [153, 50, 204],
+	"darkred": [139, 0, 0],
+	"darksalmon": [233, 150, 122],
+	"darkseagreen": [143, 188, 143],
+	"darkslateblue": [72, 61, 139],
+	"darkslategray": [47, 79, 79],
+	"darkslategrey": [47, 79, 79],
+	"darkturquoise": [0, 206, 209],
+	"darkviolet": [148, 0, 211],
+	"deeppink": [255, 20, 147],
+	"deepskyblue": [0, 191, 255],
+	"dimgray": [105, 105, 105],
+	"dimgrey": [105, 105, 105],
+	"dodgerblue": [30, 144, 255],
+	"firebrick": [178, 34, 34],
+	"floralwhite": [255, 250, 240],
+	"forestgreen": [34, 139, 34],
+	"fuchsia": [255, 0, 255],
+	"gainsboro": [220, 220, 220],
+	"ghostwhite": [248, 248, 255],
+	"gold": [255, 215, 0],
+	"goldenrod": [218, 165, 32],
+	"gray": [128, 128, 128],
+	"green": [0, 128, 0],
+	"greenyellow": [173, 255, 47],
+	"grey": [128, 128, 128],
+	"honeydew": [240, 255, 240],
+	"hotpink": [255, 105, 180],
+	"indianred": [205, 92, 92],
+	"indigo": [75, 0, 130],
+	"ivory": [255, 255, 240],
+	"khaki": [240, 230, 140],
+	"lavender": [230, 230, 250],
+	"lavenderblush": [255, 240, 245],
+	"lawngreen": [124, 252, 0],
+	"lemonchiffon": [255, 250, 205],
+	"lightblue": [173, 216, 230],
+	"lightcoral": [240, 128, 128],
+	"lightcyan": [224, 255, 255],
+	"lightgoldenrodyellow": [250, 250, 210],
+	"lightgray": [211, 211, 211],
+	"lightgreen": [144, 238, 144],
+	"lightgrey": [211, 211, 211],
+	"lightpink": [255, 182, 193],
+	"lightsalmon": [255, 160, 122],
+	"lightseagreen": [32, 178, 170],
+	"lightskyblue": [135, 206, 250],
+	"lightslategray": [119, 136, 153],
+	"lightslategrey": [119, 136, 153],
+	"lightsteelblue": [176, 196, 222],
+	"lightyellow": [255, 255, 224],
+	"lime": [0, 255, 0],
+	"limegreen": [50, 205, 50],
+	"linen": [250, 240, 230],
+	"magenta": [255, 0, 255],
+	"maroon": [128, 0, 0],
+	"mediumaquamarine": [102, 205, 170],
+	"mediumblue": [0, 0, 205],
+	"mediumorchid": [186, 85, 211],
+	"mediumpurple": [147, 112, 219],
+	"mediumseagreen": [60, 179, 113],
+	"mediumslateblue": [123, 104, 238],
+	"mediumspringgreen": [0, 250, 154],
+	"mediumturquoise": [72, 209, 204],
+	"mediumvioletred": [199, 21, 133],
+	"midnightblue": [25, 25, 112],
+	"mintcream": [245, 255, 250],
+	"mistyrose": [255, 228, 225],
+	"moccasin": [255, 228, 181],
+	"navajowhite": [255, 222, 173],
+	"navy": [0, 0, 128],
+	"oldlace": [253, 245, 230],
+	"olive": [128, 128, 0],
+	"olivedrab": [107, 142, 35],
+	"orange": [255, 165, 0],
+	"orangered": [255, 69, 0],
+	"orchid": [218, 112, 214],
+	"palegoldenrod": [238, 232, 170],
+	"palegreen": [152, 251, 152],
+	"paleturquoise": [175, 238, 238],
+	"palevioletred": [219, 112, 147],
+	"papayawhip": [255, 239, 213],
+	"peachpuff": [255, 218, 185],
+	"peru": [205, 133, 63],
+	"pink": [255, 192, 203],
+	"plum": [221, 160, 221],
+	"powderblue": [176, 224, 230],
+	"purple": [128, 0, 128],
+	"rebeccapurple": [102, 51, 153],
+	"red": [255, 0, 0],
+	"rosybrown": [188, 143, 143],
+	"royalblue": [65, 105, 225],
+	"saddlebrown": [139, 69, 19],
+	"salmon": [250, 128, 114],
+	"sandybrown": [244, 164, 96],
+	"seagreen": [46, 139, 87],
+	"seashell": [255, 245, 238],
+	"sienna": [160, 82, 45],
+	"silver": [192, 192, 192],
+	"skyblue": [135, 206, 235],
+	"slateblue": [106, 90, 205],
+	"slategray": [112, 128, 144],
+	"slategrey": [112, 128, 144],
+	"snow": [255, 250, 250],
+	"springgreen": [0, 255, 127],
+	"steelblue": [70, 130, 180],
+	"tan": [210, 180, 140],
+	"teal": [0, 128, 128],
+	"thistle": [216, 191, 216],
+	"tomato": [255, 99, 71],
+	"turquoise": [64, 224, 208],
+	"violet": [238, 130, 238],
+	"wheat": [245, 222, 179],
+	"white": [255, 255, 255],
+	"whitesmoke": [245, 245, 245],
+	"yellow": [255, 255, 0],
+	"yellowgreen": [154, 205, 50]
+}
+},{}],18:[function(require,module,exports){
 // Generated by CoffeeScript 1.6.3
 (function() {
   var Base, BinaryTable, CompressedImage, DataUnit, Decompress, FITS, HDU, Header, HeaderVerify, Image, ImageUtils, Parser, Table, Tabular, _ref, _ref1,
@@ -3302,7 +4897,7 @@ module.exports = update;
         var args, value;
         args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
         value = arguments[0];
-        if (!(this.get("BIXPIX") > 0)) {
+        if (!(this.get("BITPIX") > 0)) {
           console.warn("BLANK is not to be used for BITPIX = " + (this.get('BITPIX')));
         }
         return parseInt(value);
@@ -4621,7 +6216,100 @@ module.exports = update;
 
 }).call(this);
 
-},{}],14:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
+var builder = require( 'interpolation-values' );
+
+module.exports = function( values, interpolationFunc ) {
+
+	interpolationFunc =  builder( values[ 0 ], interpolationFunc );
+
+	return function( t ) {
+
+		var idxT = ( values.length - 1 ) * t,
+			sIdx = Math.floor( idxT ),
+			eIdx = Math.ceil( idxT ),
+			t = idxT - sIdx;
+
+		return interpolationFunc( values[ sIdx ], values[ eIdx ], t );
+	};
+};
+},{"interpolation-values":20}],20:[function(require,module,exports){
+var interpolation = require( 'interpolation' );
+
+module.exports = function( exVal, interpolationFunction ) {
+
+	interpolationFunction = interpolationFunction || interpolation.lerp;
+
+	if( typeof exVal == 'number' ) {
+
+		return interpolationFunction;
+	} else if( Array.isArray( exVal ) ) {
+
+		return require( './lib/array' )( interpolationFunction );
+	} else if( typeof exVal == 'object' ) {
+
+		return require( './lib/object' )( exVal, interpolationFunction );
+	} else {
+
+		throw 'Value of type ' + ( typeof exVal ) + ' cannot be interpolated';
+	}
+}
+},{"./lib/array":21,"./lib/object":22,"interpolation":23}],21:[function(require,module,exports){
+module.exports = function( interpolate ) {
+
+	return function( val1, val2, t ) {
+
+		var rVal = [];
+
+		for( var i = 0, len = val1.length; i < len; i++ ) {
+
+			rVal[ i ] = interpolate( val1[ i ], val2[ i ], t );
+		}
+
+		return rVal;
+	};
+};
+},{}],22:[function(require,module,exports){
+module.exports = function( exVal, interpolate ) {
+
+	var keys = [];
+
+	for( var i in exVal ) {
+
+		if( typeof exVal[ i ] == 'number' ) {
+
+			keys.push( i );
+		}
+	}
+
+	return function( val1, val2, t ) {
+
+		var key, rVal = Object.create( exVal );
+
+		for( var i = 0, len = keys.length; i < len; i++ ) {
+
+			key = keys[ i ];
+
+			rVal[ key ] = interpolate( val1[ key ], val2[ key ], t );
+		}
+
+		return rVal;
+	};
+};
+},{}],23:[function(require,module,exports){
+/** Utility function for linear interpolation. */
+module.exports.lerp = function(v0, v1, t) {
+    return v0*(1-t)+v1*t;
+};
+
+/** Utility function for Hermite interpolation. */
+module.exports.smoothstep = function(v0, v1, t) {
+    // Scale, bias and saturate x to 0..1 range
+    t = Math.max(0.0, Math.min(1.0, (t - v0)/(v1 - v0) ));
+    // Evaluate polynomial
+    return t*t*(3 - 2*t);
+};
+},{}],24:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -4648,7 +6336,7 @@ var AutoFocusMixin = {
 
 module.exports = AutoFocusMixin;
 
-},{"./focusNode":132}],15:[function(require,module,exports){
+},{"./focusNode":142}],25:[function(require,module,exports){
 /**
  * Copyright 2013-2015 Facebook, Inc.
  * All rights reserved.
@@ -5143,7 +6831,7 @@ var BeforeInputEventPlugin = {
 
 module.exports = BeforeInputEventPlugin;
 
-},{"./EventConstants":27,"./EventPropagators":32,"./ExecutionEnvironment":33,"./FallbackCompositionState":34,"./SyntheticCompositionEvent":106,"./SyntheticInputEvent":110,"./keyOf":154}],16:[function(require,module,exports){
+},{"./EventConstants":37,"./EventPropagators":42,"./ExecutionEnvironment":43,"./FallbackCompositionState":44,"./SyntheticCompositionEvent":116,"./SyntheticInputEvent":120,"./keyOf":164}],26:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -5264,7 +6952,7 @@ var CSSProperty = {
 
 module.exports = CSSProperty;
 
-},{}],17:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -5446,7 +7134,7 @@ var CSSPropertyOperations = {
 module.exports = CSSPropertyOperations;
 
 }).call(this,require('_process'))
-},{"./CSSProperty":16,"./ExecutionEnvironment":33,"./camelizeStyleName":121,"./dangerousStyleValue":126,"./hyphenateStyleName":146,"./memoizeStringOnly":156,"./warning":167,"_process":169}],18:[function(require,module,exports){
+},{"./CSSProperty":26,"./ExecutionEnvironment":43,"./camelizeStyleName":131,"./dangerousStyleValue":136,"./hyphenateStyleName":156,"./memoizeStringOnly":166,"./warning":177,"_process":179}],28:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -5546,7 +7234,7 @@ PooledClass.addPoolingTo(CallbackQueue);
 module.exports = CallbackQueue;
 
 }).call(this,require('_process'))
-},{"./Object.assign":39,"./PooledClass":40,"./invariant":148,"_process":169}],19:[function(require,module,exports){
+},{"./Object.assign":49,"./PooledClass":50,"./invariant":158,"_process":179}],29:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -5928,7 +7616,7 @@ var ChangeEventPlugin = {
 
 module.exports = ChangeEventPlugin;
 
-},{"./EventConstants":27,"./EventPluginHub":29,"./EventPropagators":32,"./ExecutionEnvironment":33,"./ReactUpdates":100,"./SyntheticEvent":108,"./isEventSupported":149,"./isTextInputElement":151,"./keyOf":154}],20:[function(require,module,exports){
+},{"./EventConstants":37,"./EventPluginHub":39,"./EventPropagators":42,"./ExecutionEnvironment":43,"./ReactUpdates":110,"./SyntheticEvent":118,"./isEventSupported":159,"./isTextInputElement":161,"./keyOf":164}],30:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -5953,7 +7641,7 @@ var ClientReactRootIndex = {
 
 module.exports = ClientReactRootIndex;
 
-},{}],21:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -6091,7 +7779,7 @@ var DOMChildrenOperations = {
 module.exports = DOMChildrenOperations;
 
 }).call(this,require('_process'))
-},{"./Danger":24,"./ReactMultiChildUpdateTypes":85,"./invariant":148,"./setTextContent":162,"_process":169}],22:[function(require,module,exports){
+},{"./Danger":34,"./ReactMultiChildUpdateTypes":95,"./invariant":158,"./setTextContent":172,"_process":179}],32:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -6390,7 +8078,7 @@ var DOMProperty = {
 module.exports = DOMProperty;
 
 }).call(this,require('_process'))
-},{"./invariant":148,"_process":169}],23:[function(require,module,exports){
+},{"./invariant":158,"_process":179}],33:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -6582,7 +8270,7 @@ var DOMPropertyOperations = {
 module.exports = DOMPropertyOperations;
 
 }).call(this,require('_process'))
-},{"./DOMProperty":22,"./quoteAttributeValueForBrowser":160,"./warning":167,"_process":169}],24:[function(require,module,exports){
+},{"./DOMProperty":32,"./quoteAttributeValueForBrowser":170,"./warning":177,"_process":179}],34:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -6769,7 +8457,7 @@ var Danger = {
 module.exports = Danger;
 
 }).call(this,require('_process'))
-},{"./ExecutionEnvironment":33,"./createNodesFromMarkup":125,"./emptyFunction":127,"./getMarkupWrap":140,"./invariant":148,"_process":169}],25:[function(require,module,exports){
+},{"./ExecutionEnvironment":43,"./createNodesFromMarkup":135,"./emptyFunction":137,"./getMarkupWrap":150,"./invariant":158,"_process":179}],35:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -6808,7 +8496,7 @@ var DefaultEventPluginOrder = [
 
 module.exports = DefaultEventPluginOrder;
 
-},{"./keyOf":154}],26:[function(require,module,exports){
+},{"./keyOf":164}],36:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -6948,7 +8636,7 @@ var EnterLeaveEventPlugin = {
 
 module.exports = EnterLeaveEventPlugin;
 
-},{"./EventConstants":27,"./EventPropagators":32,"./ReactMount":83,"./SyntheticMouseEvent":112,"./keyOf":154}],27:[function(require,module,exports){
+},{"./EventConstants":37,"./EventPropagators":42,"./ReactMount":93,"./SyntheticMouseEvent":122,"./keyOf":164}],37:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -7020,7 +8708,7 @@ var EventConstants = {
 
 module.exports = EventConstants;
 
-},{"./keyMirror":153}],28:[function(require,module,exports){
+},{"./keyMirror":163}],38:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -7110,7 +8798,7 @@ var EventListener = {
 module.exports = EventListener;
 
 }).call(this,require('_process'))
-},{"./emptyFunction":127,"_process":169}],29:[function(require,module,exports){
+},{"./emptyFunction":137,"_process":179}],39:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -7388,7 +9076,7 @@ var EventPluginHub = {
 module.exports = EventPluginHub;
 
 }).call(this,require('_process'))
-},{"./EventPluginRegistry":30,"./EventPluginUtils":31,"./accumulateInto":118,"./forEachAccumulated":133,"./invariant":148,"_process":169}],30:[function(require,module,exports){
+},{"./EventPluginRegistry":40,"./EventPluginUtils":41,"./accumulateInto":128,"./forEachAccumulated":143,"./invariant":158,"_process":179}],40:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -7668,7 +9356,7 @@ var EventPluginRegistry = {
 module.exports = EventPluginRegistry;
 
 }).call(this,require('_process'))
-},{"./invariant":148,"_process":169}],31:[function(require,module,exports){
+},{"./invariant":158,"_process":179}],41:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -7889,7 +9577,7 @@ var EventPluginUtils = {
 module.exports = EventPluginUtils;
 
 }).call(this,require('_process'))
-},{"./EventConstants":27,"./invariant":148,"_process":169}],32:[function(require,module,exports){
+},{"./EventConstants":37,"./invariant":158,"_process":179}],42:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -8031,7 +9719,7 @@ var EventPropagators = {
 module.exports = EventPropagators;
 
 }).call(this,require('_process'))
-},{"./EventConstants":27,"./EventPluginHub":29,"./accumulateInto":118,"./forEachAccumulated":133,"_process":169}],33:[function(require,module,exports){
+},{"./EventConstants":37,"./EventPluginHub":39,"./accumulateInto":128,"./forEachAccumulated":143,"_process":179}],43:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -8075,7 +9763,7 @@ var ExecutionEnvironment = {
 
 module.exports = ExecutionEnvironment;
 
-},{}],34:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -8166,7 +9854,7 @@ PooledClass.addPoolingTo(FallbackCompositionState);
 
 module.exports = FallbackCompositionState;
 
-},{"./Object.assign":39,"./PooledClass":40,"./getTextContentAccessor":143}],35:[function(require,module,exports){
+},{"./Object.assign":49,"./PooledClass":50,"./getTextContentAccessor":153}],45:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -8371,7 +10059,7 @@ var HTMLDOMPropertyConfig = {
 
 module.exports = HTMLDOMPropertyConfig;
 
-},{"./DOMProperty":22,"./ExecutionEnvironment":33}],36:[function(require,module,exports){
+},{"./DOMProperty":32,"./ExecutionEnvironment":43}],46:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -8527,7 +10215,7 @@ var LinkedValueUtils = {
 module.exports = LinkedValueUtils;
 
 }).call(this,require('_process'))
-},{"./ReactPropTypes":91,"./invariant":148,"_process":169}],37:[function(require,module,exports){
+},{"./ReactPropTypes":101,"./invariant":158,"_process":179}],47:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -8584,7 +10272,7 @@ var LocalEventTrapMixin = {
 module.exports = LocalEventTrapMixin;
 
 }).call(this,require('_process'))
-},{"./ReactBrowserEventEmitter":43,"./accumulateInto":118,"./forEachAccumulated":133,"./invariant":148,"_process":169}],38:[function(require,module,exports){
+},{"./ReactBrowserEventEmitter":53,"./accumulateInto":128,"./forEachAccumulated":143,"./invariant":158,"_process":179}],48:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -8642,7 +10330,7 @@ var MobileSafariClickEventPlugin = {
 
 module.exports = MobileSafariClickEventPlugin;
 
-},{"./EventConstants":27,"./emptyFunction":127}],39:[function(require,module,exports){
+},{"./EventConstants":37,"./emptyFunction":137}],49:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -8691,7 +10379,7 @@ function assign(target, sources) {
 
 module.exports = assign;
 
-},{}],40:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -8807,7 +10495,7 @@ var PooledClass = {
 module.exports = PooledClass;
 
 }).call(this,require('_process'))
-},{"./invariant":148,"_process":169}],41:[function(require,module,exports){
+},{"./invariant":158,"_process":179}],51:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -8959,7 +10647,7 @@ React.version = '0.13.1';
 module.exports = React;
 
 }).call(this,require('_process'))
-},{"./EventPluginUtils":31,"./ExecutionEnvironment":33,"./Object.assign":39,"./ReactChildren":45,"./ReactClass":46,"./ReactComponent":47,"./ReactContext":51,"./ReactCurrentOwner":52,"./ReactDOM":53,"./ReactDOMTextComponent":64,"./ReactDefaultInjection":67,"./ReactElement":70,"./ReactElementValidator":71,"./ReactInstanceHandles":79,"./ReactMount":83,"./ReactPerf":88,"./ReactPropTypes":91,"./ReactReconciler":94,"./ReactServerRendering":97,"./findDOMNode":130,"./onlyChild":157,"_process":169}],42:[function(require,module,exports){
+},{"./EventPluginUtils":41,"./ExecutionEnvironment":43,"./Object.assign":49,"./ReactChildren":55,"./ReactClass":56,"./ReactComponent":57,"./ReactContext":61,"./ReactCurrentOwner":62,"./ReactDOM":63,"./ReactDOMTextComponent":74,"./ReactDefaultInjection":77,"./ReactElement":80,"./ReactElementValidator":81,"./ReactInstanceHandles":89,"./ReactMount":93,"./ReactPerf":98,"./ReactPropTypes":101,"./ReactReconciler":104,"./ReactServerRendering":107,"./findDOMNode":140,"./onlyChild":167,"_process":179}],52:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -8990,7 +10678,7 @@ var ReactBrowserComponentMixin = {
 
 module.exports = ReactBrowserComponentMixin;
 
-},{"./findDOMNode":130}],43:[function(require,module,exports){
+},{"./findDOMNode":140}],53:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -9343,7 +11031,7 @@ var ReactBrowserEventEmitter = assign({}, ReactEventEmitterMixin, {
 
 module.exports = ReactBrowserEventEmitter;
 
-},{"./EventConstants":27,"./EventPluginHub":29,"./EventPluginRegistry":30,"./Object.assign":39,"./ReactEventEmitterMixin":74,"./ViewportMetrics":117,"./isEventSupported":149}],44:[function(require,module,exports){
+},{"./EventConstants":37,"./EventPluginHub":39,"./EventPluginRegistry":40,"./Object.assign":49,"./ReactEventEmitterMixin":84,"./ViewportMetrics":127,"./isEventSupported":159}],54:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -9470,7 +11158,7 @@ var ReactChildReconciler = {
 
 module.exports = ReactChildReconciler;
 
-},{"./ReactReconciler":94,"./flattenChildren":131,"./instantiateReactComponent":147,"./shouldUpdateReactComponent":164}],45:[function(require,module,exports){
+},{"./ReactReconciler":104,"./flattenChildren":141,"./instantiateReactComponent":157,"./shouldUpdateReactComponent":174}],55:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -9623,7 +11311,7 @@ var ReactChildren = {
 module.exports = ReactChildren;
 
 }).call(this,require('_process'))
-},{"./PooledClass":40,"./ReactFragment":76,"./traverseAllChildren":166,"./warning":167,"_process":169}],46:[function(require,module,exports){
+},{"./PooledClass":50,"./ReactFragment":86,"./traverseAllChildren":176,"./warning":177,"_process":179}],56:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -10569,7 +12257,7 @@ var ReactClass = {
 module.exports = ReactClass;
 
 }).call(this,require('_process'))
-},{"./Object.assign":39,"./ReactComponent":47,"./ReactCurrentOwner":52,"./ReactElement":70,"./ReactErrorUtils":73,"./ReactInstanceMap":80,"./ReactLifeCycle":81,"./ReactPropTypeLocationNames":89,"./ReactPropTypeLocations":90,"./ReactUpdateQueue":99,"./invariant":148,"./keyMirror":153,"./keyOf":154,"./warning":167,"_process":169}],47:[function(require,module,exports){
+},{"./Object.assign":49,"./ReactComponent":57,"./ReactCurrentOwner":62,"./ReactElement":80,"./ReactErrorUtils":83,"./ReactInstanceMap":90,"./ReactLifeCycle":91,"./ReactPropTypeLocationNames":99,"./ReactPropTypeLocations":100,"./ReactUpdateQueue":109,"./invariant":158,"./keyMirror":163,"./keyOf":164,"./warning":177,"_process":179}],57:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -10705,7 +12393,7 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = ReactComponent;
 
 }).call(this,require('_process'))
-},{"./ReactUpdateQueue":99,"./invariant":148,"./warning":167,"_process":169}],48:[function(require,module,exports){
+},{"./ReactUpdateQueue":109,"./invariant":158,"./warning":177,"_process":179}],58:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -10752,7 +12440,7 @@ var ReactComponentBrowserEnvironment = {
 
 module.exports = ReactComponentBrowserEnvironment;
 
-},{"./ReactDOMIDOperations":57,"./ReactMount":83}],49:[function(require,module,exports){
+},{"./ReactDOMIDOperations":67,"./ReactMount":93}],59:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -10813,7 +12501,7 @@ var ReactComponentEnvironment = {
 module.exports = ReactComponentEnvironment;
 
 }).call(this,require('_process'))
-},{"./invariant":148,"_process":169}],50:[function(require,module,exports){
+},{"./invariant":158,"_process":179}],60:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -11703,7 +13391,7 @@ var ReactCompositeComponent = {
 module.exports = ReactCompositeComponent;
 
 }).call(this,require('_process'))
-},{"./Object.assign":39,"./ReactComponentEnvironment":49,"./ReactContext":51,"./ReactCurrentOwner":52,"./ReactElement":70,"./ReactElementValidator":71,"./ReactInstanceMap":80,"./ReactLifeCycle":81,"./ReactNativeComponent":86,"./ReactPerf":88,"./ReactPropTypeLocationNames":89,"./ReactPropTypeLocations":90,"./ReactReconciler":94,"./ReactUpdates":100,"./emptyObject":128,"./invariant":148,"./shouldUpdateReactComponent":164,"./warning":167,"_process":169}],51:[function(require,module,exports){
+},{"./Object.assign":49,"./ReactComponentEnvironment":59,"./ReactContext":61,"./ReactCurrentOwner":62,"./ReactElement":80,"./ReactElementValidator":81,"./ReactInstanceMap":90,"./ReactLifeCycle":91,"./ReactNativeComponent":96,"./ReactPerf":98,"./ReactPropTypeLocationNames":99,"./ReactPropTypeLocations":100,"./ReactReconciler":104,"./ReactUpdates":110,"./emptyObject":138,"./invariant":158,"./shouldUpdateReactComponent":174,"./warning":177,"_process":179}],61:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -11781,7 +13469,7 @@ var ReactContext = {
 module.exports = ReactContext;
 
 }).call(this,require('_process'))
-},{"./Object.assign":39,"./emptyObject":128,"./warning":167,"_process":169}],52:[function(require,module,exports){
+},{"./Object.assign":49,"./emptyObject":138,"./warning":177,"_process":179}],62:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -11815,7 +13503,7 @@ var ReactCurrentOwner = {
 
 module.exports = ReactCurrentOwner;
 
-},{}],53:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -11993,7 +13681,7 @@ var ReactDOM = mapObject({
 module.exports = ReactDOM;
 
 }).call(this,require('_process'))
-},{"./ReactElement":70,"./ReactElementValidator":71,"./mapObject":155,"_process":169}],54:[function(require,module,exports){
+},{"./ReactElement":80,"./ReactElementValidator":81,"./mapObject":165,"_process":179}],64:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -12057,7 +13745,7 @@ var ReactDOMButton = ReactClass.createClass({
 
 module.exports = ReactDOMButton;
 
-},{"./AutoFocusMixin":14,"./ReactBrowserComponentMixin":42,"./ReactClass":46,"./ReactElement":70,"./keyMirror":153}],55:[function(require,module,exports){
+},{"./AutoFocusMixin":24,"./ReactBrowserComponentMixin":52,"./ReactClass":56,"./ReactElement":80,"./keyMirror":163}],65:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -12563,7 +14251,7 @@ ReactDOMComponent.injection = {
 module.exports = ReactDOMComponent;
 
 }).call(this,require('_process'))
-},{"./CSSPropertyOperations":17,"./DOMProperty":22,"./DOMPropertyOperations":23,"./Object.assign":39,"./ReactBrowserEventEmitter":43,"./ReactComponentBrowserEnvironment":48,"./ReactMount":83,"./ReactMultiChild":84,"./ReactPerf":88,"./escapeTextContentForBrowser":129,"./invariant":148,"./isEventSupported":149,"./keyOf":154,"./warning":167,"_process":169}],56:[function(require,module,exports){
+},{"./CSSPropertyOperations":27,"./DOMProperty":32,"./DOMPropertyOperations":33,"./Object.assign":49,"./ReactBrowserEventEmitter":53,"./ReactComponentBrowserEnvironment":58,"./ReactMount":93,"./ReactMultiChild":94,"./ReactPerf":98,"./escapeTextContentForBrowser":139,"./invariant":158,"./isEventSupported":159,"./keyOf":164,"./warning":177,"_process":179}],66:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -12612,7 +14300,7 @@ var ReactDOMForm = ReactClass.createClass({
 
 module.exports = ReactDOMForm;
 
-},{"./EventConstants":27,"./LocalEventTrapMixin":37,"./ReactBrowserComponentMixin":42,"./ReactClass":46,"./ReactElement":70}],57:[function(require,module,exports){
+},{"./EventConstants":37,"./LocalEventTrapMixin":47,"./ReactBrowserComponentMixin":52,"./ReactClass":56,"./ReactElement":80}],67:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -12780,7 +14468,7 @@ ReactPerf.measureMethods(ReactDOMIDOperations, 'ReactDOMIDOperations', {
 module.exports = ReactDOMIDOperations;
 
 }).call(this,require('_process'))
-},{"./CSSPropertyOperations":17,"./DOMChildrenOperations":21,"./DOMPropertyOperations":23,"./ReactMount":83,"./ReactPerf":88,"./invariant":148,"./setInnerHTML":161,"_process":169}],58:[function(require,module,exports){
+},{"./CSSPropertyOperations":27,"./DOMChildrenOperations":31,"./DOMPropertyOperations":33,"./ReactMount":93,"./ReactPerf":98,"./invariant":158,"./setInnerHTML":171,"_process":179}],68:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -12825,7 +14513,7 @@ var ReactDOMIframe = ReactClass.createClass({
 
 module.exports = ReactDOMIframe;
 
-},{"./EventConstants":27,"./LocalEventTrapMixin":37,"./ReactBrowserComponentMixin":42,"./ReactClass":46,"./ReactElement":70}],59:[function(require,module,exports){
+},{"./EventConstants":37,"./LocalEventTrapMixin":47,"./ReactBrowserComponentMixin":52,"./ReactClass":56,"./ReactElement":80}],69:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -12871,7 +14559,7 @@ var ReactDOMImg = ReactClass.createClass({
 
 module.exports = ReactDOMImg;
 
-},{"./EventConstants":27,"./LocalEventTrapMixin":37,"./ReactBrowserComponentMixin":42,"./ReactClass":46,"./ReactElement":70}],60:[function(require,module,exports){
+},{"./EventConstants":37,"./LocalEventTrapMixin":47,"./ReactBrowserComponentMixin":52,"./ReactClass":56,"./ReactElement":80}],70:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -13048,7 +14736,7 @@ var ReactDOMInput = ReactClass.createClass({
 module.exports = ReactDOMInput;
 
 }).call(this,require('_process'))
-},{"./AutoFocusMixin":14,"./DOMPropertyOperations":23,"./LinkedValueUtils":36,"./Object.assign":39,"./ReactBrowserComponentMixin":42,"./ReactClass":46,"./ReactElement":70,"./ReactMount":83,"./ReactUpdates":100,"./invariant":148,"_process":169}],61:[function(require,module,exports){
+},{"./AutoFocusMixin":24,"./DOMPropertyOperations":33,"./LinkedValueUtils":46,"./Object.assign":49,"./ReactBrowserComponentMixin":52,"./ReactClass":56,"./ReactElement":80,"./ReactMount":93,"./ReactUpdates":110,"./invariant":158,"_process":179}],71:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -13100,7 +14788,7 @@ var ReactDOMOption = ReactClass.createClass({
 module.exports = ReactDOMOption;
 
 }).call(this,require('_process'))
-},{"./ReactBrowserComponentMixin":42,"./ReactClass":46,"./ReactElement":70,"./warning":167,"_process":169}],62:[function(require,module,exports){
+},{"./ReactBrowserComponentMixin":52,"./ReactClass":56,"./ReactElement":80,"./warning":177,"_process":179}],72:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -13278,7 +14966,7 @@ var ReactDOMSelect = ReactClass.createClass({
 
 module.exports = ReactDOMSelect;
 
-},{"./AutoFocusMixin":14,"./LinkedValueUtils":36,"./Object.assign":39,"./ReactBrowserComponentMixin":42,"./ReactClass":46,"./ReactElement":70,"./ReactUpdates":100}],63:[function(require,module,exports){
+},{"./AutoFocusMixin":24,"./LinkedValueUtils":46,"./Object.assign":49,"./ReactBrowserComponentMixin":52,"./ReactClass":56,"./ReactElement":80,"./ReactUpdates":110}],73:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -13491,7 +15179,7 @@ var ReactDOMSelection = {
 
 module.exports = ReactDOMSelection;
 
-},{"./ExecutionEnvironment":33,"./getNodeForCharacterOffset":141,"./getTextContentAccessor":143}],64:[function(require,module,exports){
+},{"./ExecutionEnvironment":43,"./getNodeForCharacterOffset":151,"./getTextContentAccessor":153}],74:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -13608,7 +15296,7 @@ assign(ReactDOMTextComponent.prototype, {
 
 module.exports = ReactDOMTextComponent;
 
-},{"./DOMPropertyOperations":23,"./Object.assign":39,"./ReactComponentBrowserEnvironment":48,"./ReactDOMComponent":55,"./escapeTextContentForBrowser":129}],65:[function(require,module,exports){
+},{"./DOMPropertyOperations":33,"./Object.assign":49,"./ReactComponentBrowserEnvironment":58,"./ReactDOMComponent":65,"./escapeTextContentForBrowser":139}],75:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -13748,7 +15436,7 @@ var ReactDOMTextarea = ReactClass.createClass({
 module.exports = ReactDOMTextarea;
 
 }).call(this,require('_process'))
-},{"./AutoFocusMixin":14,"./DOMPropertyOperations":23,"./LinkedValueUtils":36,"./Object.assign":39,"./ReactBrowserComponentMixin":42,"./ReactClass":46,"./ReactElement":70,"./ReactUpdates":100,"./invariant":148,"./warning":167,"_process":169}],66:[function(require,module,exports){
+},{"./AutoFocusMixin":24,"./DOMPropertyOperations":33,"./LinkedValueUtils":46,"./Object.assign":49,"./ReactBrowserComponentMixin":52,"./ReactClass":56,"./ReactElement":80,"./ReactUpdates":110,"./invariant":158,"./warning":177,"_process":179}],76:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -13821,7 +15509,7 @@ var ReactDefaultBatchingStrategy = {
 
 module.exports = ReactDefaultBatchingStrategy;
 
-},{"./Object.assign":39,"./ReactUpdates":100,"./Transaction":116,"./emptyFunction":127}],67:[function(require,module,exports){
+},{"./Object.assign":49,"./ReactUpdates":110,"./Transaction":126,"./emptyFunction":137}],77:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -13980,7 +15668,7 @@ module.exports = {
 };
 
 }).call(this,require('_process'))
-},{"./BeforeInputEventPlugin":15,"./ChangeEventPlugin":19,"./ClientReactRootIndex":20,"./DefaultEventPluginOrder":25,"./EnterLeaveEventPlugin":26,"./ExecutionEnvironment":33,"./HTMLDOMPropertyConfig":35,"./MobileSafariClickEventPlugin":38,"./ReactBrowserComponentMixin":42,"./ReactClass":46,"./ReactComponentBrowserEnvironment":48,"./ReactDOMButton":54,"./ReactDOMComponent":55,"./ReactDOMForm":56,"./ReactDOMIDOperations":57,"./ReactDOMIframe":58,"./ReactDOMImg":59,"./ReactDOMInput":60,"./ReactDOMOption":61,"./ReactDOMSelect":62,"./ReactDOMTextComponent":64,"./ReactDOMTextarea":65,"./ReactDefaultBatchingStrategy":66,"./ReactDefaultPerf":68,"./ReactElement":70,"./ReactEventListener":75,"./ReactInjection":77,"./ReactInstanceHandles":79,"./ReactMount":83,"./ReactReconcileTransaction":93,"./SVGDOMPropertyConfig":101,"./SelectEventPlugin":102,"./ServerReactRootIndex":103,"./SimpleEventPlugin":104,"./createFullPageComponent":124,"_process":169}],68:[function(require,module,exports){
+},{"./BeforeInputEventPlugin":25,"./ChangeEventPlugin":29,"./ClientReactRootIndex":30,"./DefaultEventPluginOrder":35,"./EnterLeaveEventPlugin":36,"./ExecutionEnvironment":43,"./HTMLDOMPropertyConfig":45,"./MobileSafariClickEventPlugin":48,"./ReactBrowserComponentMixin":52,"./ReactClass":56,"./ReactComponentBrowserEnvironment":58,"./ReactDOMButton":64,"./ReactDOMComponent":65,"./ReactDOMForm":66,"./ReactDOMIDOperations":67,"./ReactDOMIframe":68,"./ReactDOMImg":69,"./ReactDOMInput":70,"./ReactDOMOption":71,"./ReactDOMSelect":72,"./ReactDOMTextComponent":74,"./ReactDOMTextarea":75,"./ReactDefaultBatchingStrategy":76,"./ReactDefaultPerf":78,"./ReactElement":80,"./ReactEventListener":85,"./ReactInjection":87,"./ReactInstanceHandles":89,"./ReactMount":93,"./ReactReconcileTransaction":103,"./SVGDOMPropertyConfig":111,"./SelectEventPlugin":112,"./ServerReactRootIndex":113,"./SimpleEventPlugin":114,"./createFullPageComponent":134,"_process":179}],78:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -14246,7 +15934,7 @@ var ReactDefaultPerf = {
 
 module.exports = ReactDefaultPerf;
 
-},{"./DOMProperty":22,"./ReactDefaultPerfAnalysis":69,"./ReactMount":83,"./ReactPerf":88,"./performanceNow":159}],69:[function(require,module,exports){
+},{"./DOMProperty":32,"./ReactDefaultPerfAnalysis":79,"./ReactMount":93,"./ReactPerf":98,"./performanceNow":169}],79:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -14452,7 +16140,7 @@ var ReactDefaultPerfAnalysis = {
 
 module.exports = ReactDefaultPerfAnalysis;
 
-},{"./Object.assign":39}],70:[function(require,module,exports){
+},{"./Object.assign":49}],80:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -14760,7 +16448,7 @@ ReactElement.isValidElement = function(object) {
 module.exports = ReactElement;
 
 }).call(this,require('_process'))
-},{"./Object.assign":39,"./ReactContext":51,"./ReactCurrentOwner":52,"./warning":167,"_process":169}],71:[function(require,module,exports){
+},{"./Object.assign":49,"./ReactContext":61,"./ReactCurrentOwner":62,"./warning":177,"_process":179}],81:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -15225,7 +16913,7 @@ var ReactElementValidator = {
 module.exports = ReactElementValidator;
 
 }).call(this,require('_process'))
-},{"./ReactCurrentOwner":52,"./ReactElement":70,"./ReactFragment":76,"./ReactNativeComponent":86,"./ReactPropTypeLocationNames":89,"./ReactPropTypeLocations":90,"./getIteratorFn":139,"./invariant":148,"./warning":167,"_process":169}],72:[function(require,module,exports){
+},{"./ReactCurrentOwner":62,"./ReactElement":80,"./ReactFragment":86,"./ReactNativeComponent":96,"./ReactPropTypeLocationNames":99,"./ReactPropTypeLocations":100,"./getIteratorFn":149,"./invariant":158,"./warning":177,"_process":179}],82:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -15320,7 +17008,7 @@ var ReactEmptyComponent = {
 module.exports = ReactEmptyComponent;
 
 }).call(this,require('_process'))
-},{"./ReactElement":70,"./ReactInstanceMap":80,"./invariant":148,"_process":169}],73:[function(require,module,exports){
+},{"./ReactElement":80,"./ReactInstanceMap":90,"./invariant":158,"_process":179}],83:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15352,7 +17040,7 @@ var ReactErrorUtils = {
 
 module.exports = ReactErrorUtils;
 
-},{}],74:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15402,7 +17090,7 @@ var ReactEventEmitterMixin = {
 
 module.exports = ReactEventEmitterMixin;
 
-},{"./EventPluginHub":29}],75:[function(require,module,exports){
+},{"./EventPluginHub":39}],85:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15585,7 +17273,7 @@ var ReactEventListener = {
 
 module.exports = ReactEventListener;
 
-},{"./EventListener":28,"./ExecutionEnvironment":33,"./Object.assign":39,"./PooledClass":40,"./ReactInstanceHandles":79,"./ReactMount":83,"./ReactUpdates":100,"./getEventTarget":138,"./getUnboundedScrollPosition":144}],76:[function(require,module,exports){
+},{"./EventListener":38,"./ExecutionEnvironment":43,"./Object.assign":49,"./PooledClass":50,"./ReactInstanceHandles":89,"./ReactMount":93,"./ReactUpdates":110,"./getEventTarget":148,"./getUnboundedScrollPosition":154}],86:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2015, Facebook, Inc.
@@ -15770,7 +17458,7 @@ var ReactFragment = {
 module.exports = ReactFragment;
 
 }).call(this,require('_process'))
-},{"./ReactElement":70,"./warning":167,"_process":169}],77:[function(require,module,exports){
+},{"./ReactElement":80,"./warning":177,"_process":179}],87:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15812,7 +17500,7 @@ var ReactInjection = {
 
 module.exports = ReactInjection;
 
-},{"./DOMProperty":22,"./EventPluginHub":29,"./ReactBrowserEventEmitter":43,"./ReactClass":46,"./ReactComponentEnvironment":49,"./ReactDOMComponent":55,"./ReactEmptyComponent":72,"./ReactNativeComponent":86,"./ReactPerf":88,"./ReactRootIndex":96,"./ReactUpdates":100}],78:[function(require,module,exports){
+},{"./DOMProperty":32,"./EventPluginHub":39,"./ReactBrowserEventEmitter":53,"./ReactClass":56,"./ReactComponentEnvironment":59,"./ReactDOMComponent":65,"./ReactEmptyComponent":82,"./ReactNativeComponent":96,"./ReactPerf":98,"./ReactRootIndex":106,"./ReactUpdates":110}],88:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -15947,7 +17635,7 @@ var ReactInputSelection = {
 
 module.exports = ReactInputSelection;
 
-},{"./ReactDOMSelection":63,"./containsNode":122,"./focusNode":132,"./getActiveElement":134}],79:[function(require,module,exports){
+},{"./ReactDOMSelection":73,"./containsNode":132,"./focusNode":142,"./getActiveElement":144}],89:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -16283,7 +17971,7 @@ var ReactInstanceHandles = {
 module.exports = ReactInstanceHandles;
 
 }).call(this,require('_process'))
-},{"./ReactRootIndex":96,"./invariant":148,"_process":169}],80:[function(require,module,exports){
+},{"./ReactRootIndex":106,"./invariant":158,"_process":179}],90:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16332,7 +18020,7 @@ var ReactInstanceMap = {
 
 module.exports = ReactInstanceMap;
 
-},{}],81:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 /**
  * Copyright 2015, Facebook, Inc.
  * All rights reserved.
@@ -16369,7 +18057,7 @@ var ReactLifeCycle = {
 
 module.exports = ReactLifeCycle;
 
-},{}],82:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -16417,7 +18105,7 @@ var ReactMarkupChecksum = {
 
 module.exports = ReactMarkupChecksum;
 
-},{"./adler32":119}],83:[function(require,module,exports){
+},{"./adler32":129}],93:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -17308,7 +18996,7 @@ ReactPerf.measureMethods(ReactMount, 'ReactMount', {
 module.exports = ReactMount;
 
 }).call(this,require('_process'))
-},{"./DOMProperty":22,"./ReactBrowserEventEmitter":43,"./ReactCurrentOwner":52,"./ReactElement":70,"./ReactElementValidator":71,"./ReactEmptyComponent":72,"./ReactInstanceHandles":79,"./ReactInstanceMap":80,"./ReactMarkupChecksum":82,"./ReactPerf":88,"./ReactReconciler":94,"./ReactUpdateQueue":99,"./ReactUpdates":100,"./containsNode":122,"./emptyObject":128,"./getReactRootElementInContainer":142,"./instantiateReactComponent":147,"./invariant":148,"./setInnerHTML":161,"./shouldUpdateReactComponent":164,"./warning":167,"_process":169}],84:[function(require,module,exports){
+},{"./DOMProperty":32,"./ReactBrowserEventEmitter":53,"./ReactCurrentOwner":62,"./ReactElement":80,"./ReactElementValidator":81,"./ReactEmptyComponent":82,"./ReactInstanceHandles":89,"./ReactInstanceMap":90,"./ReactMarkupChecksum":92,"./ReactPerf":98,"./ReactReconciler":104,"./ReactUpdateQueue":109,"./ReactUpdates":110,"./containsNode":132,"./emptyObject":138,"./getReactRootElementInContainer":152,"./instantiateReactComponent":157,"./invariant":158,"./setInnerHTML":171,"./shouldUpdateReactComponent":174,"./warning":177,"_process":179}],94:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17738,7 +19426,7 @@ var ReactMultiChild = {
 
 module.exports = ReactMultiChild;
 
-},{"./ReactChildReconciler":44,"./ReactComponentEnvironment":49,"./ReactMultiChildUpdateTypes":85,"./ReactReconciler":94}],85:[function(require,module,exports){
+},{"./ReactChildReconciler":54,"./ReactComponentEnvironment":59,"./ReactMultiChildUpdateTypes":95,"./ReactReconciler":104}],95:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -17771,7 +19459,7 @@ var ReactMultiChildUpdateTypes = keyMirror({
 
 module.exports = ReactMultiChildUpdateTypes;
 
-},{"./keyMirror":153}],86:[function(require,module,exports){
+},{"./keyMirror":163}],96:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -17878,7 +19566,7 @@ var ReactNativeComponent = {
 module.exports = ReactNativeComponent;
 
 }).call(this,require('_process'))
-},{"./Object.assign":39,"./invariant":148,"_process":169}],87:[function(require,module,exports){
+},{"./Object.assign":49,"./invariant":158,"_process":179}],97:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -17990,7 +19678,7 @@ var ReactOwner = {
 module.exports = ReactOwner;
 
 }).call(this,require('_process'))
-},{"./invariant":148,"_process":169}],88:[function(require,module,exports){
+},{"./invariant":158,"_process":179}],98:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -18094,7 +19782,7 @@ function _noMeasure(objName, fnName, func) {
 module.exports = ReactPerf;
 
 }).call(this,require('_process'))
-},{"_process":169}],89:[function(require,module,exports){
+},{"_process":179}],99:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -18122,7 +19810,7 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = ReactPropTypeLocationNames;
 
 }).call(this,require('_process'))
-},{"_process":169}],90:[function(require,module,exports){
+},{"_process":179}],100:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18146,7 +19834,7 @@ var ReactPropTypeLocations = keyMirror({
 
 module.exports = ReactPropTypeLocations;
 
-},{"./keyMirror":153}],91:[function(require,module,exports){
+},{"./keyMirror":163}],101:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18495,7 +20183,7 @@ function getPreciseType(propValue) {
 
 module.exports = ReactPropTypes;
 
-},{"./ReactElement":70,"./ReactFragment":76,"./ReactPropTypeLocationNames":89,"./emptyFunction":127}],92:[function(require,module,exports){
+},{"./ReactElement":80,"./ReactFragment":86,"./ReactPropTypeLocationNames":99,"./emptyFunction":137}],102:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18551,7 +20239,7 @@ PooledClass.addPoolingTo(ReactPutListenerQueue);
 
 module.exports = ReactPutListenerQueue;
 
-},{"./Object.assign":39,"./PooledClass":40,"./ReactBrowserEventEmitter":43}],93:[function(require,module,exports){
+},{"./Object.assign":49,"./PooledClass":50,"./ReactBrowserEventEmitter":53}],103:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18727,7 +20415,7 @@ PooledClass.addPoolingTo(ReactReconcileTransaction);
 
 module.exports = ReactReconcileTransaction;
 
-},{"./CallbackQueue":18,"./Object.assign":39,"./PooledClass":40,"./ReactBrowserEventEmitter":43,"./ReactInputSelection":78,"./ReactPutListenerQueue":92,"./Transaction":116}],94:[function(require,module,exports){
+},{"./CallbackQueue":28,"./Object.assign":49,"./PooledClass":50,"./ReactBrowserEventEmitter":53,"./ReactInputSelection":88,"./ReactPutListenerQueue":102,"./Transaction":126}],104:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -18851,7 +20539,7 @@ var ReactReconciler = {
 module.exports = ReactReconciler;
 
 }).call(this,require('_process'))
-},{"./ReactElementValidator":71,"./ReactRef":95,"_process":169}],95:[function(require,module,exports){
+},{"./ReactElementValidator":81,"./ReactRef":105,"_process":179}],105:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18922,7 +20610,7 @@ ReactRef.detachRefs = function(instance, element) {
 
 module.exports = ReactRef;
 
-},{"./ReactOwner":87}],96:[function(require,module,exports){
+},{"./ReactOwner":97}],106:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -18953,7 +20641,7 @@ var ReactRootIndex = {
 
 module.exports = ReactRootIndex;
 
-},{}],97:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -19035,7 +20723,7 @@ module.exports = {
 };
 
 }).call(this,require('_process'))
-},{"./ReactElement":70,"./ReactInstanceHandles":79,"./ReactMarkupChecksum":82,"./ReactServerRenderingTransaction":98,"./emptyObject":128,"./instantiateReactComponent":147,"./invariant":148,"_process":169}],98:[function(require,module,exports){
+},{"./ReactElement":80,"./ReactInstanceHandles":89,"./ReactMarkupChecksum":92,"./ReactServerRenderingTransaction":108,"./emptyObject":138,"./instantiateReactComponent":157,"./invariant":158,"_process":179}],108:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -19148,7 +20836,7 @@ PooledClass.addPoolingTo(ReactServerRenderingTransaction);
 
 module.exports = ReactServerRenderingTransaction;
 
-},{"./CallbackQueue":18,"./Object.assign":39,"./PooledClass":40,"./ReactPutListenerQueue":92,"./Transaction":116,"./emptyFunction":127}],99:[function(require,module,exports){
+},{"./CallbackQueue":28,"./Object.assign":49,"./PooledClass":50,"./ReactPutListenerQueue":102,"./Transaction":126,"./emptyFunction":137}],109:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2015, Facebook, Inc.
@@ -19447,7 +21135,7 @@ var ReactUpdateQueue = {
 module.exports = ReactUpdateQueue;
 
 }).call(this,require('_process'))
-},{"./Object.assign":39,"./ReactCurrentOwner":52,"./ReactElement":70,"./ReactInstanceMap":80,"./ReactLifeCycle":81,"./ReactUpdates":100,"./invariant":148,"./warning":167,"_process":169}],100:[function(require,module,exports){
+},{"./Object.assign":49,"./ReactCurrentOwner":62,"./ReactElement":80,"./ReactInstanceMap":90,"./ReactLifeCycle":91,"./ReactUpdates":110,"./invariant":158,"./warning":177,"_process":179}],110:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -19729,7 +21417,7 @@ var ReactUpdates = {
 module.exports = ReactUpdates;
 
 }).call(this,require('_process'))
-},{"./CallbackQueue":18,"./Object.assign":39,"./PooledClass":40,"./ReactCurrentOwner":52,"./ReactPerf":88,"./ReactReconciler":94,"./Transaction":116,"./invariant":148,"./warning":167,"_process":169}],101:[function(require,module,exports){
+},{"./CallbackQueue":28,"./Object.assign":49,"./PooledClass":50,"./ReactCurrentOwner":62,"./ReactPerf":98,"./ReactReconciler":104,"./Transaction":126,"./invariant":158,"./warning":177,"_process":179}],111:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -19821,7 +21509,7 @@ var SVGDOMPropertyConfig = {
 
 module.exports = SVGDOMPropertyConfig;
 
-},{"./DOMProperty":22}],102:[function(require,module,exports){
+},{"./DOMProperty":32}],112:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20016,7 +21704,7 @@ var SelectEventPlugin = {
 
 module.exports = SelectEventPlugin;
 
-},{"./EventConstants":27,"./EventPropagators":32,"./ReactInputSelection":78,"./SyntheticEvent":108,"./getActiveElement":134,"./isTextInputElement":151,"./keyOf":154,"./shallowEqual":163}],103:[function(require,module,exports){
+},{"./EventConstants":37,"./EventPropagators":42,"./ReactInputSelection":88,"./SyntheticEvent":118,"./getActiveElement":144,"./isTextInputElement":161,"./keyOf":164,"./shallowEqual":173}],113:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20047,7 +21735,7 @@ var ServerReactRootIndex = {
 
 module.exports = ServerReactRootIndex;
 
-},{}],104:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -20475,7 +22163,7 @@ var SimpleEventPlugin = {
 module.exports = SimpleEventPlugin;
 
 }).call(this,require('_process'))
-},{"./EventConstants":27,"./EventPluginUtils":31,"./EventPropagators":32,"./SyntheticClipboardEvent":105,"./SyntheticDragEvent":107,"./SyntheticEvent":108,"./SyntheticFocusEvent":109,"./SyntheticKeyboardEvent":111,"./SyntheticMouseEvent":112,"./SyntheticTouchEvent":113,"./SyntheticUIEvent":114,"./SyntheticWheelEvent":115,"./getEventCharCode":135,"./invariant":148,"./keyOf":154,"./warning":167,"_process":169}],105:[function(require,module,exports){
+},{"./EventConstants":37,"./EventPluginUtils":41,"./EventPropagators":42,"./SyntheticClipboardEvent":115,"./SyntheticDragEvent":117,"./SyntheticEvent":118,"./SyntheticFocusEvent":119,"./SyntheticKeyboardEvent":121,"./SyntheticMouseEvent":122,"./SyntheticTouchEvent":123,"./SyntheticUIEvent":124,"./SyntheticWheelEvent":125,"./getEventCharCode":145,"./invariant":158,"./keyOf":164,"./warning":177,"_process":179}],115:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20520,7 +22208,7 @@ SyntheticEvent.augmentClass(SyntheticClipboardEvent, ClipboardEventInterface);
 
 module.exports = SyntheticClipboardEvent;
 
-},{"./SyntheticEvent":108}],106:[function(require,module,exports){
+},{"./SyntheticEvent":118}],116:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20565,7 +22253,7 @@ SyntheticEvent.augmentClass(
 
 module.exports = SyntheticCompositionEvent;
 
-},{"./SyntheticEvent":108}],107:[function(require,module,exports){
+},{"./SyntheticEvent":118}],117:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20604,7 +22292,7 @@ SyntheticMouseEvent.augmentClass(SyntheticDragEvent, DragEventInterface);
 
 module.exports = SyntheticDragEvent;
 
-},{"./SyntheticMouseEvent":112}],108:[function(require,module,exports){
+},{"./SyntheticMouseEvent":122}],118:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20770,7 +22458,7 @@ PooledClass.addPoolingTo(SyntheticEvent, PooledClass.threeArgumentPooler);
 
 module.exports = SyntheticEvent;
 
-},{"./Object.assign":39,"./PooledClass":40,"./emptyFunction":127,"./getEventTarget":138}],109:[function(require,module,exports){
+},{"./Object.assign":49,"./PooledClass":50,"./emptyFunction":137,"./getEventTarget":148}],119:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20809,7 +22497,7 @@ SyntheticUIEvent.augmentClass(SyntheticFocusEvent, FocusEventInterface);
 
 module.exports = SyntheticFocusEvent;
 
-},{"./SyntheticUIEvent":114}],110:[function(require,module,exports){
+},{"./SyntheticUIEvent":124}],120:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20855,7 +22543,7 @@ SyntheticEvent.augmentClass(
 
 module.exports = SyntheticInputEvent;
 
-},{"./SyntheticEvent":108}],111:[function(require,module,exports){
+},{"./SyntheticEvent":118}],121:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -20942,7 +22630,7 @@ SyntheticUIEvent.augmentClass(SyntheticKeyboardEvent, KeyboardEventInterface);
 
 module.exports = SyntheticKeyboardEvent;
 
-},{"./SyntheticUIEvent":114,"./getEventCharCode":135,"./getEventKey":136,"./getEventModifierState":137}],112:[function(require,module,exports){
+},{"./SyntheticUIEvent":124,"./getEventCharCode":145,"./getEventKey":146,"./getEventModifierState":147}],122:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21023,7 +22711,7 @@ SyntheticUIEvent.augmentClass(SyntheticMouseEvent, MouseEventInterface);
 
 module.exports = SyntheticMouseEvent;
 
-},{"./SyntheticUIEvent":114,"./ViewportMetrics":117,"./getEventModifierState":137}],113:[function(require,module,exports){
+},{"./SyntheticUIEvent":124,"./ViewportMetrics":127,"./getEventModifierState":147}],123:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21071,7 +22759,7 @@ SyntheticUIEvent.augmentClass(SyntheticTouchEvent, TouchEventInterface);
 
 module.exports = SyntheticTouchEvent;
 
-},{"./SyntheticUIEvent":114,"./getEventModifierState":137}],114:[function(require,module,exports){
+},{"./SyntheticUIEvent":124,"./getEventModifierState":147}],124:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21133,7 +22821,7 @@ SyntheticEvent.augmentClass(SyntheticUIEvent, UIEventInterface);
 
 module.exports = SyntheticUIEvent;
 
-},{"./SyntheticEvent":108,"./getEventTarget":138}],115:[function(require,module,exports){
+},{"./SyntheticEvent":118,"./getEventTarget":148}],125:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21194,7 +22882,7 @@ SyntheticMouseEvent.augmentClass(SyntheticWheelEvent, WheelEventInterface);
 
 module.exports = SyntheticWheelEvent;
 
-},{"./SyntheticMouseEvent":112}],116:[function(require,module,exports){
+},{"./SyntheticMouseEvent":122}],126:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -21435,7 +23123,7 @@ var Transaction = {
 module.exports = Transaction;
 
 }).call(this,require('_process'))
-},{"./invariant":148,"_process":169}],117:[function(require,module,exports){
+},{"./invariant":158,"_process":179}],127:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21464,7 +23152,7 @@ var ViewportMetrics = {
 
 module.exports = ViewportMetrics;
 
-},{}],118:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -21530,7 +23218,7 @@ function accumulateInto(current, next) {
 module.exports = accumulateInto;
 
 }).call(this,require('_process'))
-},{"./invariant":148,"_process":169}],119:[function(require,module,exports){
+},{"./invariant":158,"_process":179}],129:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21564,7 +23252,7 @@ function adler32(data) {
 
 module.exports = adler32;
 
-},{}],120:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21596,7 +23284,7 @@ function camelize(string) {
 
 module.exports = camelize;
 
-},{}],121:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -21638,7 +23326,7 @@ function camelizeStyleName(string) {
 
 module.exports = camelizeStyleName;
 
-},{"./camelize":120}],122:[function(require,module,exports){
+},{"./camelize":130}],132:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21682,7 +23370,7 @@ function containsNode(outerNode, innerNode) {
 
 module.exports = containsNode;
 
-},{"./isTextNode":152}],123:[function(require,module,exports){
+},{"./isTextNode":162}],133:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21768,7 +23456,7 @@ function createArrayFromMixed(obj) {
 
 module.exports = createArrayFromMixed;
 
-},{"./toArray":165}],124:[function(require,module,exports){
+},{"./toArray":175}],134:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -21830,7 +23518,7 @@ function createFullPageComponent(tag) {
 module.exports = createFullPageComponent;
 
 }).call(this,require('_process'))
-},{"./ReactClass":46,"./ReactElement":70,"./invariant":148,"_process":169}],125:[function(require,module,exports){
+},{"./ReactClass":56,"./ReactElement":80,"./invariant":158,"_process":179}],135:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -21920,7 +23608,7 @@ function createNodesFromMarkup(markup, handleScript) {
 module.exports = createNodesFromMarkup;
 
 }).call(this,require('_process'))
-},{"./ExecutionEnvironment":33,"./createArrayFromMixed":123,"./getMarkupWrap":140,"./invariant":148,"_process":169}],126:[function(require,module,exports){
+},{"./ExecutionEnvironment":43,"./createArrayFromMixed":133,"./getMarkupWrap":150,"./invariant":158,"_process":179}],136:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -21978,7 +23666,7 @@ function dangerousStyleValue(name, value) {
 
 module.exports = dangerousStyleValue;
 
-},{"./CSSProperty":16}],127:[function(require,module,exports){
+},{"./CSSProperty":26}],137:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22012,7 +23700,7 @@ emptyFunction.thatReturnsArgument = function(arg) { return arg; };
 
 module.exports = emptyFunction;
 
-},{}],128:[function(require,module,exports){
+},{}],138:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -22036,7 +23724,7 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = emptyObject;
 
 }).call(this,require('_process'))
-},{"_process":169}],129:[function(require,module,exports){
+},{"_process":179}],139:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22076,7 +23764,7 @@ function escapeTextContentForBrowser(text) {
 
 module.exports = escapeTextContentForBrowser;
 
-},{}],130:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -22149,7 +23837,7 @@ function findDOMNode(componentOrElement) {
 module.exports = findDOMNode;
 
 }).call(this,require('_process'))
-},{"./ReactCurrentOwner":52,"./ReactInstanceMap":80,"./ReactMount":83,"./invariant":148,"./isNode":150,"./warning":167,"_process":169}],131:[function(require,module,exports){
+},{"./ReactCurrentOwner":62,"./ReactInstanceMap":90,"./ReactMount":93,"./invariant":158,"./isNode":160,"./warning":177,"_process":179}],141:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -22207,7 +23895,7 @@ function flattenChildren(children) {
 module.exports = flattenChildren;
 
 }).call(this,require('_process'))
-},{"./traverseAllChildren":166,"./warning":167,"_process":169}],132:[function(require,module,exports){
+},{"./traverseAllChildren":176,"./warning":177,"_process":179}],142:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -22236,7 +23924,7 @@ function focusNode(node) {
 
 module.exports = focusNode;
 
-},{}],133:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22267,7 +23955,7 @@ var forEachAccumulated = function(arr, cb, scope) {
 
 module.exports = forEachAccumulated;
 
-},{}],134:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22296,7 +23984,7 @@ function getActiveElement() /*?DOMElement*/ {
 
 module.exports = getActiveElement;
 
-},{}],135:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22348,7 +24036,7 @@ function getEventCharCode(nativeEvent) {
 
 module.exports = getEventCharCode;
 
-},{}],136:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22453,7 +24141,7 @@ function getEventKey(nativeEvent) {
 
 module.exports = getEventKey;
 
-},{"./getEventCharCode":135}],137:[function(require,module,exports){
+},{"./getEventCharCode":145}],147:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22500,7 +24188,7 @@ function getEventModifierState(nativeEvent) {
 
 module.exports = getEventModifierState;
 
-},{}],138:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22531,7 +24219,7 @@ function getEventTarget(nativeEvent) {
 
 module.exports = getEventTarget;
 
-},{}],139:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22575,7 +24263,7 @@ function getIteratorFn(maybeIterable) {
 
 module.exports = getIteratorFn;
 
-},{}],140:[function(require,module,exports){
+},{}],150:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -22692,7 +24380,7 @@ function getMarkupWrap(nodeName) {
 module.exports = getMarkupWrap;
 
 }).call(this,require('_process'))
-},{"./ExecutionEnvironment":33,"./invariant":148,"_process":169}],141:[function(require,module,exports){
+},{"./ExecutionEnvironment":43,"./invariant":158,"_process":179}],151:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22767,7 +24455,7 @@ function getNodeForCharacterOffset(root, offset) {
 
 module.exports = getNodeForCharacterOffset;
 
-},{}],142:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22802,7 +24490,7 @@ function getReactRootElementInContainer(container) {
 
 module.exports = getReactRootElementInContainer;
 
-},{}],143:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22839,7 +24527,7 @@ function getTextContentAccessor() {
 
 module.exports = getTextContentAccessor;
 
-},{"./ExecutionEnvironment":33}],144:[function(require,module,exports){
+},{"./ExecutionEnvironment":43}],154:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22879,7 +24567,7 @@ function getUnboundedScrollPosition(scrollable) {
 
 module.exports = getUnboundedScrollPosition;
 
-},{}],145:[function(require,module,exports){
+},{}],155:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22912,7 +24600,7 @@ function hyphenate(string) {
 
 module.exports = hyphenate;
 
-},{}],146:[function(require,module,exports){
+},{}],156:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -22953,7 +24641,7 @@ function hyphenateStyleName(string) {
 
 module.exports = hyphenateStyleName;
 
-},{"./hyphenate":145}],147:[function(require,module,exports){
+},{"./hyphenate":155}],157:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -23090,7 +24778,7 @@ function instantiateReactComponent(node, parentCompositeType) {
 module.exports = instantiateReactComponent;
 
 }).call(this,require('_process'))
-},{"./Object.assign":39,"./ReactCompositeComponent":50,"./ReactEmptyComponent":72,"./ReactNativeComponent":86,"./invariant":148,"./warning":167,"_process":169}],148:[function(require,module,exports){
+},{"./Object.assign":49,"./ReactCompositeComponent":60,"./ReactEmptyComponent":82,"./ReactNativeComponent":96,"./invariant":158,"./warning":177,"_process":179}],158:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -23147,7 +24835,7 @@ var invariant = function(condition, format, a, b, c, d, e, f) {
 module.exports = invariant;
 
 }).call(this,require('_process'))
-},{"_process":169}],149:[function(require,module,exports){
+},{"_process":179}],159:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23212,7 +24900,7 @@ function isEventSupported(eventNameSuffix, capture) {
 
 module.exports = isEventSupported;
 
-},{"./ExecutionEnvironment":33}],150:[function(require,module,exports){
+},{"./ExecutionEnvironment":43}],160:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23239,7 +24927,7 @@ function isNode(object) {
 
 module.exports = isNode;
 
-},{}],151:[function(require,module,exports){
+},{}],161:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23282,7 +24970,7 @@ function isTextInputElement(elem) {
 
 module.exports = isTextInputElement;
 
-},{}],152:[function(require,module,exports){
+},{}],162:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23307,7 +24995,7 @@ function isTextNode(object) {
 
 module.exports = isTextNode;
 
-},{"./isNode":150}],153:[function(require,module,exports){
+},{"./isNode":160}],163:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -23362,7 +25050,7 @@ var keyMirror = function(obj) {
 module.exports = keyMirror;
 
 }).call(this,require('_process'))
-},{"./invariant":148,"_process":169}],154:[function(require,module,exports){
+},{"./invariant":158,"_process":179}],164:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23398,7 +25086,7 @@ var keyOf = function(oneKeyObj) {
 
 module.exports = keyOf;
 
-},{}],155:[function(require,module,exports){
+},{}],165:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23451,7 +25139,7 @@ function mapObject(object, callback, context) {
 
 module.exports = mapObject;
 
-},{}],156:[function(require,module,exports){
+},{}],166:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23484,7 +25172,7 @@ function memoizeStringOnly(callback) {
 
 module.exports = memoizeStringOnly;
 
-},{}],157:[function(require,module,exports){
+},{}],167:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -23524,7 +25212,7 @@ function onlyChild(children) {
 module.exports = onlyChild;
 
 }).call(this,require('_process'))
-},{"./ReactElement":70,"./invariant":148,"_process":169}],158:[function(require,module,exports){
+},{"./ReactElement":80,"./invariant":158,"_process":179}],168:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23552,7 +25240,7 @@ if (ExecutionEnvironment.canUseDOM) {
 
 module.exports = performance || {};
 
-},{"./ExecutionEnvironment":33}],159:[function(require,module,exports){
+},{"./ExecutionEnvironment":43}],169:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23580,7 +25268,7 @@ var performanceNow = performance.now.bind(performance);
 
 module.exports = performanceNow;
 
-},{"./performance":158}],160:[function(require,module,exports){
+},{"./performance":168}],170:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23608,7 +25296,7 @@ function quoteAttributeValueForBrowser(value) {
 
 module.exports = quoteAttributeValueForBrowser;
 
-},{"./escapeTextContentForBrowser":129}],161:[function(require,module,exports){
+},{"./escapeTextContentForBrowser":139}],171:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23697,7 +25385,7 @@ if (ExecutionEnvironment.canUseDOM) {
 
 module.exports = setInnerHTML;
 
-},{"./ExecutionEnvironment":33}],162:[function(require,module,exports){
+},{"./ExecutionEnvironment":43}],172:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23739,7 +25427,7 @@ if (ExecutionEnvironment.canUseDOM) {
 
 module.exports = setTextContent;
 
-},{"./ExecutionEnvironment":33,"./escapeTextContentForBrowser":129,"./setInnerHTML":161}],163:[function(require,module,exports){
+},{"./ExecutionEnvironment":43,"./escapeTextContentForBrowser":139,"./setInnerHTML":171}],173:[function(require,module,exports){
 /**
  * Copyright 2013-2015, Facebook, Inc.
  * All rights reserved.
@@ -23783,7 +25471,7 @@ function shallowEqual(objA, objB) {
 
 module.exports = shallowEqual;
 
-},{}],164:[function(require,module,exports){
+},{}],174:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -23887,7 +25575,7 @@ function shouldUpdateReactComponent(prevElement, nextElement) {
 module.exports = shouldUpdateReactComponent;
 
 }).call(this,require('_process'))
-},{"./warning":167,"_process":169}],165:[function(require,module,exports){
+},{"./warning":177,"_process":179}],175:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -23959,7 +25647,7 @@ function toArray(obj) {
 module.exports = toArray;
 
 }).call(this,require('_process'))
-},{"./invariant":148,"_process":169}],166:[function(require,module,exports){
+},{"./invariant":158,"_process":179}],176:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-2015, Facebook, Inc.
@@ -24212,7 +25900,7 @@ function traverseAllChildren(children, callback, traverseContext) {
 module.exports = traverseAllChildren;
 
 }).call(this,require('_process'))
-},{"./ReactElement":70,"./ReactFragment":76,"./ReactInstanceHandles":79,"./getIteratorFn":139,"./invariant":148,"./warning":167,"_process":169}],167:[function(require,module,exports){
+},{"./ReactElement":80,"./ReactFragment":86,"./ReactInstanceHandles":89,"./getIteratorFn":149,"./invariant":158,"./warning":177,"_process":179}],177:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -24275,10 +25963,10 @@ if ("production" !== process.env.NODE_ENV) {
 module.exports = warning;
 
 }).call(this,require('_process'))
-},{"./emptyFunction":127,"_process":169}],168:[function(require,module,exports){
+},{"./emptyFunction":137,"_process":179}],178:[function(require,module,exports){
 module.exports = require('./lib/React');
 
-},{"./lib/React":41}],169:[function(require,module,exports){
+},{"./lib/React":51}],179:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -24338,10 +26026,10 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],170:[function(require,module,exports){
+},{}],180:[function(require,module,exports){
 module.exports = window.Worker;
 
-},{}],171:[function(require,module,exports){
+},{}],181:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -24354,7 +26042,7 @@ var LoadImage = _interopRequire(require("../utils/loadImage"));
 
 var RenderImage = _interopRequire(require("../utils/renderImage"));
 
-var gradient = _interopRequire(require("../utils/gradient"));
+var generateGradient = _interopRequire(require("../utils/gradient"));
 
 var data = state({
   images: ["images"],
@@ -24415,12 +26103,13 @@ function imageLoaded(data) {
   imageCursor.merge(data);
   ImageActions.setActiveImageId(id);
 
-  var scaling = imageCursor.select("scaling");
-  scaling.set("max", getMax(data.imageData));
-  scaling.set("scaleMax", getMax(data.imageData));
+  var scaling = imageCursor.select("scaling"),
+      max = getMax(data.imageData);
+  scaling.set("max", max);
+  scaling.set("scaleMax", max);
 
   var image = imageCursor.get();
-  gradient.render(image.scaling);
+  generateGradient.render(image.scaling);
 
   var scale = 60 / image.metaData.width;
 
@@ -24507,7 +26196,7 @@ var ImageActions = {
 
 module.exports = ImageActions;
 
-},{"../state":181,"../utils/gradient":183,"../utils/loadImage":184,"../utils/renderImage":185}],172:[function(require,module,exports){
+},{"../state":191,"../utils/gradient":193,"../utils/loadImage":194,"../utils/renderImage":195}],182:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -24565,7 +26254,7 @@ var AddImage = (function (_React$Component) {
 
 module.exports = AddImage;
 
-},{"../../actions/imageActions":171,"react":168}],173:[function(require,module,exports){
+},{"../../actions/imageActions":181,"react":178}],183:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -24655,7 +26344,7 @@ var App = (function (_React$Component) {
 
 module.exports = App;
 
-},{"../../state":181,"../intro/intro.jsx":175,"../preview/imagePreview.jsx":176,"../sidebar/sidebar.jsx":178,"../stage/stage.jsx":179,"react":168}],174:[function(require,module,exports){
+},{"../../state":191,"../intro/intro.jsx":185,"../preview/imagePreview.jsx":186,"../sidebar/sidebar.jsx":188,"../stage/stage.jsx":189,"react":178}],184:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -24724,7 +26413,7 @@ var ImageThumb = (function (_React$Component) {
 
 module.exports = ImageThumb;
 
-},{"../../actions/imageActions":171,"react":168}],175:[function(require,module,exports){
+},{"../../actions/imageActions":181,"react":178}],185:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -24817,7 +26506,7 @@ var Intro = (function (_React$Component) {
 
 module.exports = Intro;
 
-},{"../add-image/addImage.jsx":172,"react":168}],176:[function(require,module,exports){
+},{"../add-image/addImage.jsx":182,"react":178}],186:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -24985,7 +26674,7 @@ var ImagePreview = (function (_React$Component) {
 
 module.exports = ImagePreview;
 
-},{"../../actions/imageActions":171,"./scaleBar.jsx":177,"react":168}],177:[function(require,module,exports){
+},{"../../actions/imageActions":181,"./scaleBar.jsx":187,"react":178}],187:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25043,7 +26732,7 @@ var ScaleBar = (function (_React$Component) {
 
 module.exports = ScaleBar;
 
-},{"../../actions/imageActions":171,"../../utils/gradient":183,"react":168}],178:[function(require,module,exports){
+},{"../../actions/imageActions":181,"../../utils/gradient":193,"react":178}],188:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25104,7 +26793,7 @@ var Sidebar = (function (_React$Component) {
 
 module.exports = Sidebar;
 
-},{"../add-image/addImage.jsx":172,"../image-thumb/imageThumb.jsx":174,"react":168}],179:[function(require,module,exports){
+},{"../add-image/addImage.jsx":182,"../image-thumb/imageThumb.jsx":184,"react":178}],189:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25152,7 +26841,7 @@ var Stage = (function (_React$Component) {
 
 module.exports = Stage;
 
-},{"react":168}],180:[function(require,module,exports){
+},{"react":178}],190:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25169,7 +26858,7 @@ React.render(React.createElement(App, null), document.getElementById("main"), fu
   };
 });
 
-},{"./components/app/app.jsx":173,"./utils/dev":182,"react":168}],181:[function(require,module,exports){
+},{"./components/app/app.jsx":183,"./utils/dev":192,"react":178}],191:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25250,7 +26939,7 @@ function state(opts) {
 
 module.exports = state;
 
-},{"baobab":2,"react":168}],182:[function(require,module,exports){
+},{"baobab":2,"react":178}],192:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25269,7 +26958,7 @@ function initDev() {
 
 module.exports = initDev;
 
-},{"../actions/imageActions":171}],183:[function(require,module,exports){
+},{"../actions/imageActions":181}],193:[function(require,module,exports){
 "use strict";
 
 function render(opts) {
@@ -25303,7 +26992,7 @@ function normalize(v, min, max, newMax) {
 
 module.exports = { render: render };
 
-},{}],184:[function(require,module,exports){
+},{}],194:[function(require,module,exports){
 "use strict";
 
 var astro = require("fitsjs").astro;
@@ -25337,7 +27026,7 @@ module.exports = function LoadImage(file, callback) {
   var fits = new FITS(file, onLoad);
 };
 
-},{"fitsjs":13}],185:[function(require,module,exports){
+},{"fitsjs":18}],195:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -25386,7 +27075,7 @@ var RenderImage = (function () {
       scaleMin: this.scaleMin,
       scaleMax: this.scaleMax,
       imageData: this.image.imageData,
-      pixelValueMap: this.getPixelValueMap(),
+      colors: this.image.scaling.colors,
       tmpContext: this.tmpCtx.getImageData(0, 0, this.targetWidth, this.targetHeight)
     };
 
@@ -25404,22 +27093,9 @@ var RenderImage = (function () {
   }
 
   _createClass(RenderImage, {
-    getPixelValueMap: {
-      value: function getPixelValueMap() {
-        var scaleCtx = this.image.scaling.ctx,
-            ctxWidth = scaleCtx.canvas.width,
-            pixelValueMap = [];
-
-        for (var i = 0; i < ctxWidth; i++) {
-          pixelValueMap.push(scaleCtx.getImageData(i, 0, 1, 1).data);
-        }
-
-        return pixelValueMap;
-      }
-    },
     workerRender: {
       value: function workerRender(data, done) {
-        var worker = new Worker(window.URL.createObjectURL(new Blob(['(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module \'"+o+"\'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){\nvar transformPixels = require(\'./transformPixels\');\n\nonmessage = function (msg) {\n  var data = msg.data,\n      newImageData = transformPixels(data);\n  postMessage(newImageData);\n};\n},{"./transformPixels":2}],2:[function(require,module,exports){\nfunction transformPixels(data){\n\n  var sample = data.sample,\n      targetWidth = data.targetWidth,\n      targetHeight = data.targetHeight,\n      scaleMin = data.scaleMin,\n      scaleMax = data.scaleMax,\n      area = Math.floor(targetWidth * targetHeight),\n      width = data.width,\n      height = data.height,\n      pixelValueMap = data.pixelValueMap,\n      x = width,\n      y = 0,\n      imageData = data.imageData,\n      context = data.tmpContext;\n\n  for(var i = 0; i<area; i++){\n\n    var pixelIndex = (x * sample) + (y * sample * width),\n        value = imageData[pixelIndex],\n        v = ((value - scaleMin) * (pixelValueMap.length / (scaleMax - scaleMin))) || 0\n        v = Math.floor(v);\n\n    //clamp\n    v = (v < 0) ? 0 : v;\n    v = (v > (pixelValueMap.length - 1) || isNaN(v)) ? (pixelValueMap.length - 1) : v;\n    var data = pixelValueMap[v];\n\n    var pi = area - i;\n    // set the pixel values\n    context.data[(pi*4)+0] = data[0];\n    context.data[(pi*4)+1] = data[1];\n    context.data[(pi*4)+2] = data[2];\n    context.data[(pi*4)+3] = data[3];\n\n    //if where at the start of a new row...\n    if (i % targetWidth === 0){\n      x = width; //reset x\n      y++; // increase the row value\n    }else{\n      x--; // move to next column\n    }\n  }\n\n  return context;\n}\n\nmodule.exports = transformPixels;\n},{}]},{},[1])'],{type:"text/javascript"})));
+        var worker = new Worker(window.URL.createObjectURL(new Blob(['(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module \'"+o+"\'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){\n/* MIT license */\nvar convert = require("color-convert"),\n    string = require("color-string");\n\nvar Color = function(obj) {\n  if (obj instanceof Color) return obj;\n  if (! (this instanceof Color)) return new Color(obj);\n\n   this.values = {\n      rgb: [0, 0, 0],\n      hsl: [0, 0, 0],\n      hsv: [0, 0, 0],\n      hwb: [0, 0, 0],\n      cmyk: [0, 0, 0, 0],\n      alpha: 1\n   }\n\n   // parse Color() argument\n   if (typeof obj == "string") {\n      var vals = string.getRgba(obj);\n      if (vals) {\n         this.setValues("rgb", vals);\n      }\n      else if(vals = string.getHsla(obj)) {\n         this.setValues("hsl", vals);\n      }\n      else if(vals = string.getHwb(obj)) {\n         this.setValues("hwb", vals);\n      }\n      else {\n        throw new Error("Unable to parse color from string \\"" + obj + "\\"");\n      }\n   }\n   else if (typeof obj == "object") {\n      var vals = obj;\n      if(vals["r"] !== undefined || vals["red"] !== undefined) {\n         this.setValues("rgb", vals)\n      }\n      else if(vals["l"] !== undefined || vals["lightness"] !== undefined) {\n         this.setValues("hsl", vals)\n      }\n      else if(vals["v"] !== undefined || vals["value"] !== undefined) {\n         this.setValues("hsv", vals)\n      }\n      else if(vals["w"] !== undefined || vals["whiteness"] !== undefined) {\n         this.setValues("hwb", vals)\n      }\n      else if(vals["c"] !== undefined || vals["cyan"] !== undefined) {\n         this.setValues("cmyk", vals)\n      }\n      else {\n        throw new Error("Unable to parse color from object " + JSON.stringify(obj));\n      }\n   }\n}\n\nColor.prototype = {\n   rgb: function (vals) {\n      return this.setSpace("rgb", arguments);\n   },\n   hsl: function(vals) {\n      return this.setSpace("hsl", arguments);\n   },\n   hsv: function(vals) {\n      return this.setSpace("hsv", arguments);\n   },\n   hwb: function(vals) {\n      return this.setSpace("hwb", arguments);\n   },\n   cmyk: function(vals) {\n      return this.setSpace("cmyk", arguments);\n   },\n\n   rgbArray: function() {\n      return this.values.rgb;\n   },\n   hslArray: function() {\n      return this.values.hsl;\n   },\n   hsvArray: function() {\n      return this.values.hsv;\n   },\n   hwbArray: function() {\n      if (this.values.alpha !== 1) {\n        return this.values.hwb.concat([this.values.alpha])\n      }\n      return this.values.hwb;\n   },\n   cmykArray: function() {\n      return this.values.cmyk;\n   },\n   rgbaArray: function() {\n      var rgb = this.values.rgb;\n      return rgb.concat([this.values.alpha]);\n   },\n   hslaArray: function() {\n      var hsl = this.values.hsl;\n      return hsl.concat([this.values.alpha]);\n   },\n   alpha: function(val) {\n      if (val === undefined) {\n         return this.values.alpha;\n      }\n      this.setValues("alpha", val);\n      return this;\n   },\n\n   red: function(val) {\n      return this.setChannel("rgb", 0, val);\n   },\n   green: function(val) {\n      return this.setChannel("rgb", 1, val);\n   },\n   blue: function(val) {\n      return this.setChannel("rgb", 2, val);\n   },\n   hue: function(val) {\n      return this.setChannel("hsl", 0, val);\n   },\n   saturation: function(val) {\n      return this.setChannel("hsl", 1, val);\n   },\n   lightness: function(val) {\n      return this.setChannel("hsl", 2, val);\n   },\n   saturationv: function(val) {\n      return this.setChannel("hsv", 1, val);\n   },\n   whiteness: function(val) {\n      return this.setChannel("hwb", 1, val);\n   },\n   blackness: function(val) {\n      return this.setChannel("hwb", 2, val);\n   },\n   value: function(val) {\n      return this.setChannel("hsv", 2, val);\n   },\n   cyan: function(val) {\n      return this.setChannel("cmyk", 0, val);\n   },\n   magenta: function(val) {\n      return this.setChannel("cmyk", 1, val);\n   },\n   yellow: function(val) {\n      return this.setChannel("cmyk", 2, val);\n   },\n   black: function(val) {\n      return this.setChannel("cmyk", 3, val);\n   },\n\n   hexString: function() {\n      return string.hexString(this.values.rgb);\n   },\n   rgbString: function() {\n      return string.rgbString(this.values.rgb, this.values.alpha);\n   },\n   rgbaString: function() {\n      return string.rgbaString(this.values.rgb, this.values.alpha);\n   },\n   percentString: function() {\n      return string.percentString(this.values.rgb, this.values.alpha);\n   },\n   hslString: function() {\n      return string.hslString(this.values.hsl, this.values.alpha);\n   },\n   hslaString: function() {\n      return string.hslaString(this.values.hsl, this.values.alpha);\n   },\n   hwbString: function() {\n      return string.hwbString(this.values.hwb, this.values.alpha);\n   },\n   keyword: function() {\n      return string.keyword(this.values.rgb, this.values.alpha);\n   },\n\n   rgbNumber: function() {\n      return (this.values.rgb[0] << 16) | (this.values.rgb[1] << 8) | this.values.rgb[2];\n   },\n\n   luminosity: function() {\n      // http://www.w3.org/TR/WCAG20/#relativeluminancedef\n      var rgb = this.values.rgb;\n      var lum = [];\n      for (var i = 0; i < rgb.length; i++) {\n         var chan = rgb[i] / 255;\n         lum[i] = (chan <= 0.03928) ? chan / 12.92\n                  : Math.pow(((chan + 0.055) / 1.055), 2.4)\n      }\n      return 0.2126 * lum[0] + 0.7152 * lum[1] + 0.0722 * lum[2];\n   },\n\n   contrast: function(color2) {\n      // http://www.w3.org/TR/WCAG20/#contrast-ratiodef\n      var lum1 = this.luminosity();\n      var lum2 = color2.luminosity();\n      if (lum1 > lum2) {\n         return (lum1 + 0.05) / (lum2 + 0.05)\n      };\n      return (lum2 + 0.05) / (lum1 + 0.05);\n   },\n\n   level: function(color2) {\n     var contrastRatio = this.contrast(color2);\n     return (contrastRatio >= 7.1)\n       ? \'AAA\'\n       : (contrastRatio >= 4.5)\n        ? \'AA\'\n        : \'\';\n   },\n\n   dark: function() {\n      // YIQ equation from http://24ways.org/2010/calculating-color-contrast\n      var rgb = this.values.rgb,\n          yiq = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;\n      return yiq < 128;\n   },\n\n   light: function() {\n      return !this.dark();\n   },\n\n   negate: function() {\n      var rgb = []\n      for (var i = 0; i < 3; i++) {\n         rgb[i] = 255 - this.values.rgb[i];\n      }\n      this.setValues("rgb", rgb);\n      return this;\n   },\n\n   lighten: function(ratio) {\n      this.values.hsl[2] += this.values.hsl[2] * ratio;\n      this.setValues("hsl", this.values.hsl);\n      return this;\n   },\n\n   darken: function(ratio) {\n      this.values.hsl[2] -= this.values.hsl[2] * ratio;\n      this.setValues("hsl", this.values.hsl);\n      return this;\n   },\n\n   saturate: function(ratio) {\n      this.values.hsl[1] += this.values.hsl[1] * ratio;\n      this.setValues("hsl", this.values.hsl);\n      return this;\n   },\n\n   desaturate: function(ratio) {\n      this.values.hsl[1] -= this.values.hsl[1] * ratio;\n      this.setValues("hsl", this.values.hsl);\n      return this;\n   },\n\n   whiten: function(ratio) {\n      this.values.hwb[1] += this.values.hwb[1] * ratio;\n      this.setValues("hwb", this.values.hwb);\n      return this;\n   },\n\n   blacken: function(ratio) {\n      this.values.hwb[2] += this.values.hwb[2] * ratio;\n      this.setValues("hwb", this.values.hwb);\n      return this;\n   },\n\n   greyscale: function() {\n      var rgb = this.values.rgb;\n      // http://en.wikipedia.org/wiki/Grayscale#Converting_color_to_grayscale\n      var val = rgb[0] * 0.3 + rgb[1] * 0.59 + rgb[2] * 0.11;\n      this.setValues("rgb", [val, val, val]);\n      return this;\n   },\n\n   clearer: function(ratio) {\n      this.setValues("alpha", this.values.alpha - (this.values.alpha * ratio));\n      return this;\n   },\n\n   opaquer: function(ratio) {\n      this.setValues("alpha", this.values.alpha + (this.values.alpha * ratio));\n      return this;\n   },\n\n   rotate: function(degrees) {\n      var hue = this.values.hsl[0];\n      hue = (hue + degrees) % 360;\n      hue = hue < 0 ? 360 + hue : hue;\n      this.values.hsl[0] = hue;\n      this.setValues("hsl", this.values.hsl);\n      return this;\n   },\n\n   mix: function(color2, weight) {\n      weight = 1 - (weight == null ? 0.5 : weight);\n\n      // algorithm from Sass\'s mix(). Ratio of first color in mix is\n      // determined by the alphas of both colors and the weight\n      var t1 = weight * 2 - 1,\n          d = this.alpha() - color2.alpha();\n\n      var weight1 = (((t1 * d == -1) ? t1 : (t1 + d) / (1 + t1 * d)) + 1) / 2;\n      var weight2 = 1 - weight1;\n\n      var rgb = this.rgbArray();\n      var rgb2 = color2.rgbArray();\n\n      for (var i = 0; i < rgb.length; i++) {\n         rgb[i] = rgb[i] * weight1 + rgb2[i] * weight2;\n      }\n      this.setValues("rgb", rgb);\n\n      var alpha = this.alpha() * weight + color2.alpha() * (1 - weight);\n      this.setValues("alpha", alpha);\n\n      return this;\n   },\n\n   toJSON: function() {\n     return this.rgb();\n   },\n\n   clone: function() {\n     return new Color(this.rgb());\n   }\n}\n\n\nColor.prototype.getValues = function(space) {\n   var vals = {};\n   for (var i = 0; i < space.length; i++) {\n      vals[space.charAt(i)] = this.values[space][i];\n   }\n   if (this.values.alpha != 1) {\n      vals["a"] = this.values.alpha;\n   }\n   // {r: 255, g: 255, b: 255, a: 0.4}\n   return vals;\n}\n\nColor.prototype.setValues = function(space, vals) {\n   var spaces = {\n      "rgb": ["red", "green", "blue"],\n      "hsl": ["hue", "saturation", "lightness"],\n      "hsv": ["hue", "saturation", "value"],\n      "hwb": ["hue", "whiteness", "blackness"],\n      "cmyk": ["cyan", "magenta", "yellow", "black"]\n   };\n\n   var maxes = {\n      "rgb": [255, 255, 255],\n      "hsl": [360, 100, 100],\n      "hsv": [360, 100, 100],\n      "hwb": [360, 100, 100],\n      "cmyk": [100, 100, 100, 100]\n   };\n\n   var alpha = 1;\n   if (space == "alpha") {\n      alpha = vals;\n   }\n   else if (vals.length) {\n      // [10, 10, 10]\n      this.values[space] = vals.slice(0, space.length);\n      alpha = vals[space.length];\n   }\n   else if (vals[space.charAt(0)] !== undefined) {\n      // {r: 10, g: 10, b: 10}\n      for (var i = 0; i < space.length; i++) {\n        this.values[space][i] = vals[space.charAt(i)];\n      }\n      alpha = vals.a;\n   }\n   else if (vals[spaces[space][0]] !== undefined) {\n      // {red: 10, green: 10, blue: 10}\n      var chans = spaces[space];\n      for (var i = 0; i < space.length; i++) {\n        this.values[space][i] = vals[chans[i]];\n      }\n      alpha = vals.alpha;\n   }\n   this.values.alpha = Math.max(0, Math.min(1, (alpha !== undefined ? alpha : this.values.alpha) ));\n   if (space == "alpha") {\n      return;\n   }\n\n   // cap values of the space prior converting all values\n   for (var i = 0; i < space.length; i++) {\n      var capped = Math.max(0, Math.min(maxes[space][i], this.values[space][i]));\n      this.values[space][i] = Math.round(capped);\n   }\n\n   // convert to all the other color spaces\n   for (var sname in spaces) {\n      if (sname != space) {\n         this.values[sname] = convert[space][sname](this.values[space])\n      }\n\n      // cap values\n      for (var i = 0; i < sname.length; i++) {\n         var capped = Math.max(0, Math.min(maxes[sname][i], this.values[sname][i]));\n         this.values[sname][i] = Math.round(capped);\n      }\n   }\n   return true;\n}\n\nColor.prototype.setSpace = function(space, args) {\n   var vals = args[0];\n   if (vals === undefined) {\n      // color.rgb()\n      return this.getValues(space);\n   }\n   // color.rgb(10, 10, 10)\n   if (typeof vals == "number") {\n      vals = Array.prototype.slice.call(args);\n   }\n   this.setValues(space, vals);\n   return this;\n}\n\nColor.prototype.setChannel = function(space, index, val) {\n   if (val === undefined) {\n      // color.red()\n      return this.values[space][index];\n   }\n   // color.red(100)\n   this.values[space][index] = val;\n   this.setValues(space, this.values[space]);\n   return this;\n}\n\nmodule.exports = Color;\n\n},{"color-convert":3,"color-string":4}],2:[function(require,module,exports){\n/* MIT license */\n\nmodule.exports = {\n  rgb2hsl: rgb2hsl,\n  rgb2hsv: rgb2hsv,\n  rgb2hwb: rgb2hwb,\n  rgb2cmyk: rgb2cmyk,\n  rgb2keyword: rgb2keyword,\n  rgb2xyz: rgb2xyz,\n  rgb2lab: rgb2lab,\n  rgb2lch: rgb2lch,\n\n  hsl2rgb: hsl2rgb,\n  hsl2hsv: hsl2hsv,\n  hsl2hwb: hsl2hwb,\n  hsl2cmyk: hsl2cmyk,\n  hsl2keyword: hsl2keyword,\n\n  hsv2rgb: hsv2rgb,\n  hsv2hsl: hsv2hsl,\n  hsv2hwb: hsv2hwb,\n  hsv2cmyk: hsv2cmyk,\n  hsv2keyword: hsv2keyword,\n\n  hwb2rgb: hwb2rgb,\n  hwb2hsl: hwb2hsl,\n  hwb2hsv: hwb2hsv,\n  hwb2cmyk: hwb2cmyk,\n  hwb2keyword: hwb2keyword,\n\n  cmyk2rgb: cmyk2rgb,\n  cmyk2hsl: cmyk2hsl,\n  cmyk2hsv: cmyk2hsv,\n  cmyk2hwb: cmyk2hwb,\n  cmyk2keyword: cmyk2keyword,\n\n  keyword2rgb: keyword2rgb,\n  keyword2hsl: keyword2hsl,\n  keyword2hsv: keyword2hsv,\n  keyword2hwb: keyword2hwb,\n  keyword2cmyk: keyword2cmyk,\n  keyword2lab: keyword2lab,\n  keyword2xyz: keyword2xyz,\n\n  xyz2rgb: xyz2rgb,\n  xyz2lab: xyz2lab,\n  xyz2lch: xyz2lch,\n\n  lab2xyz: lab2xyz,\n  lab2rgb: lab2rgb,\n  lab2lch: lab2lch,\n\n  lch2lab: lch2lab,\n  lch2xyz: lch2xyz,\n  lch2rgb: lch2rgb\n}\n\n\nfunction rgb2hsl(rgb) {\n  var r = rgb[0]/255,\n      g = rgb[1]/255,\n      b = rgb[2]/255,\n      min = Math.min(r, g, b),\n      max = Math.max(r, g, b),\n      delta = max - min,\n      h, s, l;\n\n  if (max == min)\n    h = 0;\n  else if (r == max)\n    h = (g - b) / delta;\n  else if (g == max)\n    h = 2 + (b - r) / delta;\n  else if (b == max)\n    h = 4 + (r - g)/ delta;\n\n  h = Math.min(h * 60, 360);\n\n  if (h < 0)\n    h += 360;\n\n  l = (min + max) / 2;\n\n  if (max == min)\n    s = 0;\n  else if (l <= 0.5)\n    s = delta / (max + min);\n  else\n    s = delta / (2 - max - min);\n\n  return [h, s * 100, l * 100];\n}\n\nfunction rgb2hsv(rgb) {\n  var r = rgb[0],\n      g = rgb[1],\n      b = rgb[2],\n      min = Math.min(r, g, b),\n      max = Math.max(r, g, b),\n      delta = max - min,\n      h, s, v;\n\n  if (max == 0)\n    s = 0;\n  else\n    s = (delta/max * 1000)/10;\n\n  if (max == min)\n    h = 0;\n  else if (r == max)\n    h = (g - b) / delta;\n  else if (g == max)\n    h = 2 + (b - r) / delta;\n  else if (b == max)\n    h = 4 + (r - g) / delta;\n\n  h = Math.min(h * 60, 360);\n\n  if (h < 0)\n    h += 360;\n\n  v = ((max / 255) * 1000) / 10;\n\n  return [h, s, v];\n}\n\nfunction rgb2hwb(rgb) {\n  var r = rgb[0],\n      g = rgb[1],\n      b = rgb[2],\n      h = rgb2hsl(rgb)[0],\n      w = 1/255 * Math.min(r, Math.min(g, b)),\n      b = 1 - 1/255 * Math.max(r, Math.max(g, b));\n\n  return [h, w * 100, b * 100];\n}\n\nfunction rgb2cmyk(rgb) {\n  var r = rgb[0] / 255,\n      g = rgb[1] / 255,\n      b = rgb[2] / 255,\n      c, m, y, k;\n\n  k = Math.min(1 - r, 1 - g, 1 - b);\n  c = (1 - r - k) / (1 - k) || 0;\n  m = (1 - g - k) / (1 - k) || 0;\n  y = (1 - b - k) / (1 - k) || 0;\n  return [c * 100, m * 100, y * 100, k * 100];\n}\n\nfunction rgb2keyword(rgb) {\n  return reverseKeywords[JSON.stringify(rgb)];\n}\n\nfunction rgb2xyz(rgb) {\n  var r = rgb[0] / 255,\n      g = rgb[1] / 255,\n      b = rgb[2] / 255;\n\n  // assume sRGB\n  r = r > 0.04045 ? Math.pow(((r + 0.055) / 1.055), 2.4) : (r / 12.92);\n  g = g > 0.04045 ? Math.pow(((g + 0.055) / 1.055), 2.4) : (g / 12.92);\n  b = b > 0.04045 ? Math.pow(((b + 0.055) / 1.055), 2.4) : (b / 12.92);\n\n  var x = (r * 0.4124) + (g * 0.3576) + (b * 0.1805);\n  var y = (r * 0.2126) + (g * 0.7152) + (b * 0.0722);\n  var z = (r * 0.0193) + (g * 0.1192) + (b * 0.9505);\n\n  return [x * 100, y *100, z * 100];\n}\n\nfunction rgb2lab(rgb) {\n  var xyz = rgb2xyz(rgb),\n        x = xyz[0],\n        y = xyz[1],\n        z = xyz[2],\n        l, a, b;\n\n  x /= 95.047;\n  y /= 100;\n  z /= 108.883;\n\n  x = x > 0.008856 ? Math.pow(x, 1/3) : (7.787 * x) + (16 / 116);\n  y = y > 0.008856 ? Math.pow(y, 1/3) : (7.787 * y) + (16 / 116);\n  z = z > 0.008856 ? Math.pow(z, 1/3) : (7.787 * z) + (16 / 116);\n\n  l = (116 * y) - 16;\n  a = 500 * (x - y);\n  b = 200 * (y - z);\n\n  return [l, a, b];\n}\n\nfunction rgb2lch(args) {\n  return lab2lch(rgb2lab(args));\n}\n\nfunction hsl2rgb(hsl) {\n  var h = hsl[0] / 360,\n      s = hsl[1] / 100,\n      l = hsl[2] / 100,\n      t1, t2, t3, rgb, val;\n\n  if (s == 0) {\n    val = l * 255;\n    return [val, val, val];\n  }\n\n  if (l < 0.5)\n    t2 = l * (1 + s);\n  else\n    t2 = l + s - l * s;\n  t1 = 2 * l - t2;\n\n  rgb = [0, 0, 0];\n  for (var i = 0; i < 3; i++) {\n    t3 = h + 1 / 3 * - (i - 1);\n    t3 < 0 && t3++;\n    t3 > 1 && t3--;\n\n    if (6 * t3 < 1)\n      val = t1 + (t2 - t1) * 6 * t3;\n    else if (2 * t3 < 1)\n      val = t2;\n    else if (3 * t3 < 2)\n      val = t1 + (t2 - t1) * (2 / 3 - t3) * 6;\n    else\n      val = t1;\n\n    rgb[i] = val * 255;\n  }\n\n  return rgb;\n}\n\nfunction hsl2hsv(hsl) {\n  var h = hsl[0],\n      s = hsl[1] / 100,\n      l = hsl[2] / 100,\n      sv, v;\n  l *= 2;\n  s *= (l <= 1) ? l : 2 - l;\n  v = (l + s) / 2;\n  sv = (2 * s) / (l + s);\n  return [h, sv * 100, v * 100];\n}\n\nfunction hsl2hwb(args) {\n  return rgb2hwb(hsl2rgb(args));\n}\n\nfunction hsl2cmyk(args) {\n  return rgb2cmyk(hsl2rgb(args));\n}\n\nfunction hsl2keyword(args) {\n  return rgb2keyword(hsl2rgb(args));\n}\n\n\nfunction hsv2rgb(hsv) {\n  var h = hsv[0] / 60,\n      s = hsv[1] / 100,\n      v = hsv[2] / 100,\n      hi = Math.floor(h) % 6;\n\n  var f = h - Math.floor(h),\n      p = 255 * v * (1 - s),\n      q = 255 * v * (1 - (s * f)),\n      t = 255 * v * (1 - (s * (1 - f))),\n      v = 255 * v;\n\n  switch(hi) {\n    case 0:\n      return [v, t, p];\n    case 1:\n      return [q, v, p];\n    case 2:\n      return [p, v, t];\n    case 3:\n      return [p, q, v];\n    case 4:\n      return [t, p, v];\n    case 5:\n      return [v, p, q];\n  }\n}\n\nfunction hsv2hsl(hsv) {\n  var h = hsv[0],\n      s = hsv[1] / 100,\n      v = hsv[2] / 100,\n      sl, l;\n\n  l = (2 - s) * v;\n  sl = s * v;\n  sl /= (l <= 1) ? l : 2 - l;\n  sl = sl || 0;\n  l /= 2;\n  return [h, sl * 100, l * 100];\n}\n\nfunction hsv2hwb(args) {\n  return rgb2hwb(hsv2rgb(args))\n}\n\nfunction hsv2cmyk(args) {\n  return rgb2cmyk(hsv2rgb(args));\n}\n\nfunction hsv2keyword(args) {\n  return rgb2keyword(hsv2rgb(args));\n}\n\n// http://dev.w3.org/csswg/css-color/#hwb-to-rgb\nfunction hwb2rgb(hwb) {\n  var h = hwb[0] / 360,\n      wh = hwb[1] / 100,\n      bl = hwb[2] / 100,\n      ratio = wh + bl,\n      i, v, f, n;\n\n  // wh + bl cant be > 1\n  if (ratio > 1) {\n    wh /= ratio;\n    bl /= ratio;\n  }\n\n  i = Math.floor(6 * h);\n  v = 1 - bl;\n  f = 6 * h - i;\n  if ((i & 0x01) != 0) {\n    f = 1 - f;\n  }\n  n = wh + f * (v - wh);  // linear interpolation\n\n  switch (i) {\n    default:\n    case 6:\n    case 0: r = v; g = n; b = wh; break;\n    case 1: r = n; g = v; b = wh; break;\n    case 2: r = wh; g = v; b = n; break;\n    case 3: r = wh; g = n; b = v; break;\n    case 4: r = n; g = wh; b = v; break;\n    case 5: r = v; g = wh; b = n; break;\n  }\n\n  return [r * 255, g * 255, b * 255];\n}\n\nfunction hwb2hsl(args) {\n  return rgb2hsl(hwb2rgb(args));\n}\n\nfunction hwb2hsv(args) {\n  return rgb2hsv(hwb2rgb(args));\n}\n\nfunction hwb2cmyk(args) {\n  return rgb2cmyk(hwb2rgb(args));\n}\n\nfunction hwb2keyword(args) {\n  return rgb2keyword(hwb2rgb(args));\n}\n\nfunction cmyk2rgb(cmyk) {\n  var c = cmyk[0] / 100,\n      m = cmyk[1] / 100,\n      y = cmyk[2] / 100,\n      k = cmyk[3] / 100,\n      r, g, b;\n\n  r = 1 - Math.min(1, c * (1 - k) + k);\n  g = 1 - Math.min(1, m * (1 - k) + k);\n  b = 1 - Math.min(1, y * (1 - k) + k);\n  return [r * 255, g * 255, b * 255];\n}\n\nfunction cmyk2hsl(args) {\n  return rgb2hsl(cmyk2rgb(args));\n}\n\nfunction cmyk2hsv(args) {\n  return rgb2hsv(cmyk2rgb(args));\n}\n\nfunction cmyk2hwb(args) {\n  return rgb2hwb(cmyk2rgb(args));\n}\n\nfunction cmyk2keyword(args) {\n  return rgb2keyword(cmyk2rgb(args));\n}\n\n\nfunction xyz2rgb(xyz) {\n  var x = xyz[0] / 100,\n      y = xyz[1] / 100,\n      z = xyz[2] / 100,\n      r, g, b;\n\n  r = (x * 3.2406) + (y * -1.5372) + (z * -0.4986);\n  g = (x * -0.9689) + (y * 1.8758) + (z * 0.0415);\n  b = (x * 0.0557) + (y * -0.2040) + (z * 1.0570);\n\n  // assume sRGB\n  r = r > 0.0031308 ? ((1.055 * Math.pow(r, 1.0 / 2.4)) - 0.055)\n    : r = (r * 12.92);\n\n  g = g > 0.0031308 ? ((1.055 * Math.pow(g, 1.0 / 2.4)) - 0.055)\n    : g = (g * 12.92);\n\n  b = b > 0.0031308 ? ((1.055 * Math.pow(b, 1.0 / 2.4)) - 0.055)\n    : b = (b * 12.92);\n\n  r = Math.min(Math.max(0, r), 1);\n  g = Math.min(Math.max(0, g), 1);\n  b = Math.min(Math.max(0, b), 1);\n\n  return [r * 255, g * 255, b * 255];\n}\n\nfunction xyz2lab(xyz) {\n  var x = xyz[0],\n      y = xyz[1],\n      z = xyz[2],\n      l, a, b;\n\n  x /= 95.047;\n  y /= 100;\n  z /= 108.883;\n\n  x = x > 0.008856 ? Math.pow(x, 1/3) : (7.787 * x) + (16 / 116);\n  y = y > 0.008856 ? Math.pow(y, 1/3) : (7.787 * y) + (16 / 116);\n  z = z > 0.008856 ? Math.pow(z, 1/3) : (7.787 * z) + (16 / 116);\n\n  l = (116 * y) - 16;\n  a = 500 * (x - y);\n  b = 200 * (y - z);\n\n  return [l, a, b];\n}\n\nfunction xyz2lch(args) {\n  return lab2lch(xyz2lab(args));\n}\n\nfunction lab2xyz(lab) {\n  var l = lab[0],\n      a = lab[1],\n      b = lab[2],\n      x, y, z, y2;\n\n  if (l <= 8) {\n    y = (l * 100) / 903.3;\n    y2 = (7.787 * (y / 100)) + (16 / 116);\n  } else {\n    y = 100 * Math.pow((l + 16) / 116, 3);\n    y2 = Math.pow(y / 100, 1/3);\n  }\n\n  x = x / 95.047 <= 0.008856 ? x = (95.047 * ((a / 500) + y2 - (16 / 116))) / 7.787 : 95.047 * Math.pow((a / 500) + y2, 3);\n\n  z = z / 108.883 <= 0.008859 ? z = (108.883 * (y2 - (b / 200) - (16 / 116))) / 7.787 : 108.883 * Math.pow(y2 - (b / 200), 3);\n\n  return [x, y, z];\n}\n\nfunction lab2lch(lab) {\n  var l = lab[0],\n      a = lab[1],\n      b = lab[2],\n      hr, h, c;\n\n  hr = Math.atan2(b, a);\n  h = hr * 360 / 2 / Math.PI;\n  if (h < 0) {\n    h += 360;\n  }\n  c = Math.sqrt(a * a + b * b);\n  return [l, c, h];\n}\n\nfunction lab2rgb(args) {\n  return xyz2rgb(lab2xyz(args));\n}\n\nfunction lch2lab(lch) {\n  var l = lch[0],\n      c = lch[1],\n      h = lch[2],\n      a, b, hr;\n\n  hr = h / 360 * 2 * Math.PI;\n  a = c * Math.cos(hr);\n  b = c * Math.sin(hr);\n  return [l, a, b];\n}\n\nfunction lch2xyz(args) {\n  return lab2xyz(lch2lab(args));\n}\n\nfunction lch2rgb(args) {\n  return lab2rgb(lch2lab(args));\n}\n\nfunction keyword2rgb(keyword) {\n  return cssKeywords[keyword];\n}\n\nfunction keyword2hsl(args) {\n  return rgb2hsl(keyword2rgb(args));\n}\n\nfunction keyword2hsv(args) {\n  return rgb2hsv(keyword2rgb(args));\n}\n\nfunction keyword2hwb(args) {\n  return rgb2hwb(keyword2rgb(args));\n}\n\nfunction keyword2cmyk(args) {\n  return rgb2cmyk(keyword2rgb(args));\n}\n\nfunction keyword2lab(args) {\n  return rgb2lab(keyword2rgb(args));\n}\n\nfunction keyword2xyz(args) {\n  return rgb2xyz(keyword2rgb(args));\n}\n\nvar cssKeywords = {\n  aliceblue:  [240,248,255],\n  antiquewhite: [250,235,215],\n  aqua: [0,255,255],\n  aquamarine: [127,255,212],\n  azure:  [240,255,255],\n  beige:  [245,245,220],\n  bisque: [255,228,196],\n  black:  [0,0,0],\n  blanchedalmond: [255,235,205],\n  blue: [0,0,255],\n  blueviolet: [138,43,226],\n  brown:  [165,42,42],\n  burlywood:  [222,184,135],\n  cadetblue:  [95,158,160],\n  chartreuse: [127,255,0],\n  chocolate:  [210,105,30],\n  coral:  [255,127,80],\n  cornflowerblue: [100,149,237],\n  cornsilk: [255,248,220],\n  crimson:  [220,20,60],\n  cyan: [0,255,255],\n  darkblue: [0,0,139],\n  darkcyan: [0,139,139],\n  darkgoldenrod:  [184,134,11],\n  darkgray: [169,169,169],\n  darkgreen:  [0,100,0],\n  darkgrey: [169,169,169],\n  darkkhaki:  [189,183,107],\n  darkmagenta:  [139,0,139],\n  darkolivegreen: [85,107,47],\n  darkorange: [255,140,0],\n  darkorchid: [153,50,204],\n  darkred:  [139,0,0],\n  darksalmon: [233,150,122],\n  darkseagreen: [143,188,143],\n  darkslateblue:  [72,61,139],\n  darkslategray:  [47,79,79],\n  darkslategrey:  [47,79,79],\n  darkturquoise:  [0,206,209],\n  darkviolet: [148,0,211],\n  deeppink: [255,20,147],\n  deepskyblue:  [0,191,255],\n  dimgray:  [105,105,105],\n  dimgrey:  [105,105,105],\n  dodgerblue: [30,144,255],\n  firebrick:  [178,34,34],\n  floralwhite:  [255,250,240],\n  forestgreen:  [34,139,34],\n  fuchsia:  [255,0,255],\n  gainsboro:  [220,220,220],\n  ghostwhite: [248,248,255],\n  gold: [255,215,0],\n  goldenrod:  [218,165,32],\n  gray: [128,128,128],\n  green:  [0,128,0],\n  greenyellow:  [173,255,47],\n  grey: [128,128,128],\n  honeydew: [240,255,240],\n  hotpink:  [255,105,180],\n  indianred:  [205,92,92],\n  indigo: [75,0,130],\n  ivory:  [255,255,240],\n  khaki:  [240,230,140],\n  lavender: [230,230,250],\n  lavenderblush:  [255,240,245],\n  lawngreen:  [124,252,0],\n  lemonchiffon: [255,250,205],\n  lightblue:  [173,216,230],\n  lightcoral: [240,128,128],\n  lightcyan:  [224,255,255],\n  lightgoldenrodyellow: [250,250,210],\n  lightgray:  [211,211,211],\n  lightgreen: [144,238,144],\n  lightgrey:  [211,211,211],\n  lightpink:  [255,182,193],\n  lightsalmon:  [255,160,122],\n  lightseagreen:  [32,178,170],\n  lightskyblue: [135,206,250],\n  lightslategray: [119,136,153],\n  lightslategrey: [119,136,153],\n  lightsteelblue: [176,196,222],\n  lightyellow:  [255,255,224],\n  lime: [0,255,0],\n  limegreen:  [50,205,50],\n  linen:  [250,240,230],\n  magenta:  [255,0,255],\n  maroon: [128,0,0],\n  mediumaquamarine: [102,205,170],\n  mediumblue: [0,0,205],\n  mediumorchid: [186,85,211],\n  mediumpurple: [147,112,219],\n  mediumseagreen: [60,179,113],\n  mediumslateblue:  [123,104,238],\n  mediumspringgreen:  [0,250,154],\n  mediumturquoise:  [72,209,204],\n  mediumvioletred:  [199,21,133],\n  midnightblue: [25,25,112],\n  mintcream:  [245,255,250],\n  mistyrose:  [255,228,225],\n  moccasin: [255,228,181],\n  navajowhite:  [255,222,173],\n  navy: [0,0,128],\n  oldlace:  [253,245,230],\n  olive:  [128,128,0],\n  olivedrab:  [107,142,35],\n  orange: [255,165,0],\n  orangered:  [255,69,0],\n  orchid: [218,112,214],\n  palegoldenrod:  [238,232,170],\n  palegreen:  [152,251,152],\n  paleturquoise:  [175,238,238],\n  palevioletred:  [219,112,147],\n  papayawhip: [255,239,213],\n  peachpuff:  [255,218,185],\n  peru: [205,133,63],\n  pink: [255,192,203],\n  plum: [221,160,221],\n  powderblue: [176,224,230],\n  purple: [128,0,128],\n  rebeccapurple: [102, 51, 153],\n  red:  [255,0,0],\n  rosybrown:  [188,143,143],\n  royalblue:  [65,105,225],\n  saddlebrown:  [139,69,19],\n  salmon: [250,128,114],\n  sandybrown: [244,164,96],\n  seagreen: [46,139,87],\n  seashell: [255,245,238],\n  sienna: [160,82,45],\n  silver: [192,192,192],\n  skyblue:  [135,206,235],\n  slateblue:  [106,90,205],\n  slategray:  [112,128,144],\n  slategrey:  [112,128,144],\n  snow: [255,250,250],\n  springgreen:  [0,255,127],\n  steelblue:  [70,130,180],\n  tan:  [210,180,140],\n  teal: [0,128,128],\n  thistle:  [216,191,216],\n  tomato: [255,99,71],\n  turquoise:  [64,224,208],\n  violet: [238,130,238],\n  wheat:  [245,222,179],\n  white:  [255,255,255],\n  whitesmoke: [245,245,245],\n  yellow: [255,255,0],\n  yellowgreen:  [154,205,50]\n};\n\nvar reverseKeywords = {};\nfor (var key in cssKeywords) {\n  reverseKeywords[JSON.stringify(cssKeywords[key])] = key;\n}\n\n},{}],3:[function(require,module,exports){\nvar conversions = require("./conversions");\n\nvar convert = function() {\n   return new Converter();\n}\n\nfor (var func in conversions) {\n  // export Raw versions\n  convert[func + "Raw"] =  (function(func) {\n    // accept array or plain args\n    return function(arg) {\n      if (typeof arg == "number")\n        arg = Array.prototype.slice.call(arguments);\n      return conversions[func](arg);\n    }\n  })(func);\n\n  var pair = /(\\w+)2(\\w+)/.exec(func),\n      from = pair[1],\n      to = pair[2];\n\n  // export rgb2hsl and ["rgb"]["hsl"]\n  convert[from] = convert[from] || {};\n\n  convert[from][to] = convert[func] = (function(func) { \n    return function(arg) {\n      if (typeof arg == "number")\n        arg = Array.prototype.slice.call(arguments);\n      \n      var val = conversions[func](arg);\n      if (typeof val == "string" || val === undefined)\n        return val; // keyword\n\n      for (var i = 0; i < val.length; i++)\n        val[i] = Math.round(val[i]);\n      return val;\n    }\n  })(func);\n}\n\n\n/* Converter does lazy conversion and caching */\nvar Converter = function() {\n   this.convs = {};\n};\n\n/* Either get the values for a space or\n  set the values for a space, depending on args */\nConverter.prototype.routeSpace = function(space, args) {\n   var values = args[0];\n   if (values === undefined) {\n      // color.rgb()\n      return this.getValues(space);\n   }\n   // color.rgb(10, 10, 10)\n   if (typeof values == "number") {\n      values = Array.prototype.slice.call(args);        \n   }\n\n   return this.setValues(space, values);\n};\n  \n/* Set the values for a space, invalidating cache */\nConverter.prototype.setValues = function(space, values) {\n   this.space = space;\n   this.convs = {};\n   this.convs[space] = values;\n   return this;\n};\n\n/* Get the values for a space. If there\'s already\n  a conversion for the space, fetch it, otherwise\n  compute it */\nConverter.prototype.getValues = function(space) {\n   var vals = this.convs[space];\n   if (!vals) {\n      var fspace = this.space,\n          from = this.convs[fspace];\n      vals = convert[fspace][space](from);\n\n      this.convs[space] = vals;\n   }\n  return vals;\n};\n\n["rgb", "hsl", "hsv", "cmyk", "keyword"].forEach(function(space) {\n   Converter.prototype[space] = function(vals) {\n      return this.routeSpace(space, arguments);\n   }\n});\n\nmodule.exports = convert;\n},{"./conversions":2}],4:[function(require,module,exports){\n/* MIT license */\nvar colorNames = require(\'color-name\');\n\nmodule.exports = {\n   getRgba: getRgba,\n   getHsla: getHsla,\n   getRgb: getRgb,\n   getHsl: getHsl,\n   getHwb: getHwb,\n   getAlpha: getAlpha,\n\n   hexString: hexString,\n   rgbString: rgbString,\n   rgbaString: rgbaString,\n   percentString: percentString,\n   percentaString: percentaString,\n   hslString: hslString,\n   hslaString: hslaString,\n   hwbString: hwbString,\n   keyword: keyword\n}\n\nfunction getRgba(string) {\n   if (!string) {\n      return;\n   }\n   var abbr =  /^#([a-fA-F0-9]{3})$/,\n       hex =  /^#([a-fA-F0-9]{6})$/,\n       rgba = /^rgba?\\(\\s*([+-]?\\d+)\\s*,\\s*([+-]?\\d+)\\s*,\\s*([+-]?\\d+)\\s*(?:,\\s*([+-]?[\\d\\.]+)\\s*)?\\)$/,\n       per = /^rgba?\\(\\s*([+-]?[\\d\\.]+)\\%\\s*,\\s*([+-]?[\\d\\.]+)\\%\\s*,\\s*([+-]?[\\d\\.]+)\\%\\s*(?:,\\s*([+-]?[\\d\\.]+)\\s*)?\\)$/,\n       keyword = /(\\D+)/;\n\n   var rgb = [0, 0, 0],\n       a = 1,\n       match = string.match(abbr);\n   if (match) {\n      match = match[1];\n      for (var i = 0; i < rgb.length; i++) {\n         rgb[i] = parseInt(match[i] + match[i], 16);\n      }\n   }\n   else if (match = string.match(hex)) {\n      match = match[1];\n      for (var i = 0; i < rgb.length; i++) {\n         rgb[i] = parseInt(match.slice(i * 2, i * 2 + 2), 16);\n      }\n   }\n   else if (match = string.match(rgba)) {\n      for (var i = 0; i < rgb.length; i++) {\n         rgb[i] = parseInt(match[i + 1]);\n      }\n      a = parseFloat(match[4]);\n   }\n   else if (match = string.match(per)) {\n      for (var i = 0; i < rgb.length; i++) {\n         rgb[i] = Math.round(parseFloat(match[i + 1]) * 2.55);\n      }\n      a = parseFloat(match[4]);\n   }\n   else if (match = string.match(keyword)) {\n      if (match[1] == "transparent") {\n         return [0, 0, 0, 0];\n      }\n      rgb = colorNames[match[1]];\n      if (!rgb) {\n         return;\n      }\n   }\n\n   for (var i = 0; i < rgb.length; i++) {\n      rgb[i] = scale(rgb[i], 0, 255);\n   }\n   if (!a && a != 0) {\n      a = 1;\n   }\n   else {\n      a = scale(a, 0, 1);\n   }\n   rgb[3] = a;\n   return rgb;\n}\n\nfunction getHsla(string) {\n   if (!string) {\n      return;\n   }\n   var hsl = /^hsla?\\(\\s*([+-]?\\d+)(?:deg)?\\s*,\\s*([+-]?[\\d\\.]+)%\\s*,\\s*([+-]?[\\d\\.]+)%\\s*(?:,\\s*([+-]?[\\d\\.]+)\\s*)?\\)/;\n   var match = string.match(hsl);\n   if (match) {\n      var alpha = parseFloat(match[4]);\n      var h = scale(parseInt(match[1]), 0, 360),\n          s = scale(parseFloat(match[2]), 0, 100),\n          l = scale(parseFloat(match[3]), 0, 100),\n          a = scale(isNaN(alpha) ? 1 : alpha, 0, 1);\n      return [h, s, l, a];\n   }\n}\n\nfunction getHwb(string) {\n   if (!string) {\n      return;\n   }\n   var hwb = /^hwb\\(\\s*([+-]?\\d+)(?:deg)?\\s*,\\s*([+-]?[\\d\\.]+)%\\s*,\\s*([+-]?[\\d\\.]+)%\\s*(?:,\\s*([+-]?[\\d\\.]+)\\s*)?\\)/;\n   var match = string.match(hwb);\n   if (match) {\n    var alpha = parseFloat(match[4]);\n      var h = scale(parseInt(match[1]), 0, 360),\n          w = scale(parseFloat(match[2]), 0, 100),\n          b = scale(parseFloat(match[3]), 0, 100),\n          a = scale(isNaN(alpha) ? 1 : alpha, 0, 1);\n      return [h, w, b, a];\n   }\n}\n\nfunction getRgb(string) {\n   var rgba = getRgba(string);\n   return rgba && rgba.slice(0, 3);\n}\n\nfunction getHsl(string) {\n  var hsla = getHsla(string);\n  return hsla && hsla.slice(0, 3);\n}\n\nfunction getAlpha(string) {\n   var vals = getRgba(string);\n   if (vals) {\n      return vals[3];\n   }\n   else if (vals = getHsla(string)) {\n      return vals[3];\n   }\n   else if (vals = getHwb(string)) {\n      return vals[3];\n   }\n}\n\n// generators\nfunction hexString(rgb) {\n   return "#" + hexDouble(rgb[0]) + hexDouble(rgb[1])\n              + hexDouble(rgb[2]);\n}\n\nfunction rgbString(rgba, alpha) {\n   if (alpha < 1 || (rgba[3] && rgba[3] < 1)) {\n      return rgbaString(rgba, alpha);\n   }\n   return "rgb(" + rgba[0] + ", " + rgba[1] + ", " + rgba[2] + ")";\n}\n\nfunction rgbaString(rgba, alpha) {\n   if (alpha === undefined) {\n      alpha = (rgba[3] !== undefined ? rgba[3] : 1);\n   }\n   return "rgba(" + rgba[0] + ", " + rgba[1] + ", " + rgba[2]\n           + ", " + alpha + ")";\n}\n\nfunction percentString(rgba, alpha) {\n   if (alpha < 1 || (rgba[3] && rgba[3] < 1)) {\n      return percentaString(rgba, alpha);\n   }\n   var r = Math.round(rgba[0]/255 * 100),\n       g = Math.round(rgba[1]/255 * 100),\n       b = Math.round(rgba[2]/255 * 100);\n\n   return "rgb(" + r + "%, " + g + "%, " + b + "%)";\n}\n\nfunction percentaString(rgba, alpha) {\n   var r = Math.round(rgba[0]/255 * 100),\n       g = Math.round(rgba[1]/255 * 100),\n       b = Math.round(rgba[2]/255 * 100);\n   return "rgba(" + r + "%, " + g + "%, " + b + "%, " + (alpha || rgba[3] || 1) + ")";\n}\n\nfunction hslString(hsla, alpha) {\n   if (alpha < 1 || (hsla[3] && hsla[3] < 1)) {\n      return hslaString(hsla, alpha);\n   }\n   return "hsl(" + hsla[0] + ", " + hsla[1] + "%, " + hsla[2] + "%)";\n}\n\nfunction hslaString(hsla, alpha) {\n   if (alpha === undefined) {\n      alpha = (hsla[3] !== undefined ? hsla[3] : 1);\n   }\n   return "hsla(" + hsla[0] + ", " + hsla[1] + "%, " + hsla[2] + "%, "\n           + alpha + ")";\n}\n\n// hwb is a bit different than rgb(a) & hsl(a) since there is no alpha specific syntax\n// (hwb have alpha optional & 1 is default value)\nfunction hwbString(hwb, alpha) {\n   if (alpha === undefined) {\n      alpha = (hwb[3] !== undefined ? hwb[3] : 1);\n   }\n   return "hwb(" + hwb[0] + ", " + hwb[1] + "%, " + hwb[2] + "%"\n           + (alpha !== undefined && alpha !== 1 ? ", " + alpha : "") + ")";\n}\n\nfunction keyword(rgb) {\n  return reverseNames[rgb.slice(0, 3)];\n}\n\n// helpers\nfunction scale(num, min, max) {\n   return Math.min(Math.max(min, num), max);\n}\n\nfunction hexDouble(num) {\n  var str = num.toString(16).toUpperCase();\n  return (str.length < 2) ? "0" + str : str;\n}\n\n\n//create a list of reverse color names\nvar reverseNames = {};\nfor (var name in colorNames) {\n   reverseNames[colorNames[name]] = name;\n}\n\n},{"color-name":5}],5:[function(require,module,exports){\nmodule.exports={\r\n\t"aliceblue": [240, 248, 255],\r\n\t"antiquewhite": [250, 235, 215],\r\n\t"aqua": [0, 255, 255],\r\n\t"aquamarine": [127, 255, 212],\r\n\t"azure": [240, 255, 255],\r\n\t"beige": [245, 245, 220],\r\n\t"bisque": [255, 228, 196],\r\n\t"black": [0, 0, 0],\r\n\t"blanchedalmond": [255, 235, 205],\r\n\t"blue": [0, 0, 255],\r\n\t"blueviolet": [138, 43, 226],\r\n\t"brown": [165, 42, 42],\r\n\t"burlywood": [222, 184, 135],\r\n\t"cadetblue": [95, 158, 160],\r\n\t"chartreuse": [127, 255, 0],\r\n\t"chocolate": [210, 105, 30],\r\n\t"coral": [255, 127, 80],\r\n\t"cornflowerblue": [100, 149, 237],\r\n\t"cornsilk": [255, 248, 220],\r\n\t"crimson": [220, 20, 60],\r\n\t"cyan": [0, 255, 255],\r\n\t"darkblue": [0, 0, 139],\r\n\t"darkcyan": [0, 139, 139],\r\n\t"darkgoldenrod": [184, 134, 11],\r\n\t"darkgray": [169, 169, 169],\r\n\t"darkgreen": [0, 100, 0],\r\n\t"darkgrey": [169, 169, 169],\r\n\t"darkkhaki": [189, 183, 107],\r\n\t"darkmagenta": [139, 0, 139],\r\n\t"darkolivegreen": [85, 107, 47],\r\n\t"darkorange": [255, 140, 0],\r\n\t"darkorchid": [153, 50, 204],\r\n\t"darkred": [139, 0, 0],\r\n\t"darksalmon": [233, 150, 122],\r\n\t"darkseagreen": [143, 188, 143],\r\n\t"darkslateblue": [72, 61, 139],\r\n\t"darkslategray": [47, 79, 79],\r\n\t"darkslategrey": [47, 79, 79],\r\n\t"darkturquoise": [0, 206, 209],\r\n\t"darkviolet": [148, 0, 211],\r\n\t"deeppink": [255, 20, 147],\r\n\t"deepskyblue": [0, 191, 255],\r\n\t"dimgray": [105, 105, 105],\r\n\t"dimgrey": [105, 105, 105],\r\n\t"dodgerblue": [30, 144, 255],\r\n\t"firebrick": [178, 34, 34],\r\n\t"floralwhite": [255, 250, 240],\r\n\t"forestgreen": [34, 139, 34],\r\n\t"fuchsia": [255, 0, 255],\r\n\t"gainsboro": [220, 220, 220],\r\n\t"ghostwhite": [248, 248, 255],\r\n\t"gold": [255, 215, 0],\r\n\t"goldenrod": [218, 165, 32],\r\n\t"gray": [128, 128, 128],\r\n\t"green": [0, 128, 0],\r\n\t"greenyellow": [173, 255, 47],\r\n\t"grey": [128, 128, 128],\r\n\t"honeydew": [240, 255, 240],\r\n\t"hotpink": [255, 105, 180],\r\n\t"indianred": [205, 92, 92],\r\n\t"indigo": [75, 0, 130],\r\n\t"ivory": [255, 255, 240],\r\n\t"khaki": [240, 230, 140],\r\n\t"lavender": [230, 230, 250],\r\n\t"lavenderblush": [255, 240, 245],\r\n\t"lawngreen": [124, 252, 0],\r\n\t"lemonchiffon": [255, 250, 205],\r\n\t"lightblue": [173, 216, 230],\r\n\t"lightcoral": [240, 128, 128],\r\n\t"lightcyan": [224, 255, 255],\r\n\t"lightgoldenrodyellow": [250, 250, 210],\r\n\t"lightgray": [211, 211, 211],\r\n\t"lightgreen": [144, 238, 144],\r\n\t"lightgrey": [211, 211, 211],\r\n\t"lightpink": [255, 182, 193],\r\n\t"lightsalmon": [255, 160, 122],\r\n\t"lightseagreen": [32, 178, 170],\r\n\t"lightskyblue": [135, 206, 250],\r\n\t"lightslategray": [119, 136, 153],\r\n\t"lightslategrey": [119, 136, 153],\r\n\t"lightsteelblue": [176, 196, 222],\r\n\t"lightyellow": [255, 255, 224],\r\n\t"lime": [0, 255, 0],\r\n\t"limegreen": [50, 205, 50],\r\n\t"linen": [250, 240, 230],\r\n\t"magenta": [255, 0, 255],\r\n\t"maroon": [128, 0, 0],\r\n\t"mediumaquamarine": [102, 205, 170],\r\n\t"mediumblue": [0, 0, 205],\r\n\t"mediumorchid": [186, 85, 211],\r\n\t"mediumpurple": [147, 112, 219],\r\n\t"mediumseagreen": [60, 179, 113],\r\n\t"mediumslateblue": [123, 104, 238],\r\n\t"mediumspringgreen": [0, 250, 154],\r\n\t"mediumturquoise": [72, 209, 204],\r\n\t"mediumvioletred": [199, 21, 133],\r\n\t"midnightblue": [25, 25, 112],\r\n\t"mintcream": [245, 255, 250],\r\n\t"mistyrose": [255, 228, 225],\r\n\t"moccasin": [255, 228, 181],\r\n\t"navajowhite": [255, 222, 173],\r\n\t"navy": [0, 0, 128],\r\n\t"oldlace": [253, 245, 230],\r\n\t"olive": [128, 128, 0],\r\n\t"olivedrab": [107, 142, 35],\r\n\t"orange": [255, 165, 0],\r\n\t"orangered": [255, 69, 0],\r\n\t"orchid": [218, 112, 214],\r\n\t"palegoldenrod": [238, 232, 170],\r\n\t"palegreen": [152, 251, 152],\r\n\t"paleturquoise": [175, 238, 238],\r\n\t"palevioletred": [219, 112, 147],\r\n\t"papayawhip": [255, 239, 213],\r\n\t"peachpuff": [255, 218, 185],\r\n\t"peru": [205, 133, 63],\r\n\t"pink": [255, 192, 203],\r\n\t"plum": [221, 160, 221],\r\n\t"powderblue": [176, 224, 230],\r\n\t"purple": [128, 0, 128],\r\n\t"rebeccapurple": [102, 51, 153],\r\n\t"red": [255, 0, 0],\r\n\t"rosybrown": [188, 143, 143],\r\n\t"royalblue": [65, 105, 225],\r\n\t"saddlebrown": [139, 69, 19],\r\n\t"salmon": [250, 128, 114],\r\n\t"sandybrown": [244, 164, 96],\r\n\t"seagreen": [46, 139, 87],\r\n\t"seashell": [255, 245, 238],\r\n\t"sienna": [160, 82, 45],\r\n\t"silver": [192, 192, 192],\r\n\t"skyblue": [135, 206, 235],\r\n\t"slateblue": [106, 90, 205],\r\n\t"slategray": [112, 128, 144],\r\n\t"slategrey": [112, 128, 144],\r\n\t"snow": [255, 250, 250],\r\n\t"springgreen": [0, 255, 127],\r\n\t"steelblue": [70, 130, 180],\r\n\t"tan": [210, 180, 140],\r\n\t"teal": [0, 128, 128],\r\n\t"thistle": [216, 191, 216],\r\n\t"tomato": [255, 99, 71],\r\n\t"turquoise": [64, 224, 208],\r\n\t"violet": [238, 130, 238],\r\n\t"wheat": [245, 222, 179],\r\n\t"white": [255, 255, 255],\r\n\t"whitesmoke": [245, 245, 245],\r\n\t"yellow": [255, 255, 0],\r\n\t"yellowgreen": [154, 205, 50]\r\n}\n},{}],6:[function(require,module,exports){\nfunction Gradient() {\n\tthis.stops = [];\n\tthis.dirty = true;\n\tthis.minPos = undefined;\n\tthis.maxPos = undefined;\n}\n\nGradient.prototype.add = function(pos, values) {\n\tthis.stops.push({pos: pos, values: values});\n\tthis.dirty = true;\n\treturn this;\n};\n\nGradient.prototype._clean = function() {\n\tthis.stops = this.stops.sort(function(a, b) { return a.pos - b.pos; });\n\tfor(var i = 0; i < this.stops.length; i++) {\n\t\tvar pos = this.stops[i].pos;\n\t\tthis.minPos = (i === 0 ? pos : Math.min(this.minPos, pos));\n\t\tthis.maxPos = (i === 0 ? pos : Math.max(this.maxPos, pos));\n\t}\n\tthis.dirty = false;\n};\n\nGradient.prototype.get = function(pos) {\n\t"use strict";\n\tif(this.dirty) this._clean();\n\tvar stop1, stop2, alpha, beta;\n\tvar stops = this.stops;\n\tif(stops.length === 0) return null;\n\tpos = Math.max(this.minPos, Math.min(this.maxPos, pos));\n\tif(stops.length > 1) {\n\t\tfor(var i = 0; i < stops.length - 1; i++) {\n\t\t\tif(stops[i].pos <= pos && pos <= stops[i + 1].pos) {\n\t\t\t\tstop1 = stops[i];\n\t\t\t\tstop2 = stops[i + 1];\n\t\t\t\tbreak;\n\t\t\t}\n\t\t}\n\t}\n\tif(!stop1) stop1 = stops[0];\n\tif(!stop2) stop2 = stops[0];\n\tvar delta = (stop2.pos - stop1.pos);\n\talpha = (pos - stop1.pos) / (delta === 0 ? 1 : delta);\n\tbeta = 1.0 - alpha;\n\n\tvar values = {};\n\tfor(var key in stop1.values) {\n\t\tvar value1 = stop1.values[key];\n\t\tvar value2 = stop2.values[key];\n\t\tif(value1 === undefined) value1 = value2;\n\t\tif(value2 === undefined) value2 = value1;\n\t\tif(!isNaN(value1)) {\n\t\t\tvalues[key] = value1 * beta + value2 * alpha;\n\t\t}\n\t}\n\treturn values;\n};\n\nmodule.exports = Gradient;\n},{}],7:[function(require,module,exports){\nvar transformPixels = require(\'./transformPixels\');\n\nonmessage = function (msg) {\n  var data = msg.data,\n      newImageData = transformPixels(data);\n  postMessage(newImageData);\n};\n},{"./transformPixels":8}],8:[function(require,module,exports){\nvar Color = require(\'color\');\nvar Gradient = require(\'minigradient\');\n\nfunction generateGradient(colors){\n  var gradient = new Gradient(),\n      stop = 1 / (colors.length - 1);\n\n  colors.forEach(function(colorValue, index, list){\n    var colorStop = stop * index,\n        color = Color(colorValue);\n\n    gradient.add(colorStop, color.rgb());\n\n  });\n\n  return gradient;\n\n}\n\nfunction transformPixels(data){\n\n  var sample = data.sample,\n      targetWidth = data.targetWidth,\n      targetHeight = data.targetHeight,\n      scaleMin = data.scaleMin,\n      scaleMax = data.scaleMax,\n      area = Math.floor(targetWidth * targetHeight),\n      width = data.width,\n      height = data.height,\n      x = width,\n      y = 0,\n      imageData = data.imageData,\n      context = data.tmpContext,\n      gradient = generateGradient(data.colors);\n\n  for(var i = 0; i<area; i++){\n\n    var pixelIndex = (x * sample) + (y * sample * width),\n        value = imageData[pixelIndex],\n        v = ((value - scaleMin) * (1 / (scaleMax - scaleMin))) || 0\n        v = Math.floor(v);\n\n    //clamp\n    v = (v < 0 || isNaN(v)) ? 0 : v;\n    v = (v > 1) ? 1 : v;\n\n    //normalize\n    //v = (v - scaleMin) * (1 / (scaleMax - scaleMin));\n\n    var pv = gradient.get(v);\n\n    var pi = area - i;\n    // set the pixel values\n    context.data[(pi*4)+0] = pv.r;\n    context.data[(pi*4)+1] = pv.g;\n    context.data[(pi*4)+2] = pv.b;\n    context.data[(pi*4)+3] = 255;\n\n    //if where at the start of a new row...\n    if (i % targetWidth === 0){\n      x = width; //reset x\n      y++; // increase the row value\n    }else{\n      x--; // move to next column\n    }\n  }\n\n  return context;\n}\n\nmodule.exports = transformPixels;\n\n},{"color":1,"minigradient":6}]},{},[7])'],{type:"text/javascript"})));
 
         worker.onmessage = (function (e) {
           //TODO: Handle Errors here!
@@ -25443,8 +27119,67 @@ var RenderImage = (function () {
 
 module.exports = RenderImage;
 
-},{"./transformPixels":186,"workerjs":170}],186:[function(require,module,exports){
+},{"./transformPixels":197,"workerjs":180}],196:[function(require,module,exports){
 "use strict";
+
+var scalingMethods = {
+  linear: function linear(value, min, max, range) {
+    return (value + min) / max * range;
+    //return (value - min) * (range / (max - min));
+  },
+  sqrt: function sqrt(value, min, max, range) {
+    //return Math.sqrt((value + min) / max ) * range;
+    return Math.sqrt((value - min) * (range / (max - min)));
+    //TODO: ALL THE OTHERS!!!
+  },
+  cuberoot: function cuberoot(value, min, max, range) {
+    return Math.pow((value + min) / max, 0.333) * range;
+  },
+  log: function log(value, min, max, range) {
+    return Math.log((value + min) / max) * range;
+  },
+  loglog: function loglog(value, min, max, range) {
+    return Math.log(Math.log((value + min) / max)) * range;
+  },
+  sqrtlog: function sqrtlog(value, min, max, range) {
+    return Math.sqrt(Math.log((value + min) / max)) * range;
+  }
+};
+
+function scale(scaleType, value, min, max, range) {
+  return scalingMethods[scaleType](value, min, max, range);
+}
+
+function values() {
+  var output = [];
+  Object.keys(scalingMethods).forEach(function (key) {
+    output.push(key);
+  });
+  return output;
+}
+
+module.exports = {
+  scale: scale,
+  values: values
+};
+
+},{}],197:[function(require,module,exports){
+"use strict";
+
+var Color = require("color");
+var scaleFunction = require("./scaleFunctions").scale;
+var Gradient = require("interpolation-arrays");
+
+function generateGradient(colors) {
+
+  var colorArray = colors.map(function (colorValue) {
+    var color = Color(colorValue);
+
+    return color.rgbArray();
+  });
+
+  return Gradient(colorArray);
+}
 
 function transformPixels(data) {
 
@@ -25456,30 +27191,36 @@ function transformPixels(data) {
       area = Math.floor(targetWidth * targetHeight),
       width = data.width,
       height = data.height,
-      pixelValueMap = data.pixelValueMap,
       x = width,
       y = 0,
       imageData = data.imageData,
-      context = data.tmpContext;
+      context = data.tmpContext,
+      gradient = generateGradient(data.colors);
 
   for (var i = 0; i < area; i++) {
 
     var pixelIndex = x * sample + y * sample * width,
         value = imageData[pixelIndex],
-        v = (value - scaleMin) * (pixelValueMap.length / (scaleMax - scaleMin)) || 0;
-    v = Math.floor(v);
+
+    //v = ((value - scaleMin) * (1 / (scaleMax - scaleMin))) || 0
+    v = scaleFunction("log", value, scaleMin, scaleMax, 1);
+    //v = Math.floor(v);
 
     //clamp
-    v = v < 0 ? 0 : v;
-    v = v > pixelValueMap.length - 1 || isNaN(v) ? pixelValueMap.length - 1 : v;
-    var data = pixelValueMap[v];
+    v = v < 0 || isNaN(v) ? 0 : v;
+    v = v > 1 ? 1 : v;
+
+    //normalize
+    //v = (v - scaleMin) * (1 / (scaleMax - scaleMin));
+
+    var pv = gradient(v);
 
     var pi = area - i;
     // set the pixel values
-    context.data[pi * 4 + 0] = data[0];
-    context.data[pi * 4 + 1] = data[1];
-    context.data[pi * 4 + 2] = data[2];
-    context.data[pi * 4 + 3] = data[3];
+    context.data[pi * 4 + 0] = pv[0];
+    context.data[pi * 4 + 1] = pv[1];
+    context.data[pi * 4 + 2] = pv[2];
+    context.data[pi * 4 + 3] = 255;
 
     //if where at the start of a new row...
     if (i % targetWidth === 0) {
@@ -25495,4 +27236,4 @@ function transformPixels(data) {
 
 module.exports = transformPixels;
 
-},{}]},{},[180]);
+},{"./scaleFunctions":196,"color":13,"interpolation-arrays":19}]},{},[190]);
