@@ -49,6 +49,7 @@ class Image {
       scaleMin: 0,
       scaleMax: 0,
       colors: ['black', 'red', 'orange', 'yellow', 'white'],
+      scaleFunction: 'linear',
       ctx: ctx
     };
 
@@ -152,6 +153,11 @@ let ImageActions = {
     scaling.scaleMin = min;
     scaling.scaleMax = max;
     imageCursor.select('scaling').edit(scaling);
+  },
+
+  updateScaleFunction: function(id, newFunction){
+    let imageCursor = images.select({id: id});
+    imageCursor.select('scaling').set('scaleFunction', newFunction);
   }
 
 };

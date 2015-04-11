@@ -35,6 +35,7 @@ class RenderImage {
       scaleMax: this.scaleMax,
       imageData: this.image.imageData,
       colors: this.image.scaling.colors,
+      scaleFunction: this.image.scaling.scaleFunction,
       tmpContext: this.tmpCtx.getImageData(0,0,this.targetWidth, this.targetHeight)
     };
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import ImageActions from '../../actions/imageActions';
 import ScaleBar from './scaleBar.jsx';
+import scaleFunctions from '../../utils/scaleFunctions';
 
 var canvasId = 'previewCanvas',
 		size = 500;
@@ -24,7 +25,7 @@ class ImagePreview extends React.Component {
 	}
 
 	componentDidMount(){
-		//Attach mouse up events to 
+		//Attach mouse up events to
 		document.body.onmousedown = this.setMouseDown.bind(this);
 		document.body.onmouseup = this.setMouseUp.bind(this);
 
@@ -98,7 +99,16 @@ class ImagePreview extends React.Component {
 		ImageActions.showPreview(null);
 	}
 
+	updateScaleFunction(value){
+		let newFunction = value.target.value;
+		ImageActions.updateScaleFunction(this.props.image.id, newFunction);
+	}
+
 	render(){
+
+		let scaleOptions = scaleFunctions.values().map(function(sf, index){
+			return (<option key={index}>{sf}</option>);
+		});
 
 		return (
 			<div>
@@ -108,6 +118,11 @@ class ImagePreview extends React.Component {
 					<canvas width={size} height={size} className="preview__canvas" id={canvasId}
 							onMouseMove={this.mouseMove.bind(this)} />
 					<ScaleBar image={this.props.image}/>
+					<div>
+						<select onChange={this.updateScaleFunction.bind(this)}>
+							{scaleOptions}
+						</select>
+					</div>
 					<button type="button" className="btn btn-primary" onClick={this.save.bind(this)}>Done</button>
 					<button type="button" className="btn btn-danger" onClick={() => console.log('TODO: CANCEL')}>Cancel</button>
 				</div>

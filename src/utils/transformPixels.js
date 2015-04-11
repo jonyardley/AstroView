@@ -1,5 +1,5 @@
 var Color = require('color');
-var scaleFunction = require('./scaleFunctions').scale;
+var scaleFunctions = require('./scaleFunctions').scale;
 var Gradient = require('interpolation-arrays');
 
 function generateGradient(colors){
@@ -29,26 +29,22 @@ function transformPixels(data){
       y = 0,
       imageData = data.imageData,
       context = data.tmpContext,
+      scaleFunction = data.scaleFunction,
       gradient = generateGradient(data.colors);
 
   for(var i = 0; i<area; i++){
 
     var pixelIndex = (x * sample) + (y * sample * width),
         value = imageData[pixelIndex],
-        //v = ((value - scaleMin) * (1 / (scaleMax - scaleMin))) || 0
-        v = scaleFunction('log', value, scaleMin, scaleMax, 1);
-        //v = Math.floor(v);
+        v = scaleFunctions(scaleFunction, value, scaleMin, scaleMax, 1);
 
     //clamp
     v = (v < 0 || isNaN(v)) ? 0 : v;
     v = (v > 1) ? 1 : v;
 
-    //normalize
-    //v = (v - scaleMin) * (1 / (scaleMax - scaleMin));
+    var pv = gradient(v), //pixel value
+        pi = area - i; //pixel value
 
-    var pv = gradient(v);
-
-    var pi = area - i;
     // set the pixel values
     context.data[(pi*4)+0] = pv[0];
     context.data[(pi*4)+1] = pv[1];
