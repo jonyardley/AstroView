@@ -14,6 +14,7 @@
     "napa": "1.2.0",
     "react": "^0.13.1",
     "stylus": "^0.50.0",
+    "underscore": "^1.8.3",
     "watchify": "^2.6.2",
     "workerify": "^0.3.0",
     "workerjs": "^0.1.1"
