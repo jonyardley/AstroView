@@ -1,28 +1,17 @@
 import React from 'react';
 import {fabric} from 'fabric';
+import ImageActions from '../../actions/imageActions';
 
 const canvasId = 'stage'
 
 class Stage extends React.Component {
 
-  constructor(props){
-    super(props);
-    this.state = { imageRefs: [] }
-  }
 
   componentDidMount(){
-    this.canvas = new fabric.Canvas(canvasId);
-    let width = this.canvas.wrapperEl.parentNode.clientWidth,
-        height = this.canvas.wrapperEl.parentNode.clientHeight;
-    this.canvas.setWidth(width);
-    this.canvas.setHeight(height);
+    ImageActions.initFabricCanvas(canvasId);
   }
 
-  componentDidUpdate(){
-    this.updateImages();
-  }
-
-  updateImages(){
+  /**updateImages(){
     //TODO: MAKE THIS WORK WITH EVENTS!
     let image = this.props.images[0];
     let img = new fabric.Image(image, {
@@ -32,7 +21,7 @@ class Stage extends React.Component {
       height: 500
     });
     this.canvas.add(img);
-  }
+  }**/
 
 
   render(){

@@ -7,7 +7,8 @@ var data = {
   isPreviewVisible: false,
   activeImageId: null,
   images: [],
-  canvasImages: []
+  canvasImageRefs: {},
+  canvas: null
 };
 
 var options = {

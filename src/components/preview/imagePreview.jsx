@@ -5,7 +5,7 @@ import scaleFunctions from '../../utils/scaleFunctions';
 import _ from 'underscore';
 
 var canvasId = 'previewCanvas',
-		size = 500;
+		size = 400;
 
 class ImagePreview extends React.Component {
 

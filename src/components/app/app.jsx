@@ -8,8 +8,7 @@ import Stage from '../stage/stage.jsx';
 let data = state({
   images: ['images'],
   isPreviewVisible: ['isPreviewVisible'],
-  activeImageId: ['activeImageId'],
-  canvasImages: ['canvasImages']
+  activeImageId: ['activeImageId']
 });
 
 class App extends React.Component {

@@ -57833,30 +57833,13 @@ var data = state({
   images: ["images"],
   isPreviewVisible: ["isPreviewVisible"],
   activeImageId: ["activeImageId"],
-  canvasImages: ["canvasImages"]
+  canvasImageRefs: ["canvasImageRefs"],
+  canvas: ["canvas"]
 }),
     images = data.images,
     canvasImages = data.canvasImages,
     previewImage = data.prevewImage,
     _id = 0;
-
-function getId() {
-  var id = _id;
-  _id++;
-  return id;
-}
-
-function getMax(imageData) {
-  var length = imageData.length,
-      max = 0;
-  while (length--) {
-    var value = imageData[length];
-    if (value > max) {
-      max = value;
-    }
-  }
-  return max;
-}
 
 var Image = function Image(name) {
   _classCallCheck(this, Image);
@@ -57883,12 +57866,32 @@ var Image = function Image(name) {
   };
 };
 
-function updateCanvasImages(image) {
-  var ciArray = canvasImages.get();
+function getId() {
+  var id = _id;
+  _id++;
+  return id;
+}
 
-  ciArray[image.id] = image.imgRaw;
+function getMax(imageData) {
+  var length = imageData.length,
+      max = 0;
+  while (length--) {
+    var value = imageData[length];
+    if (value > max) {
+      max = value;
+    }
+  }
+  return max;
+}
 
-  canvasImages.edit(ciArray);
+function getFileName(file) {
+
+  if (typeof file == "string") {
+    var strArray = file.split("/");
+    return strArray[strArray.length - 1];
+  } else {
+    return file.name;
+  }
 }
 
 function imageLoaded(data) {
@@ -57922,20 +57925,54 @@ function imageLoaded(data) {
 
       updateCanvasImages({ id: id, imgRaw: raw });
 
-      //TODO: RE-ADD THIS FOR PRODUCTION!
-      //ImageActions.showPreview(true);
+      ImageActions.showPreview(true);
     });
   });
 }
 
-function getFileName(file) {
+function udpateVisibleImages(refs, visibleRef) {
+  Object.keys(refs).forEach(function (id) {
+    var ref = refs[id],
+        isRef = ref == visibleRef;
+    ref.setVisible(isRef ? 1 : 0);
+    ref.hasControls = isRef;
+    ref.hasBorders = isRef;
+  });
+}
 
-  if (typeof file == "string") {
-    var strArray = file.split("/");
-    return strArray[strArray.length - 1];
+function updateCanvasImages(image) {
+  var refs = data.canvasImageRefs.get(),
+      canvas = data.canvas.get(),
+      imgRef = undefined;
+
+  if (refs[image.id]) {
+
+    imgRef = refs[image.id];
+    var opts = {
+      left: imgRef.getLeft(),
+      top: imgRef.getTop(),
+      width: imgRef.getWidth(),
+      height: imgRef.getHeight()
+    };
+    imgRef.setElement(image.imgRaw);
+    imgRef.set(opts);
   } else {
-    return file.name;
+
+    imgRef = new fabric.Image(image.imgRaw, {
+      left: 0,
+      top: 0
+    });
+
+    //TODO: CALCULATE BEST FIT
+    imgRef.set("width", 500);
+    imgRef.set("height", 500);
+
+    canvas.add(imgRef);
+    refs[image.id] = imgRef;
   }
+
+  udpateVisibleImages(refs, imgRef);
+  canvas.renderAll();
 }
 
 var ImageActions = {
@@ -57967,7 +58004,8 @@ var ImageActions = {
           isDirty: false
         });
 
-        updateCanvasImages(image);
+        var img = imageCursor.get();
+        updateCanvasImages({ id: img.id, imgRaw: img.imgRaw });
       });
     });
   },
@@ -57999,6 +58037,15 @@ var ImageActions = {
   updateScaleFunction: function updateScaleFunction(id, newFunction) {
     var imageCursor = images.select({ id: id });
     imageCursor.select("scaling").set("scaleFunction", newFunction);
+  },
+
+  initFabricCanvas: function initFabricCanvas(canvasId) {
+    var canvas = new fabric.Canvas(canvasId);
+    data.canvas.edit(canvas);
+    var width = canvas.wrapperEl.parentNode.clientWidth,
+        height = canvas.wrapperEl.parentNode.clientHeight;
+    canvas.setWidth(width);
+    canvas.setHeight(height);
   }
 
 };
@@ -58091,8 +58138,7 @@ var Stage = _interopRequire(require("../stage/stage.jsx"));
 var data = state({
   images: ["images"],
   isPreviewVisible: ["isPreviewVisible"],
-  activeImageId: ["activeImageId"],
-  canvasImages: ["canvasImages"]
+  activeImageId: ["activeImageId"]
 });
 
 var App = (function (_React$Component) {
@@ -58340,7 +58386,7 @@ var scaleFunctions = _interopRequire(require("../../utils/scaleFunctions"));
 var _ = _interopRequire(require("underscore"));
 
 var canvasId = "previewCanvas",
-    size = 500;
+    size = 400;
 
 var ImagePreview = (function (_React$Component) {
 	function ImagePreview(props) {
@@ -58530,6 +58576,8 @@ var gradient = _interopRequire(require("../../utils/gradient"));
 
 var ImageActions = _interopRequire(require("../../actions/imageActions"));
 
+var SCALE_BAR_WIDTH = 500;
+
 var ScaleBar = (function (_React$Component) {
   function ScaleBar(props) {
     _classCallCheck(this, ScaleBar);
@@ -58558,7 +58606,8 @@ var ScaleBar = (function (_React$Component) {
         return React.createElement(
           "div",
           null,
-          React.createElement("canvas", { id: "scaleBar", className: "preview__scale-bar", height: 1, width: 500, style: { height: 30, width: 500 } })
+          React.createElement("canvas", { id: "scaleBar", className: "preview__scale-bar",
+            height: 1, width: SCALE_BAR_WIDTH })
         );
       }
     }
@@ -58637,8 +58686,6 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 
 var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
-
 var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
@@ -58647,14 +58694,17 @@ var React = _interopRequire(require("react"));
 
 var fabric = require("fabric").fabric;
 
+var ImageActions = _interopRequire(require("../../actions/imageActions"));
+
 var canvasId = "stage";
 
 var Stage = (function (_React$Component) {
-  function Stage(props) {
+  function Stage() {
     _classCallCheck(this, Stage);
 
-    _get(Object.getPrototypeOf(Stage.prototype), "constructor", this).call(this, props);
-    this.state = { imageRefs: [] };
+    if (_React$Component != null) {
+      _React$Component.apply(this, arguments);
+    }
   }
 
   _inherits(Stage, _React$Component);
@@ -58662,32 +58712,23 @@ var Stage = (function (_React$Component) {
   _createClass(Stage, {
     componentDidMount: {
       value: function componentDidMount() {
-        this.canvas = new fabric.Canvas(canvasId);
-        var width = this.canvas.wrapperEl.parentNode.clientWidth,
-            height = this.canvas.wrapperEl.parentNode.clientHeight;
-        this.canvas.setWidth(width);
-        this.canvas.setHeight(height);
+        ImageActions.initFabricCanvas(canvasId);
       }
     },
-    componentDidUpdate: {
-      value: function componentDidUpdate() {
-        this.updateImages();
-      }
-    },
-    updateImages: {
-      value: function updateImages() {
+    render: {
+
+      /**updateImages(){
         //TODO: MAKE THIS WORK WITH EVENTS!
-        var image = this.props.images[0];
-        var img = new fabric.Image(image, {
+        let image = this.props.images[0];
+        let img = new fabric.Image(image, {
           left: 0,
           top: 0,
           width: 500,
           height: 500
         });
         this.canvas.add(img);
-      }
-    },
-    render: {
+      }**/
+
       value: function render() {
 
         return React.createElement(
@@ -58704,7 +58745,7 @@ var Stage = (function (_React$Component) {
 
 module.exports = Stage;
 
-},{"fabric":18,"react":179}],225:[function(require,module,exports){
+},{"../../actions/imageActions":216,"fabric":18,"react":179}],225:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58736,7 +58777,8 @@ var data = {
   isPreviewVisible: false,
   activeImageId: null,
   images: [],
-  canvasImages: []
+  canvasImageRefs: {},
+  canvas: null
 };
 
 var options = {

@@ -112,10 +112,16 @@
   padding: $padding;
   border-right: 1px solid #1a1a1a;
 }
-.preview canvas {
+.preview .preview__canvas {
+  width: 500px;
+  heightL: 500px;
   border: 1px solid #333;
   background: #000;
   cursor: crosshair;
+}
+.preview #scaleBar {
+  width: 500px;
+  height: 30px;
 }
 .intro {
   width: 80%;

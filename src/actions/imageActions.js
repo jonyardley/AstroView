@@ -7,30 +7,14 @@ let data = state({
     images: ['images'],
     isPreviewVisible: ['isPreviewVisible'],
     activeImageId: ['activeImageId'],
-    canvasImages: ['canvasImages']
+    canvasImageRefs: ['canvasImageRefs'],
+    canvas: ['canvas']
   }),
   images = data.images,
   canvasImages = data.canvasImages,
   previewImage = data.prevewImage,
   _id = 0;
 
-function getId (){
-  let id = _id;
-  _id++;
-  return id;
-}
-
-function getMax(imageData){
-  let length = imageData.length,
-      max = 0;
-  while(length--){
-    let value = imageData[length];
-    if(value > max){
-      max = value;
-    }
-  }
-  return max;
-}
 
 class Image {
   constructor(name){
@@ -59,12 +43,34 @@ class Image {
 }
 
 
-function updateCanvasImages(image){
-  let ciArray = canvasImages.get();
+function getId (){
+  let id = _id;
+  _id++;
+  return id;
+}
 
-  ciArray[image.id] = image.imgRaw;
-  
-  canvasImages.edit(ciArray)
+
+function getMax(imageData){
+  let length = imageData.length,
+      max = 0;
+  while(length--){
+    let value = imageData[length];
+    if(value > max){
+      max = value;
+    }
+  }
+  return max;
+}
+
+
+function getFileName(file){
+
+  if(typeof file == 'string'){
+    let strArray = file.split('/');
+    return strArray[strArray.length-1];
+  }else{
+    return file.name;
+  }
 
 }
 
@@ -100,20 +106,56 @@ function imageLoaded(data) {
 
       updateCanvasImages({id: id, imgRaw: raw});
 
-      //TODO: RE-ADD THIS FOR PRODUCTION!
-      //ImageActions.showPreview(true);
+      ImageActions.showPreview(true);
     });
   });
 }
 
-function getFileName(file){
+function udpateVisibleImages(refs, visibleRef){
+  Object.keys(refs).forEach(function (id) {
+    let ref = refs[id],
+        isRef = ref == visibleRef;
+    ref.setVisible(isRef ? 1 : 0);
+    ref.hasControls = isRef;
+    ref.hasBorders = isRef;
+  });
+}
 
-  if(typeof file == 'string'){
-    let strArray = file.split('/');
-    return strArray[strArray.length-1];
+function updateCanvasImages(image){
+  let refs = data.canvasImageRefs.get(),
+      canvas = data.canvas.get(),
+      imgRef;
+
+  if(refs[image.id]){
+
+    imgRef = refs[image.id];
+    let opts = {
+        left: imgRef.getLeft(),
+        top: imgRef.getTop(),
+        width: imgRef.getWidth(),
+        height: imgRef.getHeight()
+      };
+    imgRef.setElement(image.imgRaw);
+    imgRef.set(opts);
+
   }else{
-    return file.name;
+
+    imgRef = new fabric.Image(image.imgRaw, {
+      left: 0,
+      top: 0
+    });
+
+    //TODO: CALCULATE BEST FIT
+    imgRef.set('width', 500);
+    imgRef.set('height', 500);
+
+    canvas.add(imgRef);
+    refs[image.id] = imgRef
+
   }
+
+  udpateVisibleImages(refs, imgRef);
+  canvas.renderAll();
 
 }
 
@@ -145,7 +187,8 @@ let ImageActions = {
           isDirty: false
         });
 
-        updateCanvasImages(image);
+        let img = imageCursor.get();
+        updateCanvasImages({id: img.id, imgRaw: img.imgRaw});
       });
     });
 
@@ -155,11 +198,11 @@ let ImageActions = {
     data.isPreviewVisible.edit(state);
   },
 
-  setActiveImageId: function(id){
+  setActiveImageId: function setActiveImageId(id){
     data.activeImageId.edit(id);
   },
 
-  isImageActive: function(id){
+  isImageActive: function isImageActive(id){
     return id === data.activeImageId.get();
   },
 
@@ -167,7 +210,7 @@ let ImageActions = {
     new RenderImage(image, scale, callback, true); //true = isPreview
   },
 
-  updateScaling: function(image, min, max){
+  updateScaling: function updateScaling(image, min, max){
     let imageCursor = images.select({id: image.id}),
         scaling = imageCursor.get().scaling;
     scaling.scaleMin = min;
@@ -175,9 +218,18 @@ let ImageActions = {
     imageCursor.select('scaling').edit(scaling);
   },
 
-  updateScaleFunction: function(id, newFunction){
+  updateScaleFunction: function updateScaleFunction(id, newFunction){
     let imageCursor = images.select({id: id});
     imageCursor.select('scaling').set('scaleFunction', newFunction);
+  },
+
+  initFabricCanvas: function initFabricCanvas(canvasId){
+    let canvas = new fabric.Canvas(canvasId);
+    data.canvas.edit(canvas);
+    let width = canvas.wrapperEl.parentNode.clientWidth,
+        height = canvas.wrapperEl.parentNode.clientHeight;
+    canvas.setWidth(width);
+    canvas.setHeight(height);
   }
 
 };
