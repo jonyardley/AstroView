@@ -104,6 +104,10 @@ class ImagePreview extends React.Component {
 		ImageActions.updateScaleFunction(this.props.image.id, newFunction);
 	}
 
+	closePreview(){
+		ImageActions.showPreview(false);
+	}
+
 	render(){
 
 		let scaleOptions = scaleFunctions.values().map(function(sf, index){
@@ -124,7 +128,7 @@ class ImagePreview extends React.Component {
 						</select>
 					</div>
 					<button type="button" className="btn btn-primary" onClick={this.save.bind(this)}>Done</button>
-					<button type="button" className="btn btn-danger" onClick={() => console.log('TODO: CANCEL')}>Cancel</button>
+					<button type="button" className="btn btn-danger" onClick={this.closePreview}>Cancel</button>
 				</div>
 				</div>
 		);
