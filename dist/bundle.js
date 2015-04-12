@@ -57841,6 +57841,10 @@ var data = state({
     previewImage = data.prevewImage,
     _id = 0;
 
+//LISTENERS
+console.log(data.activeImageId);
+data.activeImageId.on(setActiveImage);
+
 var Image = function Image(name) {
   _classCallCheck(this, Image);
 
@@ -57930,14 +57934,27 @@ function imageLoaded(data) {
   });
 }
 
-function udpateVisibleImages(refs, visibleRef) {
-  Object.keys(refs).forEach(function (id) {
-    var ref = refs[id],
-        isRef = ref == visibleRef;
-    ref.setVisible(isRef ? 1 : 0);
-    ref.hasControls = isRef;
-    ref.hasBorders = isRef;
-  });
+function setActiveImage() {
+  var canvas = data.canvas.get();
+
+  if (canvas) {
+    (function () {
+      var refs = data.canvasImageRefs.get(),
+          activeRefId = data.activeImageId.get(),
+          activeRef = refs[activeRefId];
+
+      Object.keys(refs).forEach(function (id) {
+        var ref = refs[id],
+            isRef = ref == activeRef;
+        ref.setVisible(isRef ? 1 : 0);
+        if (isRef) {
+          canvas.setActiveObject(ref);
+        }
+      });
+
+      canvas.renderAll();
+    })();
+  }
 }
 
 function updateCanvasImages(image) {
@@ -57971,7 +57988,7 @@ function updateCanvasImages(image) {
     refs[image.id] = imgRef;
   }
 
-  udpateVisibleImages(refs, imgRef);
+  setActiveImage();
   canvas.renderAll();
 }
 

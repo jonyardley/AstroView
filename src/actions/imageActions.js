@@ -16,6 +16,12 @@ let data = state({
   _id = 0;
 
 
+//LISTENERS
+console.log(data.activeImageId);
+data.activeImageId.on(setActiveImage);
+
+
+
 class Image {
   constructor(name){
     this.id = getId();
@@ -111,15 +117,30 @@ function imageLoaded(data) {
   });
 }
 
-function udpateVisibleImages(refs, visibleRef){
-  Object.keys(refs).forEach(function (id) {
-    let ref = refs[id],
-        isRef = ref == visibleRef;
-    ref.setVisible(isRef ? 1 : 0);
-    ref.hasControls = isRef;
-    ref.hasBorders = isRef;
-  });
+
+function setActiveImage(){
+  let canvas = data.canvas.get();
+
+  if(canvas){
+    let refs = data.canvasImageRefs.get(),
+        activeRefId = data.activeImageId.get(),
+        activeRef = refs[activeRefId];
+
+    Object.keys(refs).forEach(function (id) {
+      let ref = refs[id],
+          isRef = ref == activeRef;
+      ref.setVisible(isRef ? 1 : 0);
+      if(isRef){
+        canvas.setActiveObject(ref);
+      }
+    });
+
+    canvas.renderAll();
+
+  }
+
 }
+
 
 function updateCanvasImages(image){
   let refs = data.canvasImageRefs.get(),
@@ -154,7 +175,7 @@ function updateCanvasImages(image){
 
   }
 
-  udpateVisibleImages(refs, imgRef);
+  setActiveImage();
   canvas.renderAll();
 
 }
