@@ -110,17 +110,26 @@ class ImagePreview extends React.Component {
 		ImageActions.showPreview(false);
 	}
 
+	updateName(name){
+		ImageActions.updateName(this.props.image, name);
+	}
+
 	render(){
 
 		let scaleOptions = scaleFunctions.values().map(function(sf, index){
 			return (<option key={index}>{sf}</option>);
 		});
 
+		let nameValueLink = {
+			value: this.props.image.name,
+			requestChange: this.updateName.bind(this)
+		};
+
 		return (
 			<div>
 				<div className="overlay"></div>
 				<div className="preview">
-					<h2>{this.props.image.name}</h2>
+					<input type="text" className="image-name" valueLink={nameValueLink} />
 					<canvas width={size} height={size} className="preview__canvas" id={canvasId}
 							onMouseMove={_.throttle(this.mouseMove.bind(this), 300)} />
 					<ScaleBar image={this.props.image}/>

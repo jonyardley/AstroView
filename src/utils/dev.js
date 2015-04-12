@@ -6,12 +6,9 @@ function initDev(){
 
   // DEV
   //let imagePath = 'fits/656nmos.fits';
-  let imagePath = 'fits/6008B000.fits';
-  ImageActions.addImage(imagePath);
+  //let imagePath = 'fits/6008B000.fits';
+  //ImageActions.addImage(imagePath);
 
 }
 
 module.exports = initDev;
-
-
-

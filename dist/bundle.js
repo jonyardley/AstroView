@@ -57983,6 +57983,7 @@ function updateCanvasImages(image) {
     //TODO: CALCULATE BEST FIT
     imgRef.set("width", 500);
     imgRef.set("height", 500);
+    imgRef.hasControls = false;
 
     canvas.add(imgRef);
     refs[image.id] = imgRef;
@@ -58025,6 +58026,11 @@ var ImageActions = {
         updateCanvasImages({ id: img.id, imgRaw: img.imgRaw });
       });
     });
+  },
+
+  updateName: function updateName(image, name) {
+    var imageCursor = images.select({ id: image.id });
+    imageCursor.set("name", name);
   },
 
   showPreview: function showPreview(state) {
@@ -58521,6 +58527,11 @@ var ImagePreview = (function (_React$Component) {
 				ImageActions.showPreview(false);
 			}
 		},
+		updateName: {
+			value: function updateName(name) {
+				ImageActions.updateName(this.props.image, name);
+			}
+		},
 		render: {
 			value: function render() {
 
@@ -58532,6 +58543,11 @@ var ImagePreview = (function (_React$Component) {
 					);
 				});
 
+				var nameValueLink = {
+					value: this.props.image.name,
+					requestChange: this.updateName.bind(this)
+				};
+
 				return React.createElement(
 					"div",
 					null,
@@ -58539,11 +58555,7 @@ var ImagePreview = (function (_React$Component) {
 					React.createElement(
 						"div",
 						{ className: "preview" },
-						React.createElement(
-							"h2",
-							null,
-							this.props.image.name
-						),
+						React.createElement("input", { type: "text", className: "image-name", valueLink: nameValueLink }),
 						React.createElement("canvas", { width: size, height: size, className: "preview__canvas", id: canvasId,
 							onMouseMove: _.throttle(this.mouseMove.bind(this), 300) }),
 						React.createElement(ScaleBar, { image: this.props.image }),
@@ -58878,8 +58890,8 @@ function initDev() {
 
   // DEV
   //let imagePath = 'fits/656nmos.fits';
-  var imagePath = "fits/6008B000.fits";
-  ImageActions.addImage(imagePath);
+  //let imagePath = 'fits/6008B000.fits';
+  //ImageActions.addImage(imagePath);
 }
 
 module.exports = initDev;

@@ -5,10 +5,9 @@
   top: 0
   bottom: 0
   padding: 20px
-  background: darken(#333333, 5)
+  background: $bg-dark
   color: #FFF
   padding: $padding
-  border-right: 1px solid darken(#333333, 10)
 
   .preview__canvas
     width: 500px
@@ -20,3 +19,16 @@
   #scaleBar
     width: 500px
     height: 30px
+
+  .image-name
+    background: none
+    border: none
+    color: #fff
+    font-size: 2em
+    border-bottom: 2px solid transparent
+    margin-bottom: 10px
+    outline: none
+    width: 100%
+
+    &:focus
+      border-bottom-color: $primary

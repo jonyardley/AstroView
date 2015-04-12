@@ -169,6 +169,7 @@ function updateCanvasImages(image){
     //TODO: CALCULATE BEST FIT
     imgRef.set('width', 500);
     imgRef.set('height', 500);
+    imgRef.hasControls = false;
 
     canvas.add(imgRef);
     refs[image.id] = imgRef
@@ -213,6 +214,11 @@ let ImageActions = {
       });
     });
 
+  },
+
+  updateName: function updateName(image, name){
+    let imageCursor = images.select({id: image.id});
+    imageCursor.set('name', name);
   },
 
   showPreview: function showPreview(state){
