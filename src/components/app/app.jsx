@@ -33,11 +33,11 @@ class App extends React.Component {
         activeImage = data.images.select({id: this.state.activeImageId}).get();
 
     let imagePreview = this.state.isPreviewVisible ? <ImagePreview image={previewImage} key={previewImage.id}/> : '' ,
-        stageContents = activeImage ? <Stage image={activeImage}/> : <Intro /> ;
+        stageContents = activeImage ? <Stage images={this.state.canvasImages}/> : <Intro /> ;
 
     return (
       <div className="main-inner">
-        
+
         <div className="stage-wrapper">
           {stageContents}
         </div>
