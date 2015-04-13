@@ -2,6 +2,7 @@ import state from '../state';
 import LoadImage from '../utils/loadImage';
 import RenderImage from '../utils/renderImage';
 import generateGradient from '../utils/gradient';
+import resize from '../utils/resize';
 
 let data = state({
     images: ['images'],
@@ -17,9 +18,7 @@ let data = state({
 
 
 //LISTENERS
-console.log(data.activeImageId);
 data.activeImageId.on(setActiveImage);
-
 
 
 class Image {
@@ -110,9 +109,15 @@ function imageLoaded(data) {
         isDirty: false
       });
 
-      updateCanvasImages({id: id, imgRaw: raw});
+      updateCanvasImages({
+        id: id,
+        imgRaw: raw,
+        width: image.get().metaData.width,
+        height: image.get().metaData.height
+      });
 
-      ImageActions.showPreview(true);
+      //TODO: ADD THIS BACK
+      //ImageActions.showPreview(true);
     });
   });
 }
@@ -166,9 +171,23 @@ function updateCanvasImages(image){
       top: 0
     });
 
-    //TODO: CALCULATE BEST FIT
-    imgRef.set('width', 500);
-    imgRef.set('height', 500);
+    let pos = resize({
+      canvas: {
+        w: canvas.wrapperEl.parentNode.clientWidth,
+        h: canvas.wrapperEl.parentNode.clientHeight
+      },
+      img: {
+        w: image.width,
+        h:image.height
+      }
+    });
+
+    console.log(pos);
+
+    imgRef.set('width', pos.w);
+    imgRef.set('height', pos.h);
+    imgRef.set('left', pos.x);
+    imgRef.set('top', pos.y);
     imgRef.hasControls = false;
 
     canvas.add(imgRef);
@@ -210,7 +229,12 @@ let ImageActions = {
         });
 
         let img = imageCursor.get();
-        updateCanvasImages({id: img.id, imgRaw: img.imgRaw});
+        updateCanvasImages({
+          id: img.id,
+          imgRaw: img.imgRaw,
+          width: image.metaData.width,
+          height: image.metaData.height
+        });
       });
     });
 

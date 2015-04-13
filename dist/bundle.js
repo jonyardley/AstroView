@@ -57829,6 +57829,8 @@ var RenderImage = _interopRequire(require("../utils/renderImage"));
 
 var generateGradient = _interopRequire(require("../utils/gradient"));
 
+var resize = _interopRequire(require("../utils/resize"));
+
 var data = state({
   images: ["images"],
   isPreviewVisible: ["isPreviewVisible"],
@@ -57842,7 +57844,6 @@ var data = state({
     _id = 0;
 
 //LISTENERS
-console.log(data.activeImageId);
 data.activeImageId.on(setActiveImage);
 
 var Image = function Image(name) {
@@ -57927,9 +57928,15 @@ function imageLoaded(data) {
         isDirty: false
       });
 
-      updateCanvasImages({ id: id, imgRaw: raw });
+      updateCanvasImages({
+        id: id,
+        imgRaw: raw,
+        width: image.get().metaData.width,
+        height: image.get().metaData.height
+      });
 
-      ImageActions.showPreview(true);
+      //TODO: ADD THIS BACK
+      //ImageActions.showPreview(true);
     });
   });
 }
@@ -57980,9 +57987,23 @@ function updateCanvasImages(image) {
       top: 0
     });
 
-    //TODO: CALCULATE BEST FIT
-    imgRef.set("width", 500);
-    imgRef.set("height", 500);
+    var pos = resize({
+      canvas: {
+        w: canvas.wrapperEl.parentNode.clientWidth,
+        h: canvas.wrapperEl.parentNode.clientHeight
+      },
+      img: {
+        w: image.width,
+        h: image.height
+      }
+    });
+
+    console.log(pos);
+
+    imgRef.set("width", pos.w);
+    imgRef.set("height", pos.h);
+    imgRef.set("left", pos.x);
+    imgRef.set("top", pos.y);
     imgRef.hasControls = false;
 
     canvas.add(imgRef);
@@ -58023,7 +58044,12 @@ var ImageActions = {
         });
 
         var img = imageCursor.get();
-        updateCanvasImages({ id: img.id, imgRaw: img.imgRaw });
+        updateCanvasImages({
+          id: img.id,
+          imgRaw: img.imgRaw,
+          width: image.metaData.width,
+          height: image.metaData.height
+        });
       });
     });
   },
@@ -58075,7 +58101,7 @@ var ImageActions = {
 
 module.exports = ImageActions;
 
-},{"../state":226,"../utils/gradient":228,"../utils/loadImage":229,"../utils/renderImage":230}],217:[function(require,module,exports){
+},{"../state":227,"../utils/gradient":229,"../utils/loadImage":230,"../utils/renderImage":231,"../utils/resize":232}],217:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58158,6 +58184,8 @@ var Intro = _interopRequire(require("../intro/intro.jsx"));
 
 var Stage = _interopRequire(require("../stage/stage.jsx"));
 
+var Toolbar = _interopRequire(require("../toolbar/toolbar.jsx"));
+
 var data = state({
   images: ["images"],
   isPreviewVisible: ["isPreviewVisible"],
@@ -58211,6 +58239,7 @@ var App = (function (_React$Component) {
             { className: "stage-wrapper" },
             stageContents
           ),
+          React.createElement(Toolbar, null),
           imagePreview,
           React.createElement(Sidebar, { images: images })
         );
@@ -58223,7 +58252,7 @@ var App = (function (_React$Component) {
 
 module.exports = App;
 
-},{"../../state":226,"../intro/intro.jsx":220,"../preview/imagePreview.jsx":221,"../sidebar/sidebar.jsx":223,"../stage/stage.jsx":224,"react":179}],219:[function(require,module,exports){
+},{"../../state":227,"../intro/intro.jsx":220,"../preview/imagePreview.jsx":221,"../sidebar/sidebar.jsx":223,"../stage/stage.jsx":224,"../toolbar/toolbar.jsx":225,"react":179}],219:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58589,7 +58618,7 @@ var ImagePreview = (function (_React$Component) {
 
 module.exports = ImagePreview;
 
-},{"../../actions/imageActions":216,"../../utils/scaleFunctions":231,"./scaleBar.jsx":222,"react":179,"underscore":180}],222:[function(require,module,exports){
+},{"../../actions/imageActions":216,"../../utils/scaleFunctions":233,"./scaleBar.jsx":222,"react":179,"underscore":180}],222:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58650,7 +58679,7 @@ var ScaleBar = (function (_React$Component) {
 
 module.exports = ScaleBar;
 
-},{"../../actions/imageActions":216,"../../utils/gradient":228,"react":179}],223:[function(require,module,exports){
+},{"../../actions/imageActions":216,"../../utils/gradient":229,"react":179}],223:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58748,19 +58777,6 @@ var Stage = (function (_React$Component) {
       }
     },
     render: {
-
-      /**updateImages(){
-        //TODO: MAKE THIS WORK WITH EVENTS!
-        let image = this.props.images[0];
-        let img = new fabric.Image(image, {
-          left: 0,
-          top: 0,
-          width: 500,
-          height: 500
-        });
-        this.canvas.add(img);
-      }**/
-
       value: function render() {
 
         return React.createElement(
@@ -58782,6 +58798,43 @@ module.exports = Stage;
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
 
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var React = _interopRequire(require("react"));
+
+var Toolbar = (function (_React$Component) {
+  function Toolbar() {
+    _classCallCheck(this, Toolbar);
+
+    if (_React$Component != null) {
+      _React$Component.apply(this, arguments);
+    }
+  }
+
+  _inherits(Toolbar, _React$Component);
+
+  _createClass(Toolbar, {
+    render: {
+      value: function render() {
+        return React.createElement("div", { className: "toolbar" });
+      }
+    }
+  });
+
+  return Toolbar;
+})(React.Component);
+
+module.exports = Toolbar;
+
+},{"react":179}],226:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
 var React = _interopRequire(require("react"));
 
 var App = _interopRequire(require("./components/app/app.jsx"));
@@ -58794,7 +58847,7 @@ React.render(React.createElement(App, null), document.getElementById("main"), fu
   };
 });
 
-},{"./components/app/app.jsx":218,"./utils/dev":227,"react":179}],226:[function(require,module,exports){
+},{"./components/app/app.jsx":218,"./utils/dev":228,"react":179}],227:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58877,7 +58930,7 @@ function state(opts) {
 
 module.exports = state;
 
-},{"baobab":2,"react":179}],227:[function(require,module,exports){
+},{"baobab":2,"react":179}],228:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58889,14 +58942,14 @@ function initDev() {
   console.log("--- DEV MODE ---");
 
   // DEV
-  //let imagePath = 'fits/656nmos.fits';
+  var imagePath = "fits/656nmos.fits";
   //let imagePath = 'fits/6008B000.fits';
-  //ImageActions.addImage(imagePath);
+  ImageActions.addImage(imagePath);
 }
 
 module.exports = initDev;
 
-},{"../actions/imageActions":216}],228:[function(require,module,exports){
+},{"../actions/imageActions":216}],229:[function(require,module,exports){
 "use strict";
 
 function render(opts) {
@@ -58930,7 +58983,7 @@ function normalize(v, min, max, newMax) {
 
 module.exports = { render: render };
 
-},{}],229:[function(require,module,exports){
+},{}],230:[function(require,module,exports){
 "use strict";
 
 var astro = require("fitsjs").astro;
@@ -58964,7 +59017,7 @@ module.exports = function LoadImage(file, callback) {
   var fits = new FITS(file, onLoad);
 };
 
-},{"fitsjs":19}],230:[function(require,module,exports){
+},{"fitsjs":19}],231:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -59058,7 +59111,36 @@ var RenderImage = (function () {
 
 module.exports = RenderImage;
 
-},{"./transformPixels":232,"workerjs":215}],231:[function(require,module,exports){
+},{"./transformPixels":234,"workerjs":215}],232:[function(require,module,exports){
+"use strict";
+
+module.exports = function resize(opts) {
+
+    var img = opts.img,
+        canvas = opts.canvas,
+        scale = scale || 1,
+        wRatio = canvas.w / img.w,
+        hRatio = canvas.h / img.h,
+        ratio = wRatio < hRatio ? wRatio : hRatio,
+        w = img.w * ratio,
+        h = img.h * ratio;
+
+    var offsetX = canvas.w - w,
+        offsetY = canvas.h - h,
+        x = offsetX / 2,
+        y = offsetY / 2;
+
+    console.log(x, y);
+
+    return {
+        x: x,
+        y: y,
+        w: w,
+        h: h
+    };
+};
+
+},{}],233:[function(require,module,exports){
 "use strict";
 
 var scalingMethods = {
@@ -59099,7 +59181,7 @@ module.exports = {
   values: values
 };
 
-},{}],232:[function(require,module,exports){
+},{}],234:[function(require,module,exports){
 "use strict";
 
 var Color = require("color");
@@ -59168,4 +59250,4 @@ function transformPixels(data) {
 
 module.exports = transformPixels;
 
-},{"./scaleFunctions":231,"color":13,"interpolation-arrays":20}]},{},[225]);
+},{"./scaleFunctions":233,"color":13,"interpolation-arrays":20}]},{},[226]);

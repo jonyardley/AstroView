@@ -4,6 +4,7 @@ import Sidebar from '../sidebar/sidebar.jsx';
 import ImagePreview from '../preview/imagePreview.jsx'
 import Intro from '../intro/intro.jsx';
 import Stage from '../stage/stage.jsx';
+import Toolbar from '../toolbar/toolbar.jsx';
 
 let data = state({
   images: ['images'],
@@ -41,6 +42,8 @@ class App extends React.Component {
         <div className="stage-wrapper">
           {stageContents}
         </div>
+
+        <Toolbar />
 
         {imagePreview}
 
