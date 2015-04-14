@@ -1,5 +1,7 @@
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/jonyardley/AstroView?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+[![Build Status](https://travis-ci.org/jonyardley/AstroView.svg)](https://travis-ci.org/jonyardley/AstroView)
+
 ![AstroView Logo](./dist/img/logo-black-transparent-120.png)
 
 AstroView is an astronomical image viewer, compositor & analysis tool which runs in your browser.
