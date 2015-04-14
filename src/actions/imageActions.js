@@ -116,8 +116,7 @@ function imageLoaded(data) {
         height: image.get().metaData.height
       });
 
-      //TODO: ADD THIS BACK
-      //ImageActions.showPreview(true);
+      ImageActions.showPreview(true);
     });
   });
 }

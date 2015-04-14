@@ -6,7 +6,7 @@ React.render(
   <App/>,
   document.getElementById('main'),
   function(){
-    if(window.location.hostname){
+    if(window.location.hostname === 'localhost'){
       dev()
     };
   }
