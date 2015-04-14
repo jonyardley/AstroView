@@ -8,6 +8,7 @@ deploy:
     secure: bB6dsOg7JMYPxCWzZVY+NoZW60FObFg0rBx1krsUNXh8OkM8xblJ9f4xIv+YBQIiiSsXLKa7GgFfg6UJddnvhQoEKrEB0kR/Yc4m7GgZS7BDx0nIXBN17fd2O1Pedd31i2K6mMPX0i7KOY358z5wwxNGIF0VNYLJAAkwtmAsFgI=
   app: dev
   domain: astroview
+  deployment_branch: development
   on:
     repo: jonyardley/AstroView
     branch: development
