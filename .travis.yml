@@ -5,13 +5,11 @@ script: npm run build
 deploy:
   provider: openshift
   user:
-  - user
+    secure: "MPZjIpFgnr6erC898mulmgzcdMMtvIv4sXWezCd4dghx1xk6N8EVjg4BihGWMF3wNjVysThsTEzv3DNavoblLVqBRY5i0BYNjmOG3yVHqYP1508YkanksEmD9zMRp6DhJ5jdYXLXlPZJjqB4BnLERFBu3w76ZDObxNKSeQi4RTA="
   password:
-  - password
+    secure: bB6dsOg7JMYPxCWzZVY+NoZW60FObFg0rBx1krsUNXh8OkM8xblJ9f4xIv+YBQIiiSsXLKa7GgFfg6UJddnvhQoEKrEB0kR/Yc4m7GgZS7BDx0nIXBN17fd2O1Pedd31i2K6mMPX0i7KOY358z5wwxNGIF0VNYLJAAkwtmAsFgI=
+  app: dev
   domain: astroview
-  app:
-    development: dev
-env:
-  global:
-  - secure: HszCoy0Y96vW8TBk1xwGm9FY8QlhZEBJHX5teI/H7eXHEn1Y8eAHreZkdhpoM0cSmSTvE3sIAoRafg6ZBkfdVCtM8eDMqS0hbID8CqPiB4ThOhrE+1mBFXUDIqI9Slq2porLry7MSdLO/cc1a8yi95FgxIsgDn7Pk+AeT711bxU=
-  - secure: KYK6G+RGWSKGavJJ77LuIgcid/hmythuxt3HV7PjCkFvoeysaGkgZK/JpCJcLSLyNPFFP06WpyiFhoM7R+gqnWxGxvwBjSpTAu6nR2o9LpT8aNFUDDCGdlGn9KASjo3FtUbJd4/QHeW1jsc0VJ3q9BN/DIhoSmcDofQ4ss46UPM=
+  on:
+    repo: jonyardley/AstroView
+    branch: development
