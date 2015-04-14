@@ -4,8 +4,7 @@ node_js:
 script: npm run build
 deploy:
   provider: openshift
-  user:
-    secure: "MPZjIpFgnr6erC898mulmgzcdMMtvIv4sXWezCd4dghx1xk6N8EVjg4BihGWMF3wNjVysThsTEzv3DNavoblLVqBRY5i0BYNjmOG3yVHqYP1508YkanksEmD9zMRp6DhJ5jdYXLXlPZJjqB4BnLERFBu3w76ZDObxNKSeQi4RTA="
+  user: jonyardley@me.com
   password:
     secure: bB6dsOg7JMYPxCWzZVY+NoZW60FObFg0rBx1krsUNXh8OkM8xblJ9f4xIv+YBQIiiSsXLKa7GgFfg6UJddnvhQoEKrEB0kR/Yc4m7GgZS7BDx0nIXBN17fd2O1Pedd31i2K6mMPX0i7KOY358z5wwxNGIF0VNYLJAAkwtmAsFgI=
   app: dev
@@ -13,9 +12,3 @@ deploy:
   on:
     repo: jonyardley/AstroView
     branch: development
-after_success:
-  - git init
-  - git config --global user.email "travis@localhost.localdomain"
-  - git config --global user.name "Travis CI"
-  - git add --all
-  - git commit -am "Travis change"
