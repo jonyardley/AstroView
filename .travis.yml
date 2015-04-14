@@ -1,4 +1,17 @@
 language: node_js
 node_js:
- - "0.10"
-script: "npm run build"
+- '0.10'
+script: npm run build
+deploy:
+  provider: openshift
+  user:
+  - user
+  password:
+  - password
+  domain: astroview
+  app:
+    development: dev
+env:
+  global:
+  - secure: HszCoy0Y96vW8TBk1xwGm9FY8QlhZEBJHX5teI/H7eXHEn1Y8eAHreZkdhpoM0cSmSTvE3sIAoRafg6ZBkfdVCtM8eDMqS0hbID8CqPiB4ThOhrE+1mBFXUDIqI9Slq2porLry7MSdLO/cc1a8yi95FgxIsgDn7Pk+AeT711bxU=
+  - secure: KYK6G+RGWSKGavJJ77LuIgcid/hmythuxt3HV7PjCkFvoeysaGkgZK/JpCJcLSLyNPFFP06WpyiFhoM7R+gqnWxGxvwBjSpTAu6nR2o9LpT8aNFUDDCGdlGn9KASjo3FtUbJd4/QHeW1jsc0VJ3q9BN/DIhoSmcDofQ4ss46UPM=
