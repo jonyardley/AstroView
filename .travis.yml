@@ -12,3 +12,9 @@ deploy:
   on:
     repo: jonyardley/AstroView
     branch: development
+after_success:
+  - git init
+  - git config --global user.email "travis@localhost.localdomain"
+  - git config --global user.name "Travis CI"
+  - git add --all
+  - git commit -am "Travis change"
