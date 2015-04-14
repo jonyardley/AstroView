@@ -9,6 +9,7 @@ deploy:
   app: dev
   domain: astroview
   on: development
+  skip_cleanup: true
 after_success:
   - npm run build
   - git init
