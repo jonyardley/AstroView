@@ -58842,7 +58842,9 @@ var Zoom = (function (_React$Component) {
             React.createElement(
               "a",
               { href: "#", className: "btn btn-default dropdown-toggle btn-xs", "data-toggle": "dropdown" },
-              "Zoom ",
+              "Zoom: ",
+              this.state.zoom,
+              " ",
               React.createElement("span", { className: "caret" })
             ),
             React.createElement(
@@ -58879,11 +58881,15 @@ var Zoom = (function (_React$Component) {
               React.createElement(
                 "li",
                 null,
-                React.createElement("input", { defaultValue: this.state.custom, className: "input-sm" }),
                 React.createElement(
-                  "a",
-                  { href: "#", className: "btn btn-primary btn-sx" },
-                  "Go"
+                  "div",
+                  { className: "btn-group" },
+                  React.createElement("input", { defaultValue: this.state.custom, className: "input-sm" }),
+                  React.createElement(
+                    "a",
+                    { href: "#", className: "btn btn-primary btn-sx" },
+                    "Go"
+                  )
                 )
               )
             )
