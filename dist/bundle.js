@@ -58803,52 +58803,58 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 
 var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
+var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
 var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
 
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
 var React = _interopRequire(require("react"));
 
-var Toolbar = (function (_React$Component) {
-  function Toolbar() {
-    _classCallCheck(this, Toolbar);
+var Zoom = (function (_React$Component) {
+  function Zoom(props) {
+    _classCallCheck(this, Zoom);
 
-    if (_React$Component != null) {
-      _React$Component.apply(this, arguments);
-    }
+    _get(Object.getPrototypeOf(Zoom.prototype), "constructor", this).call(this, props);
+    this.state = { custom: "100%", zoom: "Fit" };
   }
 
-  _inherits(Toolbar, _React$Component);
+  _inherits(Zoom, _React$Component);
 
-  _createClass(Toolbar, {
+  _createClass(Zoom, {
+    stopInputPropagation: {
+      value: function stopInputPropagation(e) {
+        if (e.target.type === "text") {
+          e.stopPropagation();
+          e.nativeEvent.stopImmediatePropagation();
+        }
+      }
+    },
     render: {
       value: function render() {
+
         return React.createElement(
           "div",
           { className: "zoom" },
           React.createElement(
             "div",
-            { className: "btn-group" },
-            React.createElement(
-              "a",
-              { href: "#", className: "btn btn-default btn-xs" },
-              "Primary"
-            ),
+            { className: "dropdown" },
             React.createElement(
               "a",
               { href: "#", className: "btn btn-default dropdown-toggle btn-xs", "data-toggle": "dropdown" },
+              "Zoom ",
               React.createElement("span", { className: "caret" })
             ),
             React.createElement(
               "ul",
-              { className: "dropdown-menu" },
+              { className: "dropdown-menu", onClick: this.stopInputPropagation },
               React.createElement(
                 "li",
                 null,
                 React.createElement(
                   "a",
                   { href: "#" },
-                  "Action"
+                  "50%"
                 )
               ),
               React.createElement(
@@ -58857,7 +58863,7 @@ var Toolbar = (function (_React$Component) {
                 React.createElement(
                   "a",
                   { href: "#" },
-                  "Another action"
+                  "100%"
                 )
               ),
               React.createElement(
@@ -58866,17 +58872,18 @@ var Toolbar = (function (_React$Component) {
                 React.createElement(
                   "a",
                   { href: "#" },
-                  "Something else here"
+                  "150%"
                 )
               ),
               React.createElement("li", { className: "divider" }),
               React.createElement(
                 "li",
                 null,
+                React.createElement("input", { defaultValue: this.state.custom, className: "input-sm" }),
                 React.createElement(
                   "a",
-                  { href: "#" },
-                  "Separated link"
+                  { href: "#", className: "btn btn-primary btn-sx" },
+                  "Go"
                 )
               )
             )
@@ -58886,10 +58893,10 @@ var Toolbar = (function (_React$Component) {
     }
   });
 
-  return Toolbar;
+  return Zoom;
 })(React.Component);
 
-module.exports = Toolbar;
+module.exports = Zoom;
 
 },{"react":179}],227:[function(require,module,exports){
 "use strict";
