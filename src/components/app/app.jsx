@@ -34,7 +34,8 @@ class App extends React.Component {
         activeImage = data.images.select({id: this.state.activeImageId}).get();
 
     let imagePreview = this.state.isPreviewVisible ? <ImagePreview image={previewImage} key={previewImage.id}/> : '' ,
-        stageContents = activeImage ? <Stage images={this.state.canvasImages}/> : <Intro /> ;
+        stageContents = activeImage ? <Stage images={this.state.canvasImages}/> : <Intro />,
+        toolbar = activeImage? <Toolbar /> : '';
 
     return (
       <div className="main-inner">
@@ -43,7 +44,7 @@ class App extends React.Component {
           {stageContents}
         </div>
 
-        <Toolbar />
+        {toolbar}
 
         {imagePreview}
 

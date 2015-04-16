@@ -10,6 +10,7 @@ deploy:
   domain: astroview
   on: development
   skip_cleanup: true
+  deployment_branch: development
 after_success:
   - npm run build
   - git init
