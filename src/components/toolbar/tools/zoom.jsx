@@ -5,11 +5,11 @@ class Zoom extends React.Component{
 
   constructor(props){
     super(props);
-    this.state = { custom: '100%', zoom: 'Fit' };
+    this.state = { custom: '100', zoom: 'Fit' };
   }
 
   stopInputPropagation(e){
-    if(e.target.type === "text"){
+    if(e.target.type === "number"){
       e.stopPropagation();
       e.nativeEvent.stopImmediatePropagation();
     }
@@ -18,18 +18,24 @@ class Zoom extends React.Component{
   render(){
 
     return(
-      <div className="zoom">
+      <div className="zoom tool">
         <div className="dropdown">
           <a href="#" className="btn btn-default dropdown-toggle btn-xs" data-toggle="dropdown" >Zoom: {this.state.zoom} <span className="caret"></span></a>
           <ul className="dropdown-menu" onClick={this.stopInputPropagation}>
+            <li><a href="#">Fit</a></li>
+            <li><a href="#">25%</a></li>
             <li><a href="#">50%</a></li>
             <li><a href="#">100%</a></li>
-            <li><a href="#">150%</a></li>
             <li className="divider"></li>
-            <li><div className="btn-group">
-              <input defaultValue={this.state.custom} className="input-sm" />
-              <a href="#" className="btn btn-primary btn-sx">Go</a>
-            </div></li>
+            <li>
+              <div className="input-group">
+                <span className="input-group-addon">%</span>
+                <input type="number" min="0" defaultValue={this.state.custom} className="form-control" />
+                <span className="input-group-btn">
+                  <button className="btn btn-primary" type="button">Set</button>
+                </span>
+              </div>
+            </li>
           </ul>
         </div>
       </div>

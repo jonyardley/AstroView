@@ -190,3 +190,18 @@
   height: 30px;
   border-bottom: 1px solid #16232f;
 }
+.toolbar .tool {
+  margin: 2px 6px;
+}
+.toolbar .zoom .input-group {
+  margin-bottom: 5px;
+  width: 150px;
+}
+.toolbar .zoom .input-group * {
+  height: 30px;
+  line-height: 1;
+  font-size: 12px;
+}
+.toolbar .zoom .input-group input {
+  padding: 5px;
+}

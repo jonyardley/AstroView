@@ -58816,7 +58816,7 @@ var Zoom = (function (_React$Component) {
     _classCallCheck(this, Zoom);
 
     _get(Object.getPrototypeOf(Zoom.prototype), "constructor", this).call(this, props);
-    this.state = { custom: "100%", zoom: "Fit" };
+    this.state = { custom: "100", zoom: "Fit" };
   }
 
   _inherits(Zoom, _React$Component);
@@ -58824,7 +58824,7 @@ var Zoom = (function (_React$Component) {
   _createClass(Zoom, {
     stopInputPropagation: {
       value: function stopInputPropagation(e) {
-        if (e.target.type === "text") {
+        if (e.target.type === "number") {
           e.stopPropagation();
           e.nativeEvent.stopImmediatePropagation();
         }
@@ -58835,7 +58835,7 @@ var Zoom = (function (_React$Component) {
 
         return React.createElement(
           "div",
-          { className: "zoom" },
+          { className: "zoom tool" },
           React.createElement(
             "div",
             { className: "dropdown" },
@@ -58856,6 +58856,24 @@ var Zoom = (function (_React$Component) {
                 React.createElement(
                   "a",
                   { href: "#" },
+                  "Fit"
+                )
+              ),
+              React.createElement(
+                "li",
+                null,
+                React.createElement(
+                  "a",
+                  { href: "#" },
+                  "25%"
+                )
+              ),
+              React.createElement(
+                "li",
+                null,
+                React.createElement(
+                  "a",
+                  { href: "#" },
                   "50%"
                 )
               ),
@@ -58868,27 +58886,27 @@ var Zoom = (function (_React$Component) {
                   "100%"
                 )
               ),
-              React.createElement(
-                "li",
-                null,
-                React.createElement(
-                  "a",
-                  { href: "#" },
-                  "150%"
-                )
-              ),
               React.createElement("li", { className: "divider" }),
               React.createElement(
                 "li",
                 null,
                 React.createElement(
                   "div",
-                  { className: "btn-group" },
-                  React.createElement("input", { defaultValue: this.state.custom, className: "input-sm" }),
+                  { className: "input-group" },
                   React.createElement(
-                    "a",
-                    { href: "#", className: "btn btn-primary btn-sx" },
-                    "Go"
+                    "span",
+                    { className: "input-group-addon" },
+                    "%"
+                  ),
+                  React.createElement("input", { type: "number", min: "0", defaultValue: this.state.custom, className: "form-control" }),
+                  React.createElement(
+                    "span",
+                    { className: "input-group-btn" },
+                    React.createElement(
+                      "button",
+                      { className: "btn btn-primary", type: "button" },
+                      "Set"
+                    )
                   )
                 )
               )
