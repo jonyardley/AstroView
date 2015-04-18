@@ -58816,7 +58816,7 @@ var Zoom = (function (_React$Component) {
     _classCallCheck(this, Zoom);
 
     _get(Object.getPrototypeOf(Zoom.prototype), "constructor", this).call(this, props);
-    this.state = { custom: "100", zoom: "Fit" };
+    this.state = { custom: "100", zoom: props.zoom };
   }
 
   _inherits(Zoom, _React$Component);

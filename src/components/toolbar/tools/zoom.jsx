@@ -5,7 +5,7 @@ class Zoom extends React.Component{
 
   constructor(props){
     super(props);
-    this.state = { custom: '100', zoom: 'Fit' };
+    this.state = { custom: '100', zoom: props.zoom };
   }
 
   stopInputPropagation(e){
