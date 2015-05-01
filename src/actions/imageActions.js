@@ -9,7 +9,9 @@ let data = state({
     isPreviewVisible: ['isPreviewVisible'],
     activeImageId: ['activeImageId'],
     canvasImageRefs: ['canvasImageRefs'],
-    canvas: ['canvas']
+    imageGroupRef: ['imageGroupRef'],
+    canvas: ['canvas'],
+    tools: ['tools']
   }),
   images = data.images,
   canvasImages = data.canvasImages,
@@ -116,8 +118,7 @@ function imageLoaded(data) {
         height: image.get().metaData.height
       });
 
-      //TODO: ADD THIS BACK
-      //ImageActions.showPreview(true);
+      ImageActions.showPreview(true);
     });
   });
 }
@@ -150,6 +151,7 @@ function setActiveImage(){
 function updateCanvasImages(image){
   let refs = data.canvasImageRefs.get(),
       canvas = data.canvas.get(),
+      group = data.imageGroupRef.get(),
       imgRef;
 
   if(refs[image.id]){
@@ -182,15 +184,13 @@ function updateCanvasImages(image){
       }
     });
 
-    console.log(pos);
-
     imgRef.set('width', pos.w);
     imgRef.set('height', pos.h);
     imgRef.set('left', pos.x);
     imgRef.set('top', pos.y);
     imgRef.hasControls = false;
 
-    canvas.add(imgRef);
+    group.add(imgRef);
     refs[image.id] = imgRef
 
   }
@@ -281,6 +281,19 @@ let ImageActions = {
         height = canvas.wrapperEl.parentNode.clientHeight;
     canvas.setWidth(width);
     canvas.setHeight(height);
+    let group = new fabric.Group();
+    canvas.add(group);
+    data.imageGroupRef.edit(group);
+  },
+
+  setZoom: function setZoom(value){
+    let group = data.imageGroupRef.get(),
+        canvas = data.canvas.get();
+
+    group.scaleX = value;
+    group.scaleY = value;
+
+    canvas.renderAll();
   }
 
 };

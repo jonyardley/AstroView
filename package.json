@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "dependencies": {},
+  "dependencies": {
+    "express": "^4.12.3"
+  },
   "devDependencies": {
     "babelify": "^5.0.4",
     "baobab": "^0.4.2",
+    "browserify": "^9.0.8",
     "color": "^0.8.0",
     "http-server": "^0.7.5",
     "interpolation-arrays": "0.0.0",
@@ -21,12 +24,17 @@
   },
   "scripts": {
     "install": "./node_modules/.bin/napa",
-    "start": "npm run watch & npm run static & npm run sass & npm run reload",
+    "watch": "npm run js-watch & npm run static & npm run sass-watch & npm run reload",
     "reload": "./node_modules/.bin/livereload dist",
-    "watch": "./node_modules/.bin/watchify src/main.jsx -t babelify -t workerify -o dist/bundle.js",
+    "js-watch": "./node_modules/.bin/watchify src/main.jsx -t babelify -t workerify -o dist/bundle.js",
+    "js-build": "./node_modules/.bin/browserify src/main.jsx -t babelify -t workerify -o dist/bundle.js",
     "static": "./node_modules/.bin/http-server dist",
-    "sass": "./node_modules/.bin/stylus -w -r -o dist/styles src/styles/main.styl"
+    "sass-watch": "./node_modules/.bin/stylus -w -r -o dist/styles src/styles/main.styl",
+    "sass-build": "./node_modules/.bin/stylus -r -o dist/styles src/styles/main.styl",
+    "build": "npm run js-build && npm run sass-build",
+    "start": "node server.js"
   },
+  "main": "server.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/jonyardley/AstroView.git"

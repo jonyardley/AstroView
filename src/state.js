@@ -8,7 +8,11 @@ var data = {
   activeImageId: null,
   images: [],
   canvasImageRefs: {},
-  canvas: null
+  canvas: null,
+  imageGroupRef: null,
+  tools:{
+    zoom: 'Fit'
+  }
 };
 
 var options = {

@@ -1,4 +1,20 @@
 language: node_js
 node_js:
- - "0.10"
-script: "npm run build"
+  - '0.10'
+deploy:
+  provider: openshift
+  user: jonyardley@me.com
+  password:
+    secure: bB6dsOg7JMYPxCWzZVY+NoZW60FObFg0rBx1krsUNXh8OkM8xblJ9f4xIv+YBQIiiSsXLKa7GgFfg6UJddnvhQoEKrEB0kR/Yc4m7GgZS7BDx0nIXBN17fd2O1Pedd31i2K6mMPX0i7KOY358z5wwxNGIF0VNYLJAAkwtmAsFgI=
+  app: dev
+  domain: astroview
+  on: development
+  skip_cleanup: true
+  deployment_branch: development
+after_success:
+  - npm run build
+  - git init
+  - git config --global user.email "travis@localhost.localdomain"
+  - git config --global user.name "Travis CI"
+  - git add --all
+  - git commit -am "Travis change"
