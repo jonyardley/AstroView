@@ -57796,7 +57796,9 @@ var data = state({
   isPreviewVisible: ["isPreviewVisible"],
   activeImageId: ["activeImageId"],
   canvasImageRefs: ["canvasImageRefs"],
-  canvas: ["canvas"]
+  imageGroupRef: ["imageGroupRef"],
+  canvas: ["canvas"],
+  tools: ["tools"]
 }),
     images = data.images,
     canvasImages = data.canvasImages,
@@ -57926,6 +57928,7 @@ function setActiveImage() {
 function updateCanvasImages(image) {
   var refs = data.canvasImageRefs.get(),
       canvas = data.canvas.get(),
+      group = data.imageGroupRef.get(),
       imgRef = undefined;
 
   if (refs[image.id]) {
@@ -57957,15 +57960,13 @@ function updateCanvasImages(image) {
       }
     });
 
-    console.log(pos);
-
     imgRef.set("width", pos.w);
     imgRef.set("height", pos.h);
     imgRef.set("left", pos.x);
     imgRef.set("top", pos.y);
     imgRef.hasControls = false;
 
-    canvas.add(imgRef);
+    group.add(imgRef);
     refs[image.id] = imgRef;
   }
 
@@ -58054,6 +58055,19 @@ var ImageActions = {
         height = canvas.wrapperEl.parentNode.clientHeight;
     canvas.setWidth(width);
     canvas.setHeight(height);
+    var group = new fabric.Group();
+    canvas.add(group);
+    data.imageGroupRef.edit(group);
+  },
+
+  setZoom: function setZoom(value) {
+    var group = data.imageGroupRef.get(),
+        canvas = data.canvas.get();
+
+    group.scaleX = value;
+    group.scaleY = value;
+
+    canvas.renderAll();
   }
 
 };
@@ -58148,7 +58162,8 @@ var Toolbar = _interopRequire(require("../toolbar/toolbar.jsx"));
 var data = state({
   images: ["images"],
   isPreviewVisible: ["isPreviewVisible"],
-  activeImageId: ["activeImageId"]
+  activeImageId: ["activeImageId"],
+  tools: ["tools"]
 });
 
 var App = (function (_React$Component) {
@@ -58189,7 +58204,7 @@ var App = (function (_React$Component) {
 
         var imagePreview = this.state.isPreviewVisible ? React.createElement(ImagePreview, { image: previewImage, key: previewImage.id }) : "",
             stageContents = activeImage ? React.createElement(Stage, { images: this.state.canvasImages }) : React.createElement(Intro, null),
-            toolbar = activeImage ? React.createElement(Toolbar, null) : "";
+            toolbar = activeImage ? React.createElement(Toolbar, { tools: this.state.tools }) : "";
 
         return React.createElement(
           "div",
@@ -58785,7 +58800,7 @@ var Toolbar = (function (_React$Component) {
         return React.createElement(
           "div",
           { className: "toolbar" },
-          React.createElement(Zoom, null)
+          React.createElement(Zoom, { value: this.props.tools.zoom })
         );
       }
     }
@@ -58811,12 +58826,14 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
 
 var React = _interopRequire(require("react"));
 
+var ImageActions = _interopRequire(require("../../../actions/imageActions"));
+
 var Zoom = (function (_React$Component) {
   function Zoom(props) {
     _classCallCheck(this, Zoom);
 
     _get(Object.getPrototypeOf(Zoom.prototype), "constructor", this).call(this, props);
-    this.state = { custom: "100", zoom: props.zoom };
+    this.state = { custom: "100" };
   }
 
   _inherits(Zoom, _React$Component);
@@ -58830,8 +58847,29 @@ var Zoom = (function (_React$Component) {
         }
       }
     },
+    updateCustomZoomValue: {
+      value: function updateCustomZoomValue(value) {
+        this.setState({ custom: value });
+        this.updateZoom(this.state.custom);
+      }
+    },
+    updateZoomWithCustom: {
+      value: function updateZoomWithCustom() {
+        ImageActions.setZoom(this.state.custom);
+      }
+    },
+    updateZoom: {
+      value: function updateZoom(value) {
+        ImageActions.setZoom(value);
+      }
+    },
     render: {
       value: function render() {
+
+        var customZoomValueLink = {
+          value: this.state.custom,
+          requestChange: this.updateCustomZoom
+        };
 
         return React.createElement(
           "div",
@@ -58843,7 +58881,7 @@ var Zoom = (function (_React$Component) {
               "a",
               { href: "#", className: "btn btn-default dropdown-toggle btn-xs", "data-toggle": "dropdown" },
               "Zoom: ",
-              this.state.zoom,
+              this.props.value,
               " ",
               React.createElement("span", { className: "caret" })
             ),
@@ -58855,7 +58893,7 @@ var Zoom = (function (_React$Component) {
                 null,
                 React.createElement(
                   "a",
-                  { href: "#" },
+                  { href: "#", onClick: this.updateZoom.bind(this, "Fit") },
                   "Fit"
                 )
               ),
@@ -58864,7 +58902,7 @@ var Zoom = (function (_React$Component) {
                 null,
                 React.createElement(
                   "a",
-                  { href: "#" },
+                  { href: "#", onClick: this.updateZoom.bind(this, 0.25) },
                   "25%"
                 )
               ),
@@ -58873,7 +58911,7 @@ var Zoom = (function (_React$Component) {
                 null,
                 React.createElement(
                   "a",
-                  { href: "#" },
+                  { href: "#", onClick: this.updateZoom.bind(this, 0.5) },
                   "50%"
                 )
               ),
@@ -58882,7 +58920,7 @@ var Zoom = (function (_React$Component) {
                 null,
                 React.createElement(
                   "a",
-                  { href: "#" },
+                  { href: "#", onClick: this.updateZoom.bind(this, 1) },
                   "100%"
                 )
               ),
@@ -58898,13 +58936,13 @@ var Zoom = (function (_React$Component) {
                     { className: "input-group-addon" },
                     "%"
                   ),
-                  React.createElement("input", { type: "number", min: "0", defaultValue: this.state.custom, className: "form-control" }),
+                  React.createElement("input", { type: "number", min: "0", valueLink: customZoomValueLink, className: "form-control" }),
                   React.createElement(
                     "span",
                     { className: "input-group-btn" },
                     React.createElement(
                       "button",
-                      { className: "btn btn-primary", type: "button" },
+                      { className: "btn btn-primary", type: "button", onClick: this.updateCustomZoomValue.bind(this) },
                       "Set"
                     )
                   )
@@ -58922,7 +58960,7 @@ var Zoom = (function (_React$Component) {
 
 module.exports = Zoom;
 
-},{"react":179}],227:[function(require,module,exports){
+},{"../../../actions/imageActions":216,"react":179}],227:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58955,7 +58993,11 @@ var data = {
   activeImageId: null,
   images: [],
   canvasImageRefs: {},
-  canvas: null
+  canvas: null,
+  imageGroupRef: null,
+  tools: {
+    zoom: "Fit"
+  }
 };
 
 var options = {

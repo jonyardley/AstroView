@@ -6,7 +6,7 @@ class Toolbar extends React.Component{
   render(){
     return(
       <div className="toolbar">
-        <Zoom />
+        <Zoom value={this.props.tools.zoom} />
       </div>
     )
   }
