@@ -24,7 +24,7 @@
   },
   "scripts": {
     "install": "./node_modules/.bin/napa",
-    "watch": "npm run js-watch & npm run static & npm run sass-watch & npm run reload",
+    "dev": "npm run js-watch & npm run static & npm run sass-watch & npm run reload",
     "reload": "./node_modules/.bin/livereload dist",
     "js-watch": "./node_modules/.bin/watchify src/main.jsx -t babelify -t workerify -o dist/bundle.js",
     "js-build": "./node_modules/.bin/browserify src/main.jsx -t babelify -t workerify -o dist/bundle.js",
@@ -47,8 +47,7 @@
   "homepage": "https://github.com/jonyardley/AstroView",
   "napa": {
     "fitsjs": "astrojs/fitsjs",
-    "fabric": "kangax/fabric.js",
-    "imageBuffer": "mattdesl/imagebuffer"
+    "fabric": "kangax/fabric.js"
   },
   "browser": {
     "fitsjs": "fitsjs/lib/fits"
