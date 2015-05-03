@@ -9,7 +9,6 @@ var data = {
   images: [],
   canvasImageRefs: {},
   canvas: null,
-  imageGroupRef: null,
   tools:{
     zoom: 'Fit'
   }

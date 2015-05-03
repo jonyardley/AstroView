@@ -1,26 +1,22 @@
-import state from '../state';
+import appState from '../state';
 import LoadImage from '../utils/loadImage';
 import RenderImage from '../utils/renderImage';
 import generateGradient from '../utils/gradient';
 import resize from '../utils/resize';
 
-let data = state({
+let state = appState({
     images: ['images'],
     isPreviewVisible: ['isPreviewVisible'],
     activeImageId: ['activeImageId'],
     canvasImageRefs: ['canvasImageRefs'],
-    imageGroupRef: ['imageGroupRef'],
     canvas: ['canvas'],
     tools: ['tools']
   }),
-  images = data.images,
-  canvasImages = data.canvasImages,
-  previewImage = data.prevewImage,
   _id = 0;
 
 
 //LISTENERS
-data.activeImageId.on(setActiveImage);
+state.activeImageId.on(setActiveImage);
 
 
 class Image {
@@ -86,7 +82,7 @@ function imageLoaded(data) {
 
   let id = this.id;
 
-  let imageCursor = images.select({id: id});
+  let imageCursor = state.images.select({id: id});
   imageCursor.merge(data);
   ImageActions.setActiveImageId(id);
 
@@ -104,7 +100,7 @@ function imageLoaded(data) {
   //TODO: USE ASYNC TO MAKE THIS NICER!
   new RenderImage(image, scale, function(thumb){
     new RenderImage(image, 1, function(raw){
-      let image = images.select({id: id});
+      let image = state.images.select({id: id});
       image.merge({
         imgRaw: raw,
         imgThumb: thumb,
@@ -125,11 +121,11 @@ function imageLoaded(data) {
 
 
 function setActiveImage(){
-  let canvas = data.canvas.get();
+  let canvas = state.canvas.get();
 
   if(canvas){
-    let refs = data.canvasImageRefs.get(),
-        activeRefId = data.activeImageId.get(),
+    let refs = state.canvasImageRefs.get(),
+        activeRefId = state.activeImageId.get(),
         activeRef = refs[activeRefId];
 
     Object.keys(refs).forEach(function (id) {
@@ -149,9 +145,8 @@ function setActiveImage(){
 
 
 function updateCanvasImages(image){
-  let refs = data.canvasImageRefs.get(),
-      canvas = data.canvas.get(),
-      group = data.imageGroupRef.get(),
+  let refs = state.canvasImageRefs.get(),
+      canvas = state.canvas.get(),
       imgRef;
 
   if(refs[image.id]){
@@ -160,8 +155,8 @@ function updateCanvasImages(image){
     let opts = {
         left: imgRef.getLeft(),
         top: imgRef.getTop(),
-        width: imgRef.getWidth(),
-        height: imgRef.getHeight()
+        scaleX: imgRef.scaleX,
+        scaleY: imgRef.scaleY
       };
     imgRef.setElement(image.imgRaw);
     imgRef.set(opts);
@@ -184,13 +179,17 @@ function updateCanvasImages(image){
       }
     });
 
-    imgRef.set('width', pos.w);
-    imgRef.set('height', pos.h);
-    imgRef.set('left', pos.x);
-    imgRef.set('top', pos.y);
+    //imgRef.set('width', pos.w);
+    //imgRef.set('height', pos.h);
+    //imgRef.set('left', pos.x);
+    //imgRef.set('top', pos.y);
     imgRef.hasControls = false;
+    imgRef.originX = 'center'
+    imgRef.originY = 'center'
 
-    group.add(imgRef);
+    canvas.add(imgRef);
+    canvas.centerObject(imgRef);
+
     refs[image.id] = imgRef
 
   }
@@ -205,14 +204,14 @@ let ImageActions = {
 
   addImage: function addImage(file){
     let newImage = new Image(getFileName(file));
-    images.push(newImage);
+    state.images.push(newImage);
     LoadImage(file, imageLoaded.bind(newImage));
   },
 
   removeImage: () => console.log('Remove Image'),
 
   updateImage: function(image){
-    let imageCursor = images.select({id: image.id}),
+    let imageCursor = state.images.select({id: image.id}),
     image = imageCursor.get();
 
     imageCursor.merge({isDirty: true});
@@ -241,20 +240,20 @@ let ImageActions = {
   },
 
   updateName: function updateName(image, name){
-    let imageCursor = images.select({id: image.id});
+    let imageCursor = state.images.select({id: image.id});
     imageCursor.set('name', name);
   },
 
-  showPreview: function showPreview(state){
-    data.isPreviewVisible.edit(state);
+  showPreview: function showPreview(image){
+    state.isPreviewVisible.edit(image);
   },
 
   setActiveImageId: function setActiveImageId(id){
-    data.activeImageId.edit(id);
+    state.activeImageId.edit(id);
   },
 
   isImageActive: function isImageActive(id){
-    return id === data.activeImageId.get();
+    return id === state.activeImageId.get();
   },
 
   renderPreview: function renderPreview(image, scale, callback){
@@ -262,7 +261,7 @@ let ImageActions = {
   },
 
   updateScaling: function updateScaling(image, min, max){
-    let imageCursor = images.select({id: image.id}),
+    let imageCursor = state.images.select({id: image.id}),
         scaling = imageCursor.get().scaling;
     scaling.scaleMin = min;
     scaling.scaleMax = max;
@@ -270,28 +269,29 @@ let ImageActions = {
   },
 
   updateScaleFunction: function updateScaleFunction(id, newFunction){
-    let imageCursor = images.select({id: id});
+    let imageCursor = state.images.select({id: id});
     imageCursor.select('scaling').set('scaleFunction', newFunction);
   },
 
   initFabricCanvas: function initFabricCanvas(canvasId){
     let canvas = new fabric.Canvas(canvasId);
-    data.canvas.edit(canvas);
+    state.canvas.edit(canvas);
     let width = canvas.wrapperEl.parentNode.clientWidth,
         height = canvas.wrapperEl.parentNode.clientHeight;
     canvas.setWidth(width);
     canvas.setHeight(height);
-    let group = new fabric.Group();
-    canvas.add(group);
-    data.imageGroupRef.edit(group);
   },
 
   setZoom: function setZoom(value){
-    let group = data.imageGroupRef.get(),
-        canvas = data.canvas.get();
+    let images = state.canvasImageRefs.get(),
+        canvas = state.canvas.get();
 
-    group.scaleX = value;
-    group.scaleY = value;
+    Object.keys(images).forEach(function (key) {
+      let image = images[key];
+      image.scaleX = value;
+      image.scaleY = value;
+      canvas.centerObject(image);
+    });
 
     canvas.renderAll();
   }
