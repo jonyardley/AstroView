@@ -57801,7 +57801,9 @@ var data = state({
   isPreviewVisible: ["isPreviewVisible"],
   activeImageId: ["activeImageId"],
   canvasImageRefs: ["canvasImageRefs"],
-  canvas: ["canvas"]
+  imageGroupRef: ["imageGroupRef"],
+  canvas: ["canvas"],
+  tools: ["tools"]
 }),
     images = data.images,
     canvasImages = data.canvasImages,
@@ -57931,6 +57933,7 @@ function setActiveImage() {
 function updateCanvasImages(image) {
   var refs = data.canvasImageRefs.get(),
       canvas = data.canvas.get(),
+      group = data.imageGroupRef.get(),
       imgRef = undefined;
 
   if (refs[image.id]) {
@@ -57962,15 +57965,13 @@ function updateCanvasImages(image) {
       }
     });
 
-    console.log(pos);
-
     imgRef.set("width", pos.w);
     imgRef.set("height", pos.h);
     imgRef.set("left", pos.x);
     imgRef.set("top", pos.y);
     imgRef.hasControls = false;
 
-    canvas.add(imgRef);
+    group.add(imgRef);
     refs[image.id] = imgRef;
   }
 
@@ -58059,13 +58060,26 @@ var ImageActions = {
         height = canvas.wrapperEl.parentNode.clientHeight;
     canvas.setWidth(width);
     canvas.setHeight(height);
+    var group = new fabric.Group();
+    canvas.add(group);
+    data.imageGroupRef.edit(group);
+  },
+
+  setZoom: function setZoom(value) {
+    var group = data.imageGroupRef.get(),
+        canvas = data.canvas.get();
+
+    group.scaleX = value;
+    group.scaleY = value;
+
+    canvas.renderAll();
   }
 
 };
 
 module.exports = ImageActions;
 
-},{"../state":227,"../utils/gradient":229,"../utils/loadImage":230,"../utils/renderImage":231,"../utils/resize":232}],217:[function(require,module,exports){
+},{"../state":228,"../utils/gradient":230,"../utils/loadImage":231,"../utils/renderImage":232,"../utils/resize":233}],217:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58153,7 +58167,8 @@ var Toolbar = _interopRequire(require("../toolbar/toolbar.jsx"));
 var data = state({
   images: ["images"],
   isPreviewVisible: ["isPreviewVisible"],
-  activeImageId: ["activeImageId"]
+  activeImageId: ["activeImageId"],
+  tools: ["tools"]
 });
 
 var App = (function (_React$Component) {
@@ -58193,7 +58208,8 @@ var App = (function (_React$Component) {
             activeImage = data.images.select({ id: this.state.activeImageId }).get();
 
         var imagePreview = this.state.isPreviewVisible ? React.createElement(ImagePreview, { image: previewImage, key: previewImage.id }) : "",
-            stageContents = activeImage ? React.createElement(Stage, { images: this.state.canvasImages }) : React.createElement(Intro, null);
+            stageContents = activeImage ? React.createElement(Stage, { images: this.state.canvasImages }) : React.createElement(Intro, null),
+            toolbar = activeImage ? React.createElement(Toolbar, { tools: this.state.tools }) : "";
 
         return React.createElement(
           "div",
@@ -58203,7 +58219,7 @@ var App = (function (_React$Component) {
             { className: "stage-wrapper" },
             stageContents
           ),
-          React.createElement(Toolbar, null),
+          toolbar,
           imagePreview,
           React.createElement(Sidebar, { images: images })
         );
@@ -58216,7 +58232,7 @@ var App = (function (_React$Component) {
 
 module.exports = App;
 
-},{"../../state":227,"../intro/intro.jsx":220,"../preview/imagePreview.jsx":221,"../sidebar/sidebar.jsx":223,"../stage/stage.jsx":224,"../toolbar/toolbar.jsx":225,"react":179}],219:[function(require,module,exports){
+},{"../../state":228,"../intro/intro.jsx":220,"../preview/imagePreview.jsx":221,"../sidebar/sidebar.jsx":223,"../stage/stage.jsx":224,"../toolbar/toolbar.jsx":225,"react":179}],219:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58557,7 +58573,7 @@ var ImagePreview = (function (_React$Component) {
 							null,
 							React.createElement(
 								"select",
-								{ onChange: this.updateScaleFunction.bind(this) },
+								{ className: "form-control", onChange: this.updateScaleFunction.bind(this) },
 								scaleOptions
 							)
 						),
@@ -58582,7 +58598,7 @@ var ImagePreview = (function (_React$Component) {
 
 module.exports = ImagePreview;
 
-},{"../../actions/imageActions":216,"../../utils/scaleFunctions":233,"./scaleBar.jsx":222,"react":179,"underscore":180}],222:[function(require,module,exports){
+},{"../../actions/imageActions":216,"../../utils/scaleFunctions":234,"./scaleBar.jsx":222,"react":179,"underscore":180}],222:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58643,7 +58659,7 @@ var ScaleBar = (function (_React$Component) {
 
 module.exports = ScaleBar;
 
-},{"../../actions/imageActions":216,"../../utils/gradient":229,"react":179}],223:[function(require,module,exports){
+},{"../../actions/imageActions":216,"../../utils/gradient":230,"react":179}],223:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58770,6 +58786,8 @@ var _classCallCheck = function (instance, Constructor) { if (!(instance instance
 
 var React = _interopRequire(require("react"));
 
+var Zoom = _interopRequire(require("./tools/zoom.jsx"));
+
 var Toolbar = (function (_React$Component) {
   function Toolbar() {
     _classCallCheck(this, Toolbar);
@@ -58784,7 +58802,11 @@ var Toolbar = (function (_React$Component) {
   _createClass(Toolbar, {
     render: {
       value: function render() {
-        return React.createElement("div", { className: "toolbar" });
+        return React.createElement(
+          "div",
+          { className: "toolbar" },
+          React.createElement(Zoom, { value: this.props.tools.zoom })
+        );
       }
     }
   });
@@ -58794,7 +58816,156 @@ var Toolbar = (function (_React$Component) {
 
 module.exports = Toolbar;
 
-},{"react":179}],226:[function(require,module,exports){
+},{"./tools/zoom.jsx":226,"react":179}],226:[function(require,module,exports){
+"use strict";
+
+var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
+
+var _createClass = (function () { function defineProperties(target, props) { for (var key in props) { var prop = props[key]; prop.configurable = true; if (prop.value) prop.writable = true; } Object.defineProperties(target, props); } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+var _get = function get(object, property, receiver) { var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc && desc.writable) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+var _inherits = function (subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; };
+
+var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
+
+var React = _interopRequire(require("react"));
+
+var ImageActions = _interopRequire(require("../../../actions/imageActions"));
+
+var Zoom = (function (_React$Component) {
+  function Zoom(props) {
+    _classCallCheck(this, Zoom);
+
+    _get(Object.getPrototypeOf(Zoom.prototype), "constructor", this).call(this, props);
+    this.state = { custom: "100" };
+  }
+
+  _inherits(Zoom, _React$Component);
+
+  _createClass(Zoom, {
+    stopInputPropagation: {
+      value: function stopInputPropagation(e) {
+        if (e.target.type === "number") {
+          e.stopPropagation();
+          e.nativeEvent.stopImmediatePropagation();
+        }
+      }
+    },
+    updateCustomZoomValue: {
+      value: function updateCustomZoomValue(value) {
+        this.setState({ custom: value });
+        this.updateZoom(this.state.custom);
+      }
+    },
+    updateZoomWithCustom: {
+      value: function updateZoomWithCustom() {
+        ImageActions.setZoom(this.state.custom);
+      }
+    },
+    updateZoom: {
+      value: function updateZoom(value) {
+        ImageActions.setZoom(value);
+      }
+    },
+    render: {
+      value: function render() {
+
+        var customZoomValueLink = {
+          value: this.state.custom,
+          requestChange: this.updateCustomZoom
+        };
+
+        return React.createElement(
+          "div",
+          { className: "zoom tool" },
+          React.createElement(
+            "div",
+            { className: "dropdown" },
+            React.createElement(
+              "a",
+              { href: "#", className: "btn btn-default dropdown-toggle btn-xs", "data-toggle": "dropdown" },
+              "Zoom: ",
+              this.props.value,
+              " ",
+              React.createElement("span", { className: "caret" })
+            ),
+            React.createElement(
+              "ul",
+              { className: "dropdown-menu", onClick: this.stopInputPropagation },
+              React.createElement(
+                "li",
+                null,
+                React.createElement(
+                  "a",
+                  { href: "#", onClick: this.updateZoom.bind(this, "Fit") },
+                  "Fit"
+                )
+              ),
+              React.createElement(
+                "li",
+                null,
+                React.createElement(
+                  "a",
+                  { href: "#", onClick: this.updateZoom.bind(this, 0.25) },
+                  "25%"
+                )
+              ),
+              React.createElement(
+                "li",
+                null,
+                React.createElement(
+                  "a",
+                  { href: "#", onClick: this.updateZoom.bind(this, 0.5) },
+                  "50%"
+                )
+              ),
+              React.createElement(
+                "li",
+                null,
+                React.createElement(
+                  "a",
+                  { href: "#", onClick: this.updateZoom.bind(this, 1) },
+                  "100%"
+                )
+              ),
+              React.createElement("li", { className: "divider" }),
+              React.createElement(
+                "li",
+                null,
+                React.createElement(
+                  "div",
+                  { className: "input-group" },
+                  React.createElement(
+                    "span",
+                    { className: "input-group-addon" },
+                    "%"
+                  ),
+                  React.createElement("input", { type: "number", min: "0", valueLink: customZoomValueLink, className: "form-control" }),
+                  React.createElement(
+                    "span",
+                    { className: "input-group-btn" },
+                    React.createElement(
+                      "button",
+                      { className: "btn btn-primary", type: "button", onClick: this.updateCustomZoomValue.bind(this) },
+                      "Set"
+                    )
+                  )
+                )
+              )
+            )
+          )
+        );
+      }
+    }
+  });
+
+  return Zoom;
+})(React.Component);
+
+module.exports = Zoom;
+
+},{"../../../actions/imageActions":216,"react":179}],227:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58811,7 +58982,7 @@ React.render(React.createElement(App, null), document.getElementById("main"), fu
   };
 });
 
-},{"./components/app/app.jsx":218,"./utils/dev":228,"react":179}],227:[function(require,module,exports){
+},{"./components/app/app.jsx":218,"./utils/dev":229,"react":179}],228:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58827,7 +58998,11 @@ var data = {
   activeImageId: null,
   images: [],
   canvasImageRefs: {},
-  canvas: null
+  canvas: null,
+  imageGroupRef: null,
+  tools: {
+    zoom: "Fit"
+  }
 };
 
 var options = {
@@ -58894,7 +59069,7 @@ function state(opts) {
 
 module.exports = state;
 
-},{"baobab":2,"react":179}],228:[function(require,module,exports){
+},{"baobab":2,"react":179}],229:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -58913,7 +59088,7 @@ function initDev() {
 
 module.exports = initDev;
 
-},{"../actions/imageActions":216}],229:[function(require,module,exports){
+},{"../actions/imageActions":216}],230:[function(require,module,exports){
 "use strict";
 
 function render(opts) {
@@ -58947,7 +59122,7 @@ function normalize(v, min, max, newMax) {
 
 module.exports = { render: render };
 
-},{}],230:[function(require,module,exports){
+},{}],231:[function(require,module,exports){
 "use strict";
 
 var astro = require("fitsjs").astro;
@@ -58981,7 +59156,7 @@ module.exports = function LoadImage(file, callback) {
   var fits = new FITS(file, onLoad);
 };
 
-},{"fitsjs":19}],231:[function(require,module,exports){
+},{"fitsjs":19}],232:[function(require,module,exports){
 "use strict";
 
 var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["default"] : obj; };
@@ -59075,7 +59250,7 @@ var RenderImage = (function () {
 
 module.exports = RenderImage;
 
-},{"./transformPixels":234,"workerjs":215}],232:[function(require,module,exports){
+},{"./transformPixels":235,"workerjs":215}],233:[function(require,module,exports){
 "use strict";
 
 module.exports = function resize(opts) {
@@ -59104,7 +59279,7 @@ module.exports = function resize(opts) {
     };
 };
 
-},{}],233:[function(require,module,exports){
+},{}],234:[function(require,module,exports){
 "use strict";
 
 var scalingMethods = {
@@ -59145,7 +59320,7 @@ module.exports = {
   values: values
 };
 
-},{}],234:[function(require,module,exports){
+},{}],235:[function(require,module,exports){
 "use strict";
 
 var Color = require("color");
@@ -59214,4 +59389,4 @@ function transformPixels(data) {
 
 module.exports = transformPixels;
 
-},{"./scaleFunctions":233,"color":13,"interpolation-arrays":20}]},{},[226]);
+},{"./scaleFunctions":234,"color":13,"interpolation-arrays":20}]},{},[227]);

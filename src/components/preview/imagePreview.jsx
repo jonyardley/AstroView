@@ -134,7 +134,7 @@ class ImagePreview extends React.Component {
 							onMouseMove={_.throttle(this.mouseMove.bind(this), 300)} />
 					<ScaleBar image={this.props.image}/>
 					<div>
-						<select onChange={this.updateScaleFunction.bind(this)}>
+						<select className="form-control" onChange={this.updateScaleFunction.bind(this)}>
 							{scaleOptions}
 						</select>
 					</div>

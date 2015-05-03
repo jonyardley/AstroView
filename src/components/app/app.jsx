@@ -9,7 +9,8 @@ import Toolbar from '../toolbar/toolbar.jsx';
 let data = state({
   images: ['images'],
   isPreviewVisible: ['isPreviewVisible'],
-  activeImageId: ['activeImageId']
+  activeImageId: ['activeImageId'],
+  tools: ['tools']
 });
 
 class App extends React.Component {
@@ -34,7 +35,8 @@ class App extends React.Component {
         activeImage = data.images.select({id: this.state.activeImageId}).get();
 
     let imagePreview = this.state.isPreviewVisible ? <ImagePreview image={previewImage} key={previewImage.id}/> : '' ,
-        stageContents = activeImage ? <Stage images={this.state.canvasImages}/> : <Intro /> ;
+        stageContents = activeImage ? <Stage images={this.state.canvasImages}/> : <Intro />,
+      toolbar = activeImage? <Toolbar tools={this.state.tools} /> : '';
 
     return (
       <div className="main-inner">
@@ -43,7 +45,7 @@ class App extends React.Component {
           {stageContents}
         </div>
 
-        <Toolbar />
+        {toolbar}
 
         {imagePreview}
 
