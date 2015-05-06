@@ -4503,7 +4503,7 @@ module.exports={
 }
 },{}],18:[function(require,module,exports){
 (function (process,Buffer){
-/* build: `node build.js modules=ALL exclude=gestures,json minifier=uglifyjs` */
+/* build: `node build.js modules=ALL exclude=json,gestures minifier=uglifyjs` */
 /*! Fabric.js Copyright 2008-2015, Printio (Juriy Zaytsev, Maxim Chernyak) */
 
 var fabric = fabric || { version: "1.5.0" };
@@ -57781,7 +57781,7 @@ var _interopRequire = function (obj) { return obj && obj.__esModule ? obj["defau
 
 var _classCallCheck = function (instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } };
 
-var state = _interopRequire(require("../state"));
+var appState = _interopRequire(require("../state"));
 
 var LoadImage = _interopRequire(require("../utils/loadImage"));
 
@@ -57791,22 +57791,18 @@ var generateGradient = _interopRequire(require("../utils/gradient"));
 
 var resize = _interopRequire(require("../utils/resize"));
 
-var data = state({
+var state = appState({
   images: ["images"],
   isPreviewVisible: ["isPreviewVisible"],
   activeImageId: ["activeImageId"],
   canvasImageRefs: ["canvasImageRefs"],
-  imageGroupRef: ["imageGroupRef"],
   canvas: ["canvas"],
   tools: ["tools"]
 }),
-    images = data.images,
-    canvasImages = data.canvasImages,
-    previewImage = data.prevewImage,
     _id = 0;
 
 //LISTENERS
-data.activeImageId.on(setActiveImage);
+state.activeImageId.on(setActiveImage);
 
 var Image = function Image(name) {
   _classCallCheck(this, Image);
@@ -57865,7 +57861,7 @@ function imageLoaded(data) {
 
   var id = this.id;
 
-  var imageCursor = images.select({ id: id });
+  var imageCursor = state.images.select({ id: id });
   imageCursor.merge(data);
   ImageActions.setActiveImageId(id);
 
@@ -57883,7 +57879,7 @@ function imageLoaded(data) {
   //TODO: USE ASYNC TO MAKE THIS NICER!
   new RenderImage(image, scale, function (thumb) {
     new RenderImage(image, 1, function (raw) {
-      var image = images.select({ id: id });
+      var image = state.images.select({ id: id });
       image.merge({
         imgRaw: raw,
         imgThumb: thumb,
@@ -57903,12 +57899,12 @@ function imageLoaded(data) {
 }
 
 function setActiveImage() {
-  var canvas = data.canvas.get();
+  var canvas = state.canvas.get();
 
   if (canvas) {
     (function () {
-      var refs = data.canvasImageRefs.get(),
-          activeRefId = data.activeImageId.get(),
+      var refs = state.canvasImageRefs.get(),
+          activeRefId = state.activeImageId.get(),
           activeRef = refs[activeRefId];
 
       Object.keys(refs).forEach(function (id) {
@@ -57926,9 +57922,8 @@ function setActiveImage() {
 }
 
 function updateCanvasImages(image) {
-  var refs = data.canvasImageRefs.get(),
-      canvas = data.canvas.get(),
-      group = data.imageGroupRef.get(),
+  var refs = state.canvasImageRefs.get(),
+      canvas = state.canvas.get(),
       imgRef = undefined;
 
   if (refs[image.id]) {
@@ -57937,8 +57932,8 @@ function updateCanvasImages(image) {
     var opts = {
       left: imgRef.getLeft(),
       top: imgRef.getTop(),
-      width: imgRef.getWidth(),
-      height: imgRef.getHeight()
+      scaleX: imgRef.scaleX,
+      scaleY: imgRef.scaleY
     };
     imgRef.setElement(image.imgRaw);
     imgRef.set(opts);
@@ -57960,13 +57955,17 @@ function updateCanvasImages(image) {
       }
     });
 
-    imgRef.set("width", pos.w);
-    imgRef.set("height", pos.h);
-    imgRef.set("left", pos.x);
-    imgRef.set("top", pos.y);
+    //imgRef.set('width', pos.w);
+    //imgRef.set('height', pos.h);
+    //imgRef.set('left', pos.x);
+    //imgRef.set('top', pos.y);
     imgRef.hasControls = false;
+    imgRef.originX = "center";
+    imgRef.originY = "center";
 
-    group.add(imgRef);
+    canvas.add(imgRef);
+    canvas.centerObject(imgRef);
+
     refs[image.id] = imgRef;
   }
 
@@ -57978,7 +57977,7 @@ var ImageActions = {
 
   addImage: function addImage(file) {
     var newImage = new Image(getFileName(file));
-    images.push(newImage);
+    state.images.push(newImage);
     LoadImage(file, imageLoaded.bind(newImage));
   },
 
@@ -57987,7 +57986,7 @@ var ImageActions = {
   },
 
   updateImage: function updateImage(image) {
-    var imageCursor = images.select({ id: image.id }),
+    var imageCursor = state.images.select({ id: image.id }),
         image = imageCursor.get();
 
     imageCursor.merge({ isDirty: true });
@@ -58015,20 +58014,20 @@ var ImageActions = {
   },
 
   updateName: function updateName(image, name) {
-    var imageCursor = images.select({ id: image.id });
+    var imageCursor = state.images.select({ id: image.id });
     imageCursor.set("name", name);
   },
 
-  showPreview: function showPreview(state) {
-    data.isPreviewVisible.edit(state);
+  showPreview: function showPreview(image) {
+    state.isPreviewVisible.edit(image);
   },
 
   setActiveImageId: function setActiveImageId(id) {
-    data.activeImageId.edit(id);
+    state.activeImageId.edit(id);
   },
 
   isImageActive: function isImageActive(id) {
-    return id === data.activeImageId.get();
+    return id === state.activeImageId.get();
   },
 
   renderPreview: function renderPreview(image, scale, callback) {
@@ -58036,7 +58035,7 @@ var ImageActions = {
   },
 
   updateScaling: function updateScaling(image, min, max) {
-    var imageCursor = images.select({ id: image.id }),
+    var imageCursor = state.images.select({ id: image.id }),
         scaling = imageCursor.get().scaling;
     scaling.scaleMin = min;
     scaling.scaleMax = max;
@@ -58044,29 +58043,37 @@ var ImageActions = {
   },
 
   updateScaleFunction: function updateScaleFunction(id, newFunction) {
-    var imageCursor = images.select({ id: id });
+    var imageCursor = state.images.select({ id: id });
     imageCursor.select("scaling").set("scaleFunction", newFunction);
   },
 
   initFabricCanvas: function initFabricCanvas(canvasId) {
     var canvas = new fabric.Canvas(canvasId);
-    data.canvas.edit(canvas);
+    state.canvas.edit(canvas);
     var width = canvas.wrapperEl.parentNode.clientWidth,
         height = canvas.wrapperEl.parentNode.clientHeight;
     canvas.setWidth(width);
     canvas.setHeight(height);
-    var group = new fabric.Group();
-    canvas.add(group);
-    data.imageGroupRef.edit(group);
   },
 
   setZoom: function setZoom(value) {
-    var group = data.imageGroupRef.get(),
-        canvas = data.canvas.get();
+    var images = state.canvasImageRefs.get(),
+        canvas = state.canvas.get(),
+        w = canvas.getWidth(),
+        h = canvas.getHeight(),
+        label = value === "Fit" ? "Fit" : "" + Math.round(value * 100) + "%";
 
-    group.scaleX = value;
-    group.scaleY = value;
-
+    Object.keys(images).forEach(function (key) {
+      var image = images[key];
+      if (value === "Fit") {
+        if (w >= h) image.scaleToHeight(h);
+        if (h >= w) image.scaleToWidth(w);
+        canvas.centerObject(image);
+      } else {
+        image.scale(value);
+      }
+    });
+    state.tools.set("zoom", label);
     canvas.renderAll();
   }
 
@@ -58850,12 +58857,11 @@ var Zoom = (function (_React$Component) {
     updateCustomZoomValue: {
       value: function updateCustomZoomValue(value) {
         this.setState({ custom: value });
-        this.updateZoom(this.state.custom);
       }
     },
     updateZoomWithCustom: {
       value: function updateZoomWithCustom() {
-        ImageActions.setZoom(this.state.custom);
+        ImageActions.setZoom(this.state.custom / 100);
       }
     },
     updateZoom: {
@@ -58868,7 +58874,7 @@ var Zoom = (function (_React$Component) {
 
         var customZoomValueLink = {
           value: this.state.custom,
-          requestChange: this.updateCustomZoom
+          requestChange: this.updateCustomZoomValue.bind(this)
         };
 
         return React.createElement(
@@ -58942,7 +58948,7 @@ var Zoom = (function (_React$Component) {
                     { className: "input-group-btn" },
                     React.createElement(
                       "button",
-                      { className: "btn btn-primary", type: "button", onClick: this.updateCustomZoomValue.bind(this) },
+                      { className: "btn btn-primary", type: "button", onClick: this.updateZoomWithCustom.bind(this) },
                       "Set"
                     )
                   )
@@ -58994,9 +59000,8 @@ var data = {
   images: [],
   canvasImageRefs: {},
   canvas: null,
-  imageGroupRef: null,
   tools: {
-    zoom: "Fit"
+    zoom: "100%"
   }
 };
 
@@ -59263,8 +59268,6 @@ module.exports = function resize(opts) {
         offsetY = canvas.h - h,
         x = offsetX / 2,
         y = offsetY / 2;
-
-    console.log(x, y);
 
     return {
         x: x,

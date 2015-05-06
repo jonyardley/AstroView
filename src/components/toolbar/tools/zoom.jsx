@@ -5,7 +5,7 @@ class Zoom extends React.Component{
 
   constructor(props){
     super(props);
-    this.state = { custom: '100' };
+    this.state = { custom: '100'};
   }
 
   stopInputPropagation(e){
@@ -17,11 +17,10 @@ class Zoom extends React.Component{
 
   updateCustomZoomValue(value){
     this.setState({custom: value});
-    this.updateZoom(this.state.custom);
   }
 
   updateZoomWithCustom(){
-    ImageActions.setZoom(this.state.custom);
+    ImageActions.setZoom(this.state.custom/100);
   }
 
   updateZoom(value){
@@ -32,7 +31,7 @@ class Zoom extends React.Component{
 
     let customZoomValueLink = {
       value: this.state.custom,
-      requestChange: this.updateCustomZoom
+      requestChange: this.updateCustomZoomValue.bind(this)
     }
 
     return(
@@ -50,7 +49,7 @@ class Zoom extends React.Component{
                 <span className="input-group-addon">%</span>
                 <input type="number" min="0" valueLink={customZoomValueLink} className="form-control" />
                 <span className="input-group-btn">
-                  <button className="btn btn-primary" type="button" onClick={this.updateCustomZoomValue.bind(this)}>Set</button>
+                  <button className="btn btn-primary" type="button" onClick={this.updateZoomWithCustom.bind(this)}>Set</button>
                 </span>
               </div>
             </li>
