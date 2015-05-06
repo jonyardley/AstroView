@@ -284,15 +284,22 @@ let ImageActions = {
 
   setZoom: function setZoom(value){
     let images = state.canvasImageRefs.get(),
-        canvas = state.canvas.get();
+        canvas = state.canvas.get(),
+        w = canvas.getWidth(),
+        h = canvas.getHeight(),
+        label = value === 'Fit' ? 'Fit' : `${Math.round(value*100)}%`;
 
     Object.keys(images).forEach(function (key) {
       let image = images[key];
-      image.scaleX = value;
-      image.scaleY = value;
-      canvas.centerObject(image);
+      if(value === 'Fit'){
+        if (w >= h) image.scaleToHeight(h)
+        if (h >= w) image.scaleToWidth(w)
+        canvas.centerObject(image);
+      }else{
+        image.scale(value);
+      }
     });
-
+    state.tools.set('zoom', label);
     canvas.renderAll();
   }
 

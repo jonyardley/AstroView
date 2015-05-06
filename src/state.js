@@ -10,7 +10,7 @@ var data = {
   canvasImageRefs: {},
   canvas: null,
   tools:{
-    zoom: 'Fit'
+    zoom: '100%'
   }
 };
 

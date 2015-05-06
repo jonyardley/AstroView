@@ -14,8 +14,6 @@ module.exports = function resize(opts){
       x = offsetX / 2,
       y = offsetY / 2;
 
-  console.log(x, y)
-
   return{
     x: x,
     y: y,

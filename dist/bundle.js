@@ -49,7 +49,7 @@ var Baobab = require('./src/baobab.js'),
 
 // Non-writable version
 Object.defineProperty(Baobab, 'version', {
-  value: '0.4.4'
+  value: '0.4.3'
 });
 
 // Exposing helpers
@@ -1366,9 +1366,6 @@ Baobab.prototype.commit = function(referenceRecord) {
 };
 
 Baobab.prototype.select = function(path) {
-  if (!path)
-    throw Error('Baobab.select: invalid path.');
-
   if (arguments.length > 1)
     path = helpers.arrayOf(arguments);
 
@@ -1412,7 +1409,7 @@ Baobab.prototype.select = function(path) {
 };
 
 Baobab.prototype.root = function() {
-  return this.select([]);
+  return this.select();
 };
 
 Baobab.prototype.reference = function(path) {
@@ -2072,7 +2069,7 @@ Cursor.prototype.release = function() {
   // Dereferencing
   delete this.tree;
   delete this.path;
-  delete this.solvedPath;
+  delete this.solvePath;
 
   // Killing emitter
   this.kill();
@@ -2095,7 +2092,6 @@ type.Cursor = function (value) {
 module.exports = Cursor;
 
 },{"./combination.js":6,"./helpers.js":8,"./mixins.js":10,"./type.js":11,"emmett":3}],8:[function(require,module,exports){
-(function (global){
 /**
  * Baobab Helpers
  * ===============
@@ -2139,7 +2135,7 @@ function clone(deep, item) {
   if (!item ||
       typeof item !== 'object' ||
       item instanceof Error ||
-      ('ArrayBuffer' in global && item instanceof ArrayBuffer))
+      item instanceof ArrayBuffer)
     return item;
 
   // Array
@@ -2355,7 +2351,6 @@ module.exports = {
   solvePath: solvePath
 };
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"./type.js":11}],9:[function(require,module,exports){
 /**
  * Baobab Merge
@@ -58063,15 +58058,22 @@ var ImageActions = {
 
   setZoom: function setZoom(value) {
     var images = state.canvasImageRefs.get(),
-        canvas = state.canvas.get();
+        canvas = state.canvas.get(),
+        w = canvas.getWidth(),
+        h = canvas.getHeight(),
+        label = value === "Fit" ? "Fit" : "" + Math.round(value * 100) + "%";
 
     Object.keys(images).forEach(function (key) {
       var image = images[key];
-      image.scaleX = value;
-      image.scaleY = value;
-      canvas.centerObject(image);
+      if (value === "Fit") {
+        if (w >= h) image.scaleToHeight(h);
+        if (h >= w) image.scaleToWidth(w);
+        canvas.centerObject(image);
+      } else {
+        image.scale(value);
+      }
     });
-
+    state.tools.set("zoom", label);
     canvas.renderAll();
   }
 
@@ -58855,12 +58857,11 @@ var Zoom = (function (_React$Component) {
     updateCustomZoomValue: {
       value: function updateCustomZoomValue(value) {
         this.setState({ custom: value });
-        this.updateZoom(this.state.custom);
       }
     },
     updateZoomWithCustom: {
       value: function updateZoomWithCustom() {
-        ImageActions.setZoom(this.state.custom);
+        ImageActions.setZoom(this.state.custom / 100);
       }
     },
     updateZoom: {
@@ -58873,7 +58874,7 @@ var Zoom = (function (_React$Component) {
 
         var customZoomValueLink = {
           value: this.state.custom,
-          requestChange: this.updateCustomZoom
+          requestChange: this.updateCustomZoomValue.bind(this)
         };
 
         return React.createElement(
@@ -58947,7 +58948,7 @@ var Zoom = (function (_React$Component) {
                     { className: "input-group-btn" },
                     React.createElement(
                       "button",
-                      { className: "btn btn-primary", type: "button", onClick: this.updateCustomZoomValue.bind(this) },
+                      { className: "btn btn-primary", type: "button", onClick: this.updateZoomWithCustom.bind(this) },
                       "Set"
                     )
                   )
@@ -59000,7 +59001,7 @@ var data = {
   canvasImageRefs: {},
   canvas: null,
   tools: {
-    zoom: "Fit"
+    zoom: "100%"
   }
 };
 
@@ -59267,8 +59268,6 @@ module.exports = function resize(opts) {
         offsetY = canvas.h - h,
         x = offsetX / 2,
         y = offsetY / 2;
-
-    console.log(x, y);
 
     return {
         x: x,
