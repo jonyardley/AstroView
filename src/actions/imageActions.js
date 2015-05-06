@@ -301,6 +301,11 @@ let ImageActions = {
     });
     state.tools.set('zoom', label);
     canvas.renderAll();
+  },
+
+  updateColors: function updateColors(image, colors){
+    let imageCursor = state.images.select({id: image.id});
+    imageCursor.select('scaling').set('colors', colors);
   }
 
 };

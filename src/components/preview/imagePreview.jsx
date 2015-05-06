@@ -3,6 +3,7 @@ import ImageActions from '../../actions/imageActions';
 import ScaleBar from './scaleBar.jsx';
 import scaleFunctions from '../../utils/scaleFunctions';
 import _ from 'underscore';
+import Colors from './colours.jsx';
 
 var canvasId = 'previewCanvas',
 		size = 400;
@@ -133,6 +134,7 @@ class ImagePreview extends React.Component {
 					<canvas width={size} height={size} className="preview__canvas" id={canvasId}
 							onMouseMove={_.throttle(this.mouseMove.bind(this), 300)} />
 					<ScaleBar image={this.props.image}/>
+					<Colors image={this.props.image} colors={this.props.image.scaling.colors} />
 					<div>
 						<select className="form-control" onChange={this.updateScaleFunction.bind(this)}>
 							{scaleOptions}

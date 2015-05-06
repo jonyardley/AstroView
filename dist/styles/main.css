@@ -1,3 +1,10 @@
+* {
+  -webkit-user-select: none;
+  -moz-user-select: -moz-none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
 #main {
   min-width: 1024px;
   position: absolute;
@@ -110,7 +117,7 @@
 }
 .preview .preview__canvas {
   width: 500px;
-  heightL: 500px;
+  height: 500px;
   border: 1px solid #333;
   background: #000;
   cursor: crosshair;
@@ -131,6 +138,33 @@
 }
 .preview .image-name:focus {
   border-bottom-color: #f05e00;
+}
+.preview .colors {
+  height: 50px;
+  width: 500px;
+}
+.preview .colors .color {
+  height: 50px;
+  float: left;
+  margin-bottom: 5px;
+  cursor: pointer;
+}
+.preview .colors .color:active {
+  cursor: ew-resize !important;
+}
+.preview .colors .placeholder {
+  background: $secondary;
+  float: left;
+  height: 50px;
+  line-height: 50px;
+  text-align: center;
+  outline: 2px solid #000;
+  position: relative;
+  z-index: 1;
+}
+.preview .colors .placeholder:before {
+  content: "Drop here";
+  color: #fff;
 }
 .intro {
   width: 80%;

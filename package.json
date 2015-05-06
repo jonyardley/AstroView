@@ -2,7 +2,7 @@
   "name": "AstroView",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "dependencies": {
     "express": "^4.12.3"
   },
@@ -16,6 +16,7 @@
     "livereload": "^0.3.6",
     "napa": "1.2.0",
     "react": "^0.13.1",
+    "react-simple-colorpicker": "^1.0.1",
     "stylus": "^0.50.0",
     "underscore": "^1.8.3",
     "watchify": "^2.6.2",
@@ -34,7 +35,6 @@
     "build": "npm run js-build && npm run sass-build",
     "start": "node server.js"
   },
-  "main": "server.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/jonyardley/AstroView.git"

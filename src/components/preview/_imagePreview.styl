@@ -11,7 +11,7 @@
 
   .preview__canvas
     width: 500px
-    heightL 500px
+    height: 500px
     border: 1px solid #333
     background: #000
     cursor: crosshair
@@ -32,3 +32,30 @@
 
     &:focus
       border-bottom-color: $primary
+
+  .colors
+    height: 50px
+    width: 500px
+
+    .color
+      height: 50px
+      float: left
+      margin-bottom: 5px
+      cursor: pointer
+      &:active
+        cursor: ew-resize!important
+
+    .placeholder
+      background: $secondary
+      float: left
+      height: 50px
+      line-height: 50px
+      text-align: center
+      outline: 2px solid #000
+      position: relative
+      z-index: 1
+
+
+      &:before
+        content: "Drop here"
+        color: white
