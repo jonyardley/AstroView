@@ -38,10 +38,12 @@
     width: 500px
 
     .color
+      text-align: center
       height: 50px
       float: left
       margin-bottom: 5px
       cursor: pointer
+      postion: relative
       &:active
         cursor: ew-resize!important
 
@@ -54,8 +56,21 @@
       outline: 2px solid #000
       position: relative
       z-index: 1
-
-
       &:before
         content: "Drop here"
         color: white
+
+    &.remove .color
+      color: white
+      &:after
+        content: 'x'
+        display: inline-block
+        background: red
+        padding: 2px 10px 4px
+        margin: 13px
+        border-radius: 50px
+        font-weight: bold
+
+      &:hover:after
+        color: red
+        background: white

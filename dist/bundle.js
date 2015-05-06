@@ -58476,6 +58476,25 @@ var Colors = (function (_React$Component) {
         ImageActions.updateColors(this.props.image, this.state.colors);
       }
     },
+    add: {
+      value: function add() {
+        this.setState({ mode: "add" });
+      }
+    },
+    remove: {
+      value: function remove() {
+        this.setState({ mode: "remove" });
+      }
+    },
+    action: {
+      value: function action(index) {
+        console.log(this.state.colors);
+        if (this.state.mode === "remove") {
+          this.setState({ images: this.state.colors.splice(index, 1) });
+          ImageActions.updateColors(this.props.image, this.state.colors);
+        }
+      }
+    },
     render: {
       value: function render() {
 
@@ -58485,6 +58504,7 @@ var Colors = (function (_React$Component) {
           var bgColor = Color(color).hexString();
           return React.createElement("div", { key: index, "data-id": index, className: "color",
             draggable: "true", onDragEnd: this.dragEnd.bind(this), onDragStart: this.dragStart.bind(this),
+            onClick: this.action.bind(this, index),
             style: { background: bgColor, width: "" + colorWidth + "%" } });
         }).bind(this));
 
@@ -58494,8 +58514,18 @@ var Colors = (function (_React$Component) {
           "div",
           null,
           React.createElement(
+            "button",
+            { type: "button", className: "btn btn-primary", onClick: this.add.bind(this) },
+            "Add"
+          ),
+          React.createElement(
+            "button",
+            { type: "button", className: "btn btn-danger", onClick: this.remove.bind(this) },
+            this.state.mode === "remove" ? "Cancel" : "Remove"
+          ),
+          React.createElement(
             "div",
-            { className: "colors", onDragOver: this.dragOver.bind(this) },
+            { className: "colors " + this.state.mode, onDragOver: this.dragOver.bind(this) },
             colorDivs
           )
         );

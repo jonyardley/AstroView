@@ -45,6 +45,22 @@ class Colors extends React.Component {
     ImageActions.updateColors(this.props.image, this.state.colors);
   }
 
+  add(){
+    this.setState({mode: 'add'});
+  }
+
+  remove(){
+    this.setState({mode: 'remove'});
+  }
+
+  action(index){
+    console.log(this.state.colors);
+    if(this.state.mode === 'remove'){
+      this.setState({images: this.state.colors.splice(index, 1)});
+      ImageActions.updateColors(this.props.image, this.state.colors);
+    }
+  }
+
   render(){
 
     let colors = this.state.colors,
@@ -53,6 +69,7 @@ class Colors extends React.Component {
           let bgColor = Color(color).hexString();
           return <div key={index} data-id={index} className="color"
             draggable="true" onDragEnd={this.dragEnd.bind(this)} onDragStart={this.dragStart.bind(this)}
+            onClick={this.action.bind(this, index)}
             style={{background: bgColor, width: `${colorWidth}%`}} />
         }.bind(this));
 
@@ -60,8 +77,11 @@ class Colors extends React.Component {
 
     return(
       <div>
-
-        <div className="colors" onDragOver={this.dragOver.bind(this)}>
+        <button type="button" className="btn btn-primary" onClick={this.add.bind(this)}>Add</button>
+        <button type="button" className="btn btn-danger" onClick={this.remove.bind(this)}>
+          {(this.state.mode === 'remove' ? 'Cancel' : 'Remove')}
+        </button>
+        <div className={'colors ' + this.state.mode} onDragOver={this.dragOver.bind(this)}>
           {colorDivs}
         </div>
       </div>
