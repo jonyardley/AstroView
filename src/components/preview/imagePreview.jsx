@@ -22,7 +22,7 @@ class ImagePreview extends React.Component {
 				x:0,
 				y:0
 			},
-			editColors: true
+			editColors: false
 		};
 		this.hasScalingChanged = (this.props.image.imgRaw) ? false : true;
 	}
