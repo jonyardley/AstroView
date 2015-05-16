@@ -103,8 +103,8 @@ class ImagePreview extends React.Component {
 		ImageActions.showPreview(null);
 	}
 
-	updateScaleFunction(value){
-		let newFunction = value.target.value;
+	updateScaleFunction(e){
+		let newFunction = e.target.value;
 		ImageActions.updateScaleFunction(this.props.image.id, newFunction);
 	}
 

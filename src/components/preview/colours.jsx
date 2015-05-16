@@ -14,23 +14,28 @@ const presets = [
   '#0000FF'
 ]
 
+const presetGradients = {
+  Grey: ['#000000', '#FFFFFF'],
+  Red: ['#000000', '#FF0000'],
+  Green: ['#000000', '#00FF00'],
+  Blue: ['#000000', '#0000FF'],
+  Heat: ['#000000', 'orange', 'yellow', '#FFFFFF']
+}
+
 class Colors extends React.Component {
 
   constructor(props){
     super(props);
     this.state = {
-      colors: props.colors,
+      colors: Object.assign([], props.colors),
       colorValue: '#FFFFFF',
-      selectedIndex: null
+      selectedIndex: 0
     };
   }
 
   dragStart(e){
     this.dragged = e.currentTarget;
     e.dataTransfer.effectAllowed = 'move';
-
-    // Firefox requires calling dataTransfer.setData
-    // for the drag to properly work
     e.dataTransfer.setData("text/html", e.currentTarget);
   }
 
@@ -45,19 +50,25 @@ class Colors extends React.Component {
   dragEnd(e){
     this.dragged.style.display = "block";
     this.dragged.parentNode.removeChild(placeholder);
-
     // Update data
     var data = this.state.colors;
     var from = Number(this.dragged.dataset.id);
     var to = Number(this.over.dataset.id);
     if(from < to) to--;
     data.splice(to, 0, data.splice(from, 1)[0]);
-    this.setState({data: data});
-    ImageActions.updateColors(this.props.image, this.state.colors);
+    this.setState({
+      data: data,
+      selectedIndex: to
+    });
   }
 
   add(){
-    console.log('TODO: ADD');
+    let colors = Object.assign([], this.state.colors);
+    colors.push(this.state.colorValue);
+    this.setState({
+      colors: colors,
+      selectedIndex: colors.length - 1
+    });
   }
 
   edit(index){
@@ -77,35 +88,61 @@ class Colors extends React.Component {
   }
 
   save(){
-    console.log('TODO: Save')
+    ImageActions.updateColors(this.props.image, this.state.colors);
+    this.props.close();
   }
 
   updateSelectedColorValue(value){
-    this.setState({colorValue: value});
+    let colors = Object.assign([], this.state.colors);
+    if(this.state.selectedIndex > -1){
+      colors[this.state.selectedIndex] = value;
+    }
+    this.setState({
+      colorValue: value,
+      colors: colors
+    });
   }
 
-  cancel(){
-    console.log('TODO: RESTORE INITIAL VALUES')
-    this.props.close();
+  renderColor(color, index){
+    let bgColor = Color(color).hexString();
+    let active = this.state.selectedIndex == index ? 'active' : false,
+        remove;
+    if(active && this.state.colors.length > 2){
+      remove = <div className="remove" onClick={this.remove.bind(this)}>x</div>
+    }
+    return (
+      <div key={index} data-id={index} className={"color " + active}
+        draggable="true" onDragEnd={this.dragEnd.bind(this)} onDragStart={this.dragStart.bind(this)}
+        onClick={this.edit.bind(this, index)}
+        style={{background: bgColor, width: `${this.colorWidth}%`}}>{remove}</div>
+    )
+  }
+
+  renderPreset(color, index){
+    return (
+      <div className="color-preset"
+          style={{background: color}} key={index}
+          onClick={this.updateSelectedColorValue.bind(this, color)} />
+    )
+  }
+
+  setPresetGradient(e){
+    let colors = presetGradients[e.target.value];
+    this.setState({colors: colors});
   }
 
   render(){
 
-    let colors = this.state.colors,
-        colorWidth = 100 / (colors.length),
-        colorDivs = colors.map(function(color, index){
-          let bgColor = Color(color).hexString();
-          return <div key={index} data-id={index} className="color"
-            draggable="true" onDragEnd={this.dragEnd.bind(this)} onDragStart={this.dragStart.bind(this)}
-            onClick={this.edit.bind(this, index)}
-            style={{background: bgColor, width: `${colorWidth}%`}} />
-        }.bind(this));
+    this.colorWidth = 100 / (this.state.colors.length);
+    let colorDivs = this.state.colors.map(this.renderColor.bind(this));
 
-    placeholder.style.width = `${colorWidth}%`;
+    placeholder.style.width = `${this.colorWidth}%`;
 
-    let presetDivs = presets.map(function(color, index){
-      return <div className="color-preset" style={{background: color}} key={index} onClick={this.updateSelectedColorValue.bind(this, color)} />
-    }.bind(this));
+    let presetDivs = presets.map(this.renderPreset.bind(this));
+
+    let gradientPresetOptions = Object.keys(presetGradients).map(function(key, index){
+			return (<option key={index}>{key}</option>);
+		});
 
     return(
       <div className="colors-panel">
@@ -122,10 +159,15 @@ class Colors extends React.Component {
               <p>Presets</p>
               {presetDivs}
             </div>
+            <select className="form-control" onChange={this.setPresetGradient.bind(this)}>
+							{gradientPresetOptions}
+						</select>
           </div>
-          <button type="button" className="btn btn-secondary" onClick={this.add.bind(this)}>Add</button>
-          <button type="button" className="btn btn-primary" onClick={this.save.bind(this)}>Save</button>
-          <button type="button" className="btn btn-danger" onClick={this.cancel.bind(this)}>Cancel</button>
+          <div className="buttons">
+            <button type="button" className="btn btn-primary" onClick={this.save.bind(this)}>Save</button>
+            <button type="button" className="btn btn-danger" onClick={this.props.close}>Cancel</button>
+            <button type="button" className="btn btn-secondary" onClick={this.add.bind(this)}>Add</button>
+          </div>
         </div>
       </div>
     )

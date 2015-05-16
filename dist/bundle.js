@@ -64469,7 +64469,7 @@ var Image = function Image(name) {
     max: 0,
     scaleMin: 0,
     scaleMax: 0,
-    colors: ["black", "red", "orange", "yellow", "white"],
+    colors: ["#000000", "#FFFFFF"],
     scaleFunction: "linear",
     ctx: ctx
   };
@@ -65073,15 +65073,23 @@ placeholder.className = "placeholder";
 
 var presets = ["#FFFFFF", "#000000", "#FF0000", "#00FF00", "#0000FF"];
 
+var presetGradients = {
+  Grey: ["#000000", "#FFFFFF"],
+  Red: ["#000000", "#FF0000"],
+  Green: ["#000000", "#00FF00"],
+  Blue: ["#000000", "#0000FF"],
+  Heat: ["#000000", "orange", "yellow", "#FFFFFF"]
+};
+
 var Colors = (function (_React$Component) {
   function Colors(props) {
     _classCallCheck(this, Colors);
 
     _get(Object.getPrototypeOf(Colors.prototype), "constructor", this).call(this, props);
     this.state = {
-      colors: props.colors,
+      colors: Object.assign([], props.colors),
       colorValue: "#FFFFFF",
-      selectedIndex: null
+      selectedIndex: 0
     };
   }
 
@@ -65092,9 +65100,6 @@ var Colors = (function (_React$Component) {
       value: function dragStart(e) {
         this.dragged = e.currentTarget;
         e.dataTransfer.effectAllowed = "move";
-
-        // Firefox requires calling dataTransfer.setData
-        // for the drag to properly work
         e.dataTransfer.setData("text/html", e.currentTarget);
       }
     },
@@ -65112,20 +65117,26 @@ var Colors = (function (_React$Component) {
       value: function dragEnd(e) {
         this.dragged.style.display = "block";
         this.dragged.parentNode.removeChild(placeholder);
-
         // Update data
         var data = this.state.colors;
         var from = Number(this.dragged.dataset.id);
         var to = Number(this.over.dataset.id);
         if (from < to) to--;
         data.splice(to, 0, data.splice(from, 1)[0]);
-        this.setState({ data: data });
-        ImageActions.updateColors(this.props.image, this.state.colors);
+        this.setState({
+          data: data,
+          selectedIndex: to
+        });
       }
     },
     add: {
       value: function add() {
-        console.log("TODO: ADD");
+        var colors = Object.assign([], this.state.colors);
+        colors.push(this.state.colorValue);
+        this.setState({
+          colors: colors,
+          selectedIndex: colors.length - 1
+        });
       }
     },
     edit: {
@@ -65149,38 +65160,74 @@ var Colors = (function (_React$Component) {
     },
     save: {
       value: function save() {
-        console.log("TODO: Save");
+        ImageActions.updateColors(this.props.image, this.state.colors);
+        this.props.close();
       }
     },
     updateSelectedColorValue: {
       value: function updateSelectedColorValue(value) {
-        this.setState({ colorValue: value });
+        var colors = Object.assign([], this.state.colors);
+        if (this.state.selectedIndex > -1) {
+          colors[this.state.selectedIndex] = value;
+        }
+        this.setState({
+          colorValue: value,
+          colors: colors
+        });
       }
     },
-    cancel: {
-      value: function cancel() {
-        console.log("TODO: RESTORE INITIAL VALUES");
-        this.props.close();
+    renderColor: {
+      value: function renderColor(color, index) {
+        var bgColor = Color(color).hexString();
+        var active = this.state.selectedIndex == index ? "active" : false,
+            remove = undefined;
+        if (active && this.state.colors.length > 2) {
+          remove = React.createElement(
+            "div",
+            { className: "remove", onClick: this.remove.bind(this) },
+            "x"
+          );
+        }
+        return React.createElement(
+          "div",
+          { key: index, "data-id": index, className: "color " + active,
+            draggable: "true", onDragEnd: this.dragEnd.bind(this), onDragStart: this.dragStart.bind(this),
+            onClick: this.edit.bind(this, index),
+            style: { background: bgColor, width: "" + this.colorWidth + "%" } },
+          remove
+        );
+      }
+    },
+    renderPreset: {
+      value: function renderPreset(color, index) {
+        return React.createElement("div", { className: "color-preset",
+          style: { background: color }, key: index,
+          onClick: this.updateSelectedColorValue.bind(this, color) });
+      }
+    },
+    setPresetGradient: {
+      value: function setPresetGradient(e) {
+        var colors = presetGradients[e.target.value];
+        this.setState({ colors: colors });
       }
     },
     render: {
       value: function render() {
 
-        var colors = this.state.colors,
-            colorWidth = 100 / colors.length,
-            colorDivs = colors.map((function (color, index) {
-          var bgColor = Color(color).hexString();
-          return React.createElement("div", { key: index, "data-id": index, className: "color",
-            draggable: "true", onDragEnd: this.dragEnd.bind(this), onDragStart: this.dragStart.bind(this),
-            onClick: this.edit.bind(this, index),
-            style: { background: bgColor, width: "" + colorWidth + "%" } });
-        }).bind(this));
+        this.colorWidth = 100 / this.state.colors.length;
+        var colorDivs = this.state.colors.map(this.renderColor.bind(this));
 
-        placeholder.style.width = "" + colorWidth + "%";
+        placeholder.style.width = "" + this.colorWidth + "%";
 
-        var presetDivs = presets.map((function (color, index) {
-          return React.createElement("div", { className: "color-preset", style: { background: color }, key: index, onClick: this.updateSelectedColorValue.bind(this, color) });
-        }).bind(this));
+        var presetDivs = presets.map(this.renderPreset.bind(this));
+
+        var gradientPresetOptions = Object.keys(presetGradients).map(function (key, index) {
+          return React.createElement(
+            "option",
+            { key: index },
+            key
+          );
+        });
 
         return React.createElement(
           "div",
@@ -65217,22 +65264,31 @@ var Colors = (function (_React$Component) {
                   "Presets"
                 ),
                 presetDivs
+              ),
+              React.createElement(
+                "select",
+                { className: "form-control", onChange: this.setPresetGradient.bind(this) },
+                gradientPresetOptions
               )
             ),
             React.createElement(
-              "button",
-              { type: "button", className: "btn btn-secondary", onClick: this.add.bind(this) },
-              "Add"
-            ),
-            React.createElement(
-              "button",
-              { type: "button", className: "btn btn-primary", onClick: this.save.bind(this) },
-              "Save"
-            ),
-            React.createElement(
-              "button",
-              { type: "button", className: "btn btn-danger", onClick: this.cancel.bind(this) },
-              "Cancel"
+              "div",
+              { className: "buttons" },
+              React.createElement(
+                "button",
+                { type: "button", className: "btn btn-primary", onClick: this.save.bind(this) },
+                "Save"
+              ),
+              React.createElement(
+                "button",
+                { type: "button", className: "btn btn-danger", onClick: this.props.close },
+                "Cancel"
+              ),
+              React.createElement(
+                "button",
+                { type: "button", className: "btn btn-secondary", onClick: this.add.bind(this) },
+                "Add"
+              )
             )
           )
         );
@@ -65382,8 +65438,8 @@ var ImagePreview = (function (_React$Component) {
 			}
 		},
 		updateScaleFunction: {
-			value: function updateScaleFunction(value) {
-				var newFunction = value.target.value;
+			value: function updateScaleFunction(e) {
+				var newFunction = e.target.value;
 				ImageActions.updateScaleFunction(this.props.image.id, newFunction);
 			}
 		},

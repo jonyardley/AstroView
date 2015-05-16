@@ -37,7 +37,7 @@ class Image {
       max: 0,
       scaleMin: 0,
       scaleMax: 0,
-      colors: ['black', 'red', 'orange', 'yellow', 'white'],
+      colors: ['#000000', '#FFFFFF'],
       scaleFunction: 'linear',
       ctx: ctx
     };
