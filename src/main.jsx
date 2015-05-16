@@ -1,3 +1,4 @@
+import from 'babelify/polyfill';
 import React from 'react';
 import App from './components/app/app.jsx';
 import dev from './utils/dev';

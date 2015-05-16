@@ -21,7 +21,8 @@ class ImagePreview extends React.Component {
 			offset: {
 				x:0,
 				y:0
-			}
+			},
+			editColors: true
 		};
 		this.hasScalingChanged = (this.props.image.imgRaw) ? false : true;
 	}
@@ -115,6 +116,11 @@ class ImagePreview extends React.Component {
 		ImageActions.updateName(this.props.image, name);
 	}
 
+	editColors(){
+		let state = !this.state.editColors;
+		this.setState({editColors: state});
+	}
+
 	render(){
 
 		let scaleOptions = scaleFunctions.values().map(function(sf, index){
@@ -126,6 +132,12 @@ class ImagePreview extends React.Component {
 			requestChange: this.updateName.bind(this)
 		};
 
+		let colors = null;
+
+		if(this.state.editColors){
+			colors = <Colors if={this.state.editColors} image={this.props.image} colors={this.props.image.scaling.colors} close={this.editColors.bind(this)}/>
+		}
+
 		return (
 			<div>
 				<div className="overlay"></div>
@@ -133,8 +145,9 @@ class ImagePreview extends React.Component {
 					<input type="text" className="image-name" valueLink={nameValueLink} />
 					<canvas width={size} height={size} className="preview__canvas" id={canvasId}
 							onMouseMove={_.throttle(this.mouseMove.bind(this), 300)} />
-					<ScaleBar image={this.props.image}/>
-					<Colors image={this.props.image} colors={this.props.image.scaling.colors} />
+						<ScaleBar image={this.props.image}/>
+					<button type="button" className="btn btn-primary" onClick={this.editColors.bind(this)}>Edit Colors</button>
+					{colors}
 					<div>
 						<select className="form-control" onChange={this.updateScaleFunction.bind(this)}>
 							{scaleOptions}
