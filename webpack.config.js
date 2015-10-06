@@ -32,5 +32,11 @@ module.exports = {
       { test: /\.svg$/, loader: "svg-inline" },
       { test: /\.(png|jpg|jpeg|gif|woff|eot|ttf)$/, loader: "file-loader" }
     ]
-  }
+  },
+  worker: {
+		output: {
+			filename: "hash.worker.js",
+			chunkFilename: "[id].hash.worker.js"
+		}
+	}
 };

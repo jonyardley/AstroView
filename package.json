@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "UV_THREADPOOL_SIZE=100 node --harmony index.js",
-    "build": "UV_THREADPOOL_SIZE=100 webpack --colors --progress"
+    "build": "UV_THREADPOOL_SIZE=100 webpack --colors --progress",
+    "install": "./node_modules/.bin/napa"
   },
   "repository": {
     "type": "git",
@@ -34,19 +35,29 @@
   },
   "dependencies": {
     "babel": "^5.8.20",
+    "baobab": "^2.0.0",
     "breakpoint-sass": "^2.6.1",
     "classnames": "^2.1.3",
+    "color": "^0.10.1",
     "es6-promise": "^3.0.2",
     "extract-text-webpack-plugin": "^0.8.2",
+    "fits": "git+https://github.com/astrojs/fitsjs.git",
     "imports-loader": "^0.6.4",
+    "interpolation-arrays": "0.0.0",
     "isomorphic-fetch": "^2.1.1",
     "koa": "^0.21.0",
     "koa-compress": "^1.0.8",
     "koa-static": "^1.4.9",
+    "lodash": "^3.10.1",
+    "napa": "^1.2.0",
     "node-fetch": "^1.3.2",
     "react": "^0.13.3",
     "susy": "^2.2.5",
     "svg-inline-loader": "^0.2.1",
     "url-loader": "^0.5.6"
+  },
+  "napa": {
+    "fitsjs": "astrojs/fitsjs",
+    "fabric": "kangax/fabric.js"
   }
 }
