@@ -1,0 +1,22 @@
+{
+  "extends": "airbnb",
+  "parser": "babel-eslint",
+  "env": {
+    "node": true,
+    "es6": true,
+    "mocha": true
+  },
+  "rules": {
+    "quotes": [
+      2,
+      "double"
+    ],
+    "comma-dangle": [
+      2,
+      "never"
+    ],
+    "func-names": 0,
+    "key-spacing": 0,
+    "react/sort-comp": 0
+  }
+}
