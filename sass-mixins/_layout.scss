@@ -1,0 +1,19 @@
+@mixin fill($top: 0, $right: $top, $bottom: $top, $left: $top){
+  position: absolute;
+  top: $top;
+  right: $right;
+  bottom: $bottom;
+  left: $left;
+}
+
+@mixin fullHeight(){
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
+@mixin fullWidth(){
+  position: absolute;
+  left: 0;
+  right: 0;
+}

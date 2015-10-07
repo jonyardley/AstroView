@@ -27,7 +27,7 @@ module.exports = {
   ],
   module: {
     loaders: [
-      { test: /\.js$/, loader: "babel-loader", exclude: /node_modules/ },
+      { test: /\.js$/, loader: "babel-loader?optional[]=runtime", exclude: /node_modules/ },
       { test: /\.scss$/, loader: ExtractTextPlugin.extract("css!sass") },
       { test: /\.svg$/, loader: "svg-inline" },
       { test: /\.(png|jpg|jpeg|gif|woff|eot|ttf)$/, loader: "file-loader" }
@@ -38,5 +38,9 @@ module.exports = {
 			filename: "hash.worker.js",
 			chunkFilename: "[id].hash.worker.js"
 		}
-	}
+	},
+  externals: {
+      "astro": "astro",
+      "fabric": "fabric"
+  }
 };

@@ -14,6 +14,8 @@ export default class Renderer {
         </head>
         <body>
           <div className="app"><App/></div>
+          <script src="js/fits.js" />
+          <script src="js/fabric.js" />
           <script src={scriptPath} />
         </body>
       </html>

@@ -1,0 +1,26 @@
+.load-image {
+  display: inline-block;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer !important;
+  text-align: center;
+
+  input {
+    cursor: pointer !important;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    opacity: 0.001;
+  }
+
+  button {
+    @include button();
+    background: #FFF;
+    font-size: 30px;
+    line-height: 30px;
+    padding: 0 10px 6px;
+    margin: 6px;
+  }
+}

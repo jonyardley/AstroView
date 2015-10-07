@@ -1,0 +1,20 @@
+// Mixins
+@import "../../sass-mixins/normalize";
+@import "../../sass-mixins/layout";
+@import "../../sass-mixins/colours";
+@import "../../sass-mixins/elements";
+
+//Components
+@import "../load-image/load-image";
+@import "../sidebar/sidebar";
+
+
+//Global Styles
+body, html {
+  min-height: 100%;
+  height: 100%;
+}
+
+.main {
+  @include fill();
+}

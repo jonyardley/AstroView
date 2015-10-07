@@ -20,7 +20,7 @@ app.use(compress({
 
 app.use(serve("public"));
 
-app.use(function() {
+app.use(async function() {
   this.body = Renderer.render({hotLoading});
 });
 

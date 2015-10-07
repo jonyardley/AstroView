@@ -1,22 +1,21 @@
 import React, {Component} from "react";
 import {root} from "baobab-react/higher-order";
 import tree from "./state";
-import List from "../list/list";
-import LoadImage from "../load-image/load-image";
-
+import "./app.scss";
+import Sidebar from "../sidebar/sidebar";
 
 class App extends Component {
 
   render() {
     return (
-      <div>
-        <h1>Hello World!</h1>
-        <LoadImage/>
-        <List />
-      </div>);
+      <div className="main">
+        <Sidebar />
+      </div>
+    );
   }
 }
 
+// https://github.com/Yomguithereal/baobab-react/blob/master/docs/higher-order.md
 const RootedApp = root(App, tree);
 
 export default RootedApp;

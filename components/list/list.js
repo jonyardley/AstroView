@@ -2,7 +2,7 @@ import React, {Component} from "react";
 import {branch} from "baobab-react/higher-order";
 
 function renderItem(item){
-  return (<li>{item.file.name}</li>);
+  return (<li>{item.loading + ' : ' + item.file.name}</li>);
 }
 
 class List extends Component {
@@ -21,6 +21,7 @@ class List extends Component {
 // Subscribing to the relevant data and binding actions to the component
 export default branch(List, {
   cursors: {
-    fits: ["fits"]
+    fits: ["fits"],
+    thumbs: ["images.thumbs"]
   }
 });

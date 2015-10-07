@@ -20,7 +20,7 @@ module.exports = merge(prodConfig, {
   ],
   module: {
     loaders: [
-      { test: /\.js$/, loaders: ["react-hot", "babel-loader"], exclude: /node_modules/ },
+      { test: /\.js$/, loaders: ["react-hot", "babel-loader?optional[]=runtime"], exclude: /node_modules/ },
       { test: /\.scss$/, loader: "style!css!sass", exclude: /node_modules/ },
       { test: /\.svg$/, loader: "svg-inline" },
       { test: /\.(png|jpg|jpeg|gif|woff|eot|ttf)$/, loader: "file-loader" }

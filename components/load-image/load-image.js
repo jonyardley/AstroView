@@ -1,31 +1,27 @@
 import React, {Component} from 'react';
 import {branch} from "baobab-react/higher-order";
-import * as actions from "../../actions";
+import * as actions from "../../actions/actions";
 
 class LoadImage extends Component {
 
-  attemptFileLoad(e) {
+  handleUpdate(e) {
     let file = event.target.files[0];
-    this.props.actions.add(file);
+    if (file) this.props.actions.add(file);
   }
 
   render(){
     return (
-      <div>
+      <div className="load-image">
         <button type="button">
-          <span>{this.props.label}</span>
-          <input type="file" onChange={this.attemptFileLoad.bind(this)} />
+          <span>+</span>
+          <input type="file" onChange={this.handleUpdate.bind(this)} />
         </button>
       </div>
     )
   }
-
 }
 
 export default branch(LoadImage, {
-  cursors: {
-    fits: ["fits"]
-  },
   actions: {
     add: actions.addFits
   }
