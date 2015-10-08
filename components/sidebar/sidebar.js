@@ -1,6 +1,7 @@
 import React, {Component} from "react";
 import {branch} from 'baobab-react/higher-order';
 import LoadImage from "../load-image/load-image";
+import Thumb from "./thumb";
 
 class Sidebar extends Component {
   render(){
@@ -8,9 +9,9 @@ class Sidebar extends Component {
       <div className="sidebar">
         <LoadImage />
         <ul>
-          {this.props.fits.map(function(item, index, list){
-            return <li key={`sidebar-${index}`}>{item.name} - {!item.loaded ? 'Loading...': ''}</li>
-          })}
+          {this.props.fits.map(
+            (item, index) => <Thumb {...item} index={index} />
+          )}
         </ul>
       </div>
     );
