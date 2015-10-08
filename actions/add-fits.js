@@ -1,4 +1,5 @@
 import LoadImage from "../lib/load-image";
+import ImageModel from "../models/image";
 import {imageData} from "../state";
 let counter = 0;
 
@@ -13,13 +14,10 @@ function getFileName(file){
 
 export default function addFits(tree, file) {
   const id = counter;
-  const fits = {
+  const fits = ImageModel({
     id: id,
-    name: getFileName(file),
-    dirty: true,
-    file: file,
-    loaded: false
-  };
+    name: getFileName(file)
+  });
 
   tree.push('fits', fits);
   counter++;

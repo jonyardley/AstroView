@@ -21,6 +21,7 @@ const tree = new Baobab({
 
 const imageData = {};
 const images = {};
-const canvasRefs = {};
+const canvases = {};
+const fabricImages = {};
 
-export default {tree, imageData, images, canvasRefs};
+export default {tree, imageData, images, canvases, fabricImages};

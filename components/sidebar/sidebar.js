@@ -8,8 +8,8 @@ class Sidebar extends Component {
       <div className="sidebar">
         <LoadImage />
         <ul>
-          {this.props.fits.map(function(item){
-            return <li>{item.name} - {!item.loaded ? 'Loading...': ''}</li>
+          {this.props.fits.map(function(item, index, list){
+            return <li key={`sidebar-${index}`}>{item.name} - {!item.loaded ? 'Loading...': ''}</li>
           })}
         </ul>
       </div>
