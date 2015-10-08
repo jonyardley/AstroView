@@ -1,6 +1,6 @@
 import React, {Component} from "react";
 import {root} from "baobab-react/higher-order";
-import tree from "./state";
+import {tree} from "../../state";
 import "./app.scss";
 import Sidebar from "../sidebar/sidebar";
 

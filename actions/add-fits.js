@@ -1,4 +1,5 @@
 import LoadImage from "../lib/load-image";
+import {imageData} from "../state";
 let counter = 0;
 
 function getFileName(file){
@@ -24,8 +25,8 @@ export default function addFits(tree, file) {
   counter++;
 
   LoadImage(file, function(data){
+    imageData[id] = data;
     tree.select('fits', {id: id}).merge({
-      data: data,
       loaded: true
     });
   });

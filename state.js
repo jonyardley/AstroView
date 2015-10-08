@@ -1,5 +1,7 @@
 import Baobab from "baobab";
 
+const isProduction = process.env.NODE_ENV == "production";
+
 const tree = new Baobab({
   appState: {
     mode: 'view',
@@ -13,8 +15,12 @@ const tree = new Baobab({
   },
   fits: []
 },{
-  immutable: false, //This is disabled for performance reasons!
-  persistent: false //This is disabled for performance reasons!
+  immutable: isProduction,
+  persistent: false
 });
 
-export default tree;
+const imageData = {};
+const images = {};
+const canvasRefs = {};
+
+export default {tree, imageData, images, canvasRefs};
