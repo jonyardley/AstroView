@@ -1,14 +1,12 @@
 import Baobab from "baobab";
 
 const isProduction = process.env.NODE_ENV == "production";
-
-const tree = new Baobab({
+const appState = new Baobab({
   appState: {
     mode: 'view',
     maxImages: 8,
-    preview: false,
+    processing: false,
     activeId: null,
-    canvas: null,
     tools:{
       zoom: '100%'
     }
@@ -24,4 +22,4 @@ const images = {};
 const canvases = {};
 const fabricImages = {};
 
-export default {tree, imageData, images, canvases, fabricImages};
+export default {appState, imageData, images, canvases, fabricImages};

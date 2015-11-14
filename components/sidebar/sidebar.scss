@@ -1,5 +1,5 @@
 .sidebar {
   @include fullHeight();
   background: #222;
-  width: 50px;
+  width: $sidebar-width;
 }

@@ -1,5 +1,7 @@
-import addFits from "./add-fits.js";
+import addFits from "./add-fits";
+import * as stage from "./stage";
 
 export default {
-  addFits
+  addFits,
+  stage
 };

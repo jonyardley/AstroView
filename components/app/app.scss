@@ -1,5 +1,6 @@
 // Mixins
 @import "../../sass-mixins/normalize";
+@import "../../sass-mixins/variables";
 @import "../../sass-mixins/layout";
 @import "../../sass-mixins/colours";
 @import "../../sass-mixins/elements";
@@ -7,6 +8,8 @@
 //Components
 @import "../load-image/load-image";
 @import "../sidebar/sidebar";
+@import "../process/process";
+@import "../stage/stage";
 
 
 //Global Styles
