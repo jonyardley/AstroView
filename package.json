@@ -40,8 +40,6 @@
     "@rill/react": "^2.1.0",
     "@rill/static": "^0.5.0",
     "babel": "^5.8.33",
-    "baobab": "^2.1.1",
-    "baobab-react": "^2.1.1",
     "breakpoint-sass": "^2.6.1",
     "classnames": "^2.2.0",
     "color": "^0.11.1",
