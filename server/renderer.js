@@ -4,9 +4,10 @@ import mainStore from '../store';
 import { Provider } from 'react-redux';
 
 export default function Renderer(props, { locals }) {
-  const scriptPath = locals.hotLoading ? 'http://localhost:3001/app.js' : '/app.js';
-  const stylesPath = locals.hotLoading ? null : '/style.css';
+  const scriptPath = locals.options.hotLoading ? "http://localhost:3001/app.js" : "/app.js";
+  const stylesPath = locals.options.hotLoading ? null : "/style.css";
   const store = mainStore({});
+
   return (
     <html>
       <head>

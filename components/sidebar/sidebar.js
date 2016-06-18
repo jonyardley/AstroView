@@ -4,6 +4,7 @@ import Thumb from "./thumb";
 
 class Sidebar extends Component {
   render(){
+    console.log("RENDERING SIDEBAR");
     return (
       <div className="sidebar">
         <LoadImage />

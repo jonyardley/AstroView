@@ -29,4 +29,7 @@ app.use(({ req, res }, next) => {
   res.body = <Renderer />;
 });
 
-export default app;
+const port = process.env.PORT || 3000;
+app.listen({ port }, () => {
+  console.log(`AstroView server started at localhost:${port}`);
+});
