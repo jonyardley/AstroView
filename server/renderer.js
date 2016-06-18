@@ -1,11 +1,12 @@
-import React from "react";
-import { renderToString } from "react-dom/server";
-import App from "../components/app/app";
+import React from 'react';
+import App from '../components/app/app';
+import mainStore from '../store';
+import { Provider } from 'react-redux';
 
 export default function Renderer(props, { locals }) {
-  const scriptPath = locals.hotLoading ? "http://localhost:3001/app.js" : "/app.js";
-  const stylesPath = locals.hotLoading ? null : "/style.css";
-
+  const scriptPath = locals.hotLoading ? 'http://localhost:3001/app.js' : '/app.js';
+  const stylesPath = locals.hotLoading ? null : '/style.css';
+  const store = mainStore({});
   return (
     <html>
       <head>
@@ -13,7 +14,11 @@ export default function Renderer(props, { locals }) {
         {stylesPath && <link rel="stylesheet" href={stylesPath} />}
       </head>
       <body>
-        <div className="app"><App/></div>
+        <div id="app">
+        <Provider store={store}>
+          <App/>
+        </Provider>
+        </div>
         <script src="js/fits.js" />
         <script src="js/fabric.js" />
         <script src={scriptPath} />

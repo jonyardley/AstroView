@@ -1,7 +1,5 @@
-import Baobab from "baobab";
-
 const isProduction = process.env.NODE_ENV == "production";
-const appState = new Baobab({
+const appState = {
   appState: {
     mode: 'view',
     maxImages: 8,
@@ -12,10 +10,7 @@ const appState = new Baobab({
     }
   },
   fits: []
-},{
-  immutable: isProduction,
-  persistent: false
-});
+};
 
 const imageData = {};
 const images = {};

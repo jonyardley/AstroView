@@ -9,7 +9,7 @@
   "rules": {
     "quotes": [
       2,
-      "double"
+      "single"
     ],
     "comma-dangle": [
       2,

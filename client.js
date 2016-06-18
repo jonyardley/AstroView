@@ -1,11 +1,14 @@
-import React from "react";
-React.initializeTouchEvents(true);
+import React from 'react';
+import { render } from 'react-dom';
+import App from './components/app/app';
+import { Provider } from 'react-redux';
+import mainStore from './store';
 
-import promise from "es6-promise";
-promise.polyfill();
+const store = mainStore({});
 
-import App from "./components/app/app";
-
-// const props = document.body.getAttribute("data-props");
-// const content = props ? JSON.parse(props) : null;
-React.render(<App />, document.querySelector(".app"));
+render(
+  <Provider store={store}>
+    <App/>
+  </Provider>,
+  document.getElementById('app')
+);
