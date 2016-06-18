@@ -1,11 +1,12 @@
-import koa from "koa";
-import serve from "koa-static";
-import compress from "koa-compress";
+import Rill from "rill";
+import compress from "@rill/compress";
+import serve from "@rill/static";
+import renderer from "@rill/react";
+
 import React from "react";
 import Renderer from "./server/renderer";
 
-const app = koa();
-app.experimental = true;
+const app  = Rill();
 
 let hotLoading;
 if (process.env.NODE_ENV === "development") {
@@ -13,17 +14,19 @@ if (process.env.NODE_ENV === "development") {
   require("./server/hot-loader").listen(3001);
 }
 
-app.use(compress({
-  threshold: 2048,
-  flush: require("zlib").Z_SYNC_FLUSH
-}));
-
+app.use(compress({ threshold: "2048kb" }));
 app.use(serve("public"));
+app.use(renderer());
 
-app.use(async function() {
-  this.body = Renderer.render({hotLoading});
+// Set locals in middleware.
+app.use(({ locals }, next) => {
+  locals.title = "@rill/react";
+  locals.options = { hotLoading };
+  return next();
 });
 
-console.log("Server starting...");
+app.use(({ req, res }, next) => {
+  res.body = <Renderer />;
+});
 
 export default app;
