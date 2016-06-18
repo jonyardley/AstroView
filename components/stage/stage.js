@@ -1,5 +1,4 @@
 import React, {Component} from "react";
-import {branch} from 'baobab-react/higher-order';
 import actions from '../../actions/actions';
 import {canvases, imageData, images} from "../../state";
 
@@ -20,8 +19,4 @@ class Stage extends Component {
   }
 }
 
-export default branch(Stage, {
-  cursors: {
-    fits: ['fits']
-  }
-});
+export default Stage;

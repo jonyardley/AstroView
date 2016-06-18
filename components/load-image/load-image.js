@@ -1,5 +1,4 @@
 import React, {Component} from 'react';
-import {branch} from "baobab-react/higher-order";
 import * as actions from "../../actions/actions";
 
 class LoadImage extends Component {
@@ -21,8 +20,4 @@ class LoadImage extends Component {
   }
 }
 
-export default branch(LoadImage, {
-  actions: {
-    add: actions.addFits
-  }
-});
+export default LoadImage;

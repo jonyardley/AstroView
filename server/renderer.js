@@ -1,4 +1,5 @@
 import React from "react";
+import { renderToString } from "react-dom/server";
 import App from "../components/app/app";
 
 export default class Renderer {
@@ -6,7 +7,7 @@ export default class Renderer {
     const scriptPath = options.hotLoading ? "http://localhost:3001/app.js" : "/app.js";
     const stylesPath = options.hotLoading ? null : "/style.css";
 
-    return React.renderToStaticMarkup(
+    return renderToString(
       <html>
         <head>
           <title>AstroView</title>

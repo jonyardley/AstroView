@@ -1,5 +1,4 @@
 import React, {Component} from "react";
-import {branch} from 'baobab-react/higher-order';
 import actions from '../../actions/actions';
 import {canvases, imageData, images} from "../../state";
 
@@ -14,8 +13,4 @@ class Process extends Component {
   }
 }
 
-export default branch(Process, {
-  cursors: {
-    fits: ['fits']
-  }
-});
+export default Process;

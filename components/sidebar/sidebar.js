@@ -1,5 +1,4 @@
 import React, {Component} from "react";
-import {branch} from 'baobab-react/higher-order';
 import LoadImage from "../load-image/load-image";
 import Thumb from "./thumb";
 
@@ -18,8 +17,4 @@ class Sidebar extends Component {
   }
 }
 
-export default branch(Sidebar, {
-  cursors: {
-    fits: ['fits']
-  }
-});
+export default Sidebar;
