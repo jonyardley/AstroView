@@ -1,11 +1,11 @@
-import koa from "koa";
-import serve from "koa-static";
-import compress from "koa-compress";
+import Rill from "rill";
+import compress from "@rill/compress";
+import serve from "@rill/static";
+
 import React from "react";
 import Renderer from "./server/renderer";
 
-const app = koa();
-app.experimental = true;
+const app  = Rill();
 
 let hotLoading;
 if (process.env.NODE_ENV === "development") {
@@ -14,16 +14,13 @@ if (process.env.NODE_ENV === "development") {
 }
 
 app.use(compress({
-  threshold: 2048,
-  flush: require("zlib").Z_SYNC_FLUSH
+  threshold: "2048kb"
 }));
 
 app.use(serve("public"));
 
-app.use(async function() {
-  this.body = Renderer.render({hotLoading});
+app.use(({ req, res }, next) => {
+  res.body = Renderer.render({ hotLoading });
 });
-
-console.log("Server starting...");
 
 export default app;
