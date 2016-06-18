@@ -1,4 +1,4 @@
-import React from "react/addons";
+import React from "react";
 import App from "../components/app/app";
 
 export default class Renderer {
