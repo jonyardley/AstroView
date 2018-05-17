@@ -1,10 +1,17 @@
+import { observable } from "mobx";
+import fits from "../lib/fits";
+
 class Image {
   public id = null;
-  public file = null;
+  public imageData = null;
+  public metaData = null;
+  public header = null;
 
-  constructor(id, file) {
-    this.id = id;
-    this.file = file;
+  constructor(params) {
+    this.id = params.id;
+    this.imageData = params.imageData;
+    this.metaData = params.metaData;
+    this.header = params.header;
   }
 }
 

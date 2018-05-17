@@ -1,13 +1,20 @@
 import { action, flow, observable } from "mobx";
+import loadImage from "../lib/loadImage";
 import Image from "./image";
 
 class ImageStore {
   @observable public images = [];
 
   public addImage = flow(function*(file) {
-    const newImage = new Image(this.imageIdCounter, file);
-    this.images.push(newImage);
-    this.imageIdCounter++;
+    try {
+      const imageData = yield loadImage(file);
+      const newImage = new Image({ ...imageData, id: this.imageIdCounter });
+      this.images.push(newImage);
+      this.imageIdCounter++;
+    } catch (e) {
+      // tslint:disable-next-line:no-console
+      console.error(e);
+    }
   });
 
   @observable private imageIdCounter = 0;

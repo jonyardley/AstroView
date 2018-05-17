@@ -5,6 +5,7 @@
   "author": "Jon Yardley <jon.yardley@red-badger.com>",
   "license": "MIT",
   "dependencies": {
+    "fitsjs": "^0.6.6",
     "mobx": "^4.2.1",
     "mobx-react": "^5.1.2",
     "mobx-react-devtools": "^5.0.1",
