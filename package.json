@@ -6,6 +6,7 @@
   "license": "MIT",
   "dependencies": {
     "fitsjs": "^0.6.6",
+    "gpu.js": "https://github.com/gpujs/gpu.js.git#1bb63042a06e29b91262a87160f405616de3301a",
     "mobx": "^4.2.1",
     "mobx-react": "^5.1.2",
     "mobx-react-devtools": "^5.0.1",
