@@ -1,6 +1,7 @@
 import { inject, observer } from "mobx-react";
 import * as React from "react";
 import GPUKernel from "../../lib/gpuKernel";
+import scaleFunctions from "../../lib/scaleFunctions";
 
 @observer
 class Viewer extends React.Component<{ image }> {
@@ -8,6 +9,14 @@ class Viewer extends React.Component<{ image }> {
 
   public componentDidMount() {
     this.renderCanvas();
+  }
+
+  public componentDidUpdate() {
+    console.log("did update");
+  }
+
+  public componentWillReceiveProps() {
+    console.log("will receive props");
   }
 
   public renderCanvas() {
@@ -27,8 +36,18 @@ class Viewer extends React.Component<{ image }> {
   }
 
   public render() {
+    console.log("render");
     return (
       <div>
+        {scaleFunctions.map(name => (
+          <button
+            onClick={() => this.props.image.updateScaleMode(name)}
+            key={`edit-scale-${name}`}
+          >
+            {name}
+          </button>
+        ))}
+        <h1>{this.props.image.scaleMode}</h1>
         <canvas
           width={800}
           height={800}

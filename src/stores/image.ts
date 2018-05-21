@@ -1,6 +1,7 @@
 import { action, observable } from "mobx";
 import fits from "../lib/fits";
 import GPUKernel from "../lib/gpuKernel";
+import scaleFunctions from "../lib/scaleFunctions";
 
 class Image {
   public id = null;
@@ -8,7 +9,10 @@ class Image {
   public metaData = null;
   public header = null;
   public renderer = null;
-  public canvas = null;
+  @observable public canvas = null;
+  @observable public min = 0;
+  @observable public max = 500;
+  @observable public scaleMode = 0;
 
   constructor(params) {
     this.id = params.id;
@@ -16,13 +20,25 @@ class Image {
     this.metaData = params.metaData;
     this.header = params.header;
     this.renderer = GPUKernel(this.metaData.width, this.metaData.height);
-    this.render(this.imageData, this.metaData.width, 0, 500, 0);
+    this.render();
   }
 
   @action
-  public render(data, width, min, max, scaleMode) {
-    this.renderer(data, width, min, max, scaleMode);
+  public render() {
+    this.renderer(
+      this.imageData,
+      this.metaData.width,
+      this.min,
+      this.max,
+      this.scaleMode
+    );
     this.canvas = this.renderer.getCanvas();
+  }
+
+  @action
+  public updateScaleMode(scaleMode) {
+    this.scaleMode = scaleFunctions.indexOf(scaleMode);
+    this.render();
   }
 }
 
