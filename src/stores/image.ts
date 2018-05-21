@@ -8,8 +8,7 @@ class Image {
   public imageData = null;
   public metaData = null;
   public header = null;
-  public renderer = null;
-  @observable public canvas = null;
+  @observable public renderer = null;
   @observable public min = 0;
   @observable public max = 500;
   @observable public scaleMode = 0;
@@ -19,7 +18,15 @@ class Image {
     this.imageData = params.imageData;
     this.metaData = params.metaData;
     this.header = params.header;
-    this.renderer = GPUKernel(this.metaData.width, this.metaData.height);
+  }
+
+  @action
+  public initRenderer(canvas) {
+    this.renderer = GPUKernel(
+      this.metaData.width,
+      this.metaData.height,
+      canvas
+    );
     this.render();
   }
 
@@ -32,7 +39,6 @@ class Image {
       this.max,
       this.scaleMode
     );
-    this.canvas = this.renderer.getCanvas();
   }
 
   @action
