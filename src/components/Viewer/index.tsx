@@ -35,7 +35,7 @@ class Viewer extends React.Component<{ image }> {
           style={{ display: "inline-block" }}
         >
           <canvas
-            style={{ width: 600, height: 600, background: "#000" }}
+            style={{ width: 800, height: 800, background: "#000" }}
             ref={el => {
               this.canvas = el;
             }}
@@ -54,12 +54,12 @@ class Viewer extends React.Component<{ image }> {
   }
 
   private updateZoomCanvas({ x, y }) {
-    const zoomCtx = this.zoom.getContext("2d");
-    const offset = this.canvas.width / 600;
-    zoomCtx.drawImage(
+    const ctx = this.zoom.getContext("2d");
+    const offset = this.canvas.width / 800;
+    ctx.drawImage(
       this.canvas,
-      x * offset - 50,
-      y * offset - 37.5,
+      x * offset - 100 / 2,
+      y * offset - 75 / 2,
       200,
       150,
       0,
@@ -67,6 +67,24 @@ class Viewer extends React.Component<{ image }> {
       400,
       300
     );
+
+    ctx.strokeStyle = "#E11010";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+
+    ctx.moveTo(100, 55);
+    ctx.lineTo(100, 65);
+
+    ctx.moveTo(100, 85);
+    ctx.lineTo(100, 95);
+
+    ctx.moveTo(90, 75);
+    ctx.lineTo(80, 75);
+
+    ctx.moveTo(110, 75);
+    ctx.lineTo(120, 75);
+
+    ctx.stroke();
   }
 }
 
