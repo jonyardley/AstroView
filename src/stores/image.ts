@@ -15,9 +15,10 @@ class Image {
     sum2: 0,
     range: 0,
     stdDev: 0,
-    histogram: new Array(128).fill(0),
-    histogramMax: 0
+    histo: new Array(600).fill(0),
+    histomax: 0
   };
+
   @observable public renderer = null;
   @observable public min = 0;
   @observable public max = 500;
@@ -49,18 +50,19 @@ class Image {
 
     for (const intensity of this.imageData) {
       const bin = Math.floor(
-        (this.stats.histogram.length - 1) *
+        (this.stats.histo.length - 1) *
           (intensity - this.stats.min) /
           this.stats.range
       );
-      if (++this.stats.histogram[bin] > this.stats.histogramMax) {
-        this.stats.histogramMax = this.stats.histogram[bin];
+      if (++this.stats.histo[bin] > this.stats.histomax) {
+        this.stats.histomax = this.stats.histo[bin];
       }
     }
   }
 
   @action
   public initRenderer(canvas) {
+    canvas.getContext("webgl2", { preserveDrawingBuffer: true });
     this.renderer = GPUKernel(
       this.metaData.width,
       this.metaData.height,
