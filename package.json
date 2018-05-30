@@ -7,8 +7,7 @@
   "dependencies": {
     "@types/lodash": "^4.14.109",
     "fitsjs": "^0.6.6",
-    "gpu.js":
-      "https://github.com/gpujs/gpu.js.git#1bb63042a06e29b91262a87160f405616de3301a",
+    "gpu.js": "https://github.com/gpujs/gpu.js.git#1bb63042a06e29b91262a87160f405616de3301a",
     "mobx": "^4.2.1",
     "mobx-react": "^5.1.2",
     "mobx-react-devtools": "^5.0.1",
@@ -20,6 +19,7 @@
     "@types/react": "^16.3.13",
     "@types/react-dom": "^16.0.5",
     "awesome-typescript-loader": "^5.0.0",
+    "copy-webpack-plugin": "^4.5.1",
     "prettier": "^1.12.1",
     "tslint": "^5.10.0",
     "tslint-config-prettier": "^1.12.0",

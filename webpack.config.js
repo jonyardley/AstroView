@@ -1,6 +1,10 @@
 const path = require("path");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+
+const production = process.env.NODE_ENV === "production";
 
 module.exports = {
+  devtool: production ? null : "inline-sourcemap",
   entry: "./src/index.tsx",
   output: {
     path: path.resolve(__dirname, "dist"),
@@ -17,5 +21,5 @@ module.exports = {
       }
     ]
   },
-  plugins: []
+  plugins: [new CopyWebpackPlugin(["index.html", "public"], {})]
 };
