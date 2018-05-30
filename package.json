@@ -29,8 +29,8 @@
     "webpack-dev-server": "^3.1.4"
   },
   "scripts": {
-    "dev":
-      "webpack-dev-server -d --config ./webpack.config.js --inline --hot --colors",
+    "start": "webpack-dev-server -d --inline --hot --colors --open",
+    "build": "webpack --mode=production",
     "test": "echo 'TODO: Setup tests'"
   }
 }
