@@ -19,7 +19,8 @@ jobs:
             - node_modules
             - assets/fits
           key: v1-dependencies-{{ checksum "package.json" }}
-        
+      
+      - run: yarn lint
       - run: yarn test
 
       - store_artifacts:
