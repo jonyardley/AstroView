@@ -1,5 +1,5 @@
-class AppStore {
-  public name = "AstroView";
+export class AppStore {
+  public name: string = "AstroView";
 }
 
 export default new AppStore();

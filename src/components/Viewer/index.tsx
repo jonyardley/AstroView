@@ -3,16 +3,30 @@ import * as React from "react";
 import ReactCursorPosition from "react-cursor-position";
 import GPUKernel from "../../lib/gpuKernel";
 import scaleFunctions from "../../lib/scaleFunctions";
+import Image from "../../stores/image";
 import Histogram from "./histogram";
 import Zoom from "./zoom";
 
-@observer
-class Viewer extends React.Component<{ image }, { x; y; canvas }> {
-  private canvas = null;
-  private zoom = null;
-  private cursor = null;
+interface IProps {
+  image?: Image;
+}
 
-  constructor(props) {
+interface IState {
+  x: number;
+  y: number;
+  canvas: HTMLCanvasElement | null;
+}
+
+interface IPosition {
+  x: number;
+  y: number;
+}
+
+@observer
+class Viewer extends React.Component<IProps, IState> {
+  private canvas: HTMLCanvasElement | null = null;
+
+  constructor(props: IProps) {
     super(props);
     this.state = {
       x: 0,
@@ -22,8 +36,14 @@ class Viewer extends React.Component<{ image }, { x; y; canvas }> {
   }
 
   public componentDidMount() {
-    this.props.image.initRenderer(this.canvas);
-    this.setState({ canvas: this.canvas });
+    if (this.canvas) {
+      this.props.image!.initRenderer(this.canvas);
+      this.setState({ canvas: this.canvas });
+    }
+  }
+
+  private updatePosition(position: IPosition) {
+    this.setState({ ...position });
   }
 
   public render() {
@@ -31,7 +51,7 @@ class Viewer extends React.Component<{ image }, { x; y; canvas }> {
       <div>
         {scaleFunctions.map(name => (
           <button
-            onClick={() => this.props.image.updateScaleMode(name)}
+            onClick={() => this.props.image!.updateScaleMode(name)}
             key={`edit-scale-${name}`}
           >
             {name}
@@ -39,9 +59,9 @@ class Viewer extends React.Component<{ image }, { x; y; canvas }> {
         ))}
         <br />
         <ReactCursorPosition
-          onPositionChanged={({ position }) => {
-            this.setState({ ...position });
-          }}
+          onPositionChanged={({ position }: { position: IPosition }) =>
+            this.updatePosition(position)
+          }
           style={{ display: "inline-block" }}
         >
           <canvas
@@ -51,7 +71,7 @@ class Viewer extends React.Component<{ image }, { x; y; canvas }> {
             }}
           />
         </ReactCursorPosition>
-        <Histogram stats={this.props.image.stats} />
+        <Histogram stats={this.props.image!.stats} />
         <Zoom
           width={200}
           height={150}
