@@ -16,10 +16,14 @@ interface IState {
   canvas: HTMLCanvasElement | null;
 }
 
+interface IPosition {
+  x: number;
+  y: number;
+}
+
 @observer
 class Viewer extends React.Component<IProps, IState> {
   private canvas: HTMLCanvasElement | null = null;
-  private cursor = null;
 
   constructor(props: IProps) {
     super(props);
@@ -37,6 +41,11 @@ class Viewer extends React.Component<IProps, IState> {
     }
   }
 
+  private updatePosition(position: IPosition) {
+    this.setState({ ...position });
+  }
+
+  // tslint:disable-next-line:member-ordering
   public render() {
     return (
       <div>
@@ -50,13 +59,9 @@ class Viewer extends React.Component<IProps, IState> {
         ))}
         <br />
         <ReactCursorPosition
-          onPositionChanged={({
-            position
-          }: {
-            position: { x: number; y: number };
-          }) => {
-            this.setState({ ...position });
-          }}
+          onPositionChanged={({ position }: { position: IPosition }) =>
+            this.updatePosition(position)
+          }
           style={{ display: "inline-block" }}
         >
           <canvas
