@@ -13,11 +13,47 @@ export interface IStats {
   histomax: number;
 }
 
+export interface IMetaData {
+  bitpix: number;
+  blob: Blob;
+  bscale: number;
+  bytes: number;
+  bzero: number;
+  depth: number;
+  frame: number;
+  frameLength: number;
+  frameOffsets: any[];
+  height: number;
+  length: number;
+  nBuffers: number;
+  naxis: number[];
+  width: number;
+  getFrame: (
+    frame: number,
+    callback: (imageData: Float32Array) => void
+  ) => void;
+}
+
+export interface IHeader {
+  block: string;
+  cardIndex: number;
+  cards: {
+    [key: string]: {
+      comment: string;
+      index: number;
+      value: any;
+    };
+  };
+  extensions: boolean;
+  primary: boolean;
+  verifyCard: any;
+}
+
 class Image {
   public id: number;
-  public imageData: any;
-  public metaData: any;
-  public header: any;
+  public imageData: number[];
+  public metaData: IMetaData;
+  public header: IHeader;
   public stats: IStats = {
     min: 0,
     max: 0,

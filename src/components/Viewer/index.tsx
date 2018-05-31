@@ -10,6 +10,7 @@ import Zoom from "./zoom";
 interface IProps {
   image?: Image;
 }
+
 interface IState {
   x: number;
   y: number;
@@ -45,7 +46,6 @@ class Viewer extends React.Component<IProps, IState> {
     this.setState({ ...position });
   }
 
-  // tslint:disable-next-line:member-ordering
   public render() {
     return (
       <div>

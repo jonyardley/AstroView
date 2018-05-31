@@ -1,34 +1,9 @@
+import { IHeader, IMetaData } from "../stores/image";
 import FITS from "./fits";
 
-export interface IFitsData {
-  metaData: {
-    bitpix: number;
-    blob: Blob;
-    bscale: number;
-    bytes: number;
-    bzero: number;
-    depth: number;
-    frame: number;
-    frameLength: number;
-    frameOffsets: any[];
-    height: number;
-    length: number;
-    nBuffers: number;
-    naxis: number[];
-    width: number;
-    getFrame: (
-      frame: number,
-      callback: (imageData: Float32Array) => void
-    ) => void;
-  };
-  header: {
-    block: string;
-    cardIndex: number;
-    cards: any;
-    extensions: boolean;
-    primary: boolean;
-    verifyCard: any;
-  };
+interface IFitsData {
+  metaData: IMetaData;
+  header: IHeader;
 }
 
 const parseData = (fitsData: any) => ({

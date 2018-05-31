@@ -4,12 +4,7 @@
   "jsRules": {},
   "rules": {
     "object-literal-sort-keys": false,
-    "member-ordering": [
-      true,
-      {
-        "order": "fields-first"
-      }
-    ]
+    "member-ordering": false
   },
   "rulesDirectory": []
 }
