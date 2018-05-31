@@ -1,7 +1,12 @@
 import { inject, observer } from "mobx-react";
 import * as React from "react";
+import { ImageStore } from "../../stores/imageStore";
 
-const Images = props => (
+interface IProps {
+  imageStore: ImageStore;
+}
+
+const Images = (props: IProps) => (
   <div>
     <h2>Images</h2>
     <ul>

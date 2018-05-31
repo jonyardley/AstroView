@@ -1,14 +1,24 @@
 import { action, observable } from "mobx";
-import fits from "../lib/fits";
 import GPUKernel from "../lib/gpuKernel";
 import scaleFunctions from "../lib/scaleFunctions";
 
+export interface IStats {
+  min: number;
+  max: number;
+  sum: number;
+  sum2: number;
+  range: number;
+  stdDev: number;
+  histo: number[];
+  histomax: number;
+}
+
 class Image {
-  public id = null;
-  public imageData = null;
-  public metaData = null;
-  public header = null;
-  public stats = {
+  public id: number;
+  public imageData: any;
+  public metaData: any;
+  public header: any;
+  public stats: IStats = {
     min: 0,
     max: 0,
     sum: 0,
@@ -19,17 +29,49 @@ class Image {
     histomax: 0
   };
 
-  @observable public renderer = null;
-  @observable public min = 0;
-  @observable public max = 500;
-  @observable public scaleMode = 0;
+  @observable public renderer: any;
+  @observable public min: number = 0;
+  @observable public max: number = 500;
+  @observable public scaleMode: number = 0;
 
-  constructor(params) {
-    this.id = params.id;
-    this.imageData = params.imageData;
-    this.metaData = params.metaData;
-    this.header = params.header;
+  constructor(id: number, imageData: any, metaData: any, header: any) {
+    this.id = id;
+    this.imageData = imageData;
+    this.metaData = metaData;
+    this.header = header;
 
+    this.calulateStats();
+  }
+
+  @action
+  public initRenderer(canvas: HTMLCanvasElement): void {
+    canvas.getContext("webgl2", { preserveDrawingBuffer: true });
+    this.renderer = GPUKernel(
+      this.metaData.width,
+      this.metaData.height,
+      canvas
+    );
+    this.render();
+  }
+
+  @action
+  public render(): void {
+    this.renderer(
+      this.imageData,
+      this.metaData.width,
+      this.min,
+      this.max,
+      this.scaleMode
+    );
+  }
+
+  @action
+  public updateScaleMode(scaleMode: string): void {
+    this.scaleMode = scaleFunctions.indexOf(scaleMode);
+    this.render();
+  }
+
+  private calulateStats(): void {
     for (const intensity of this.imageData) {
       if (intensity > this.stats.max) {
         this.stats.max = intensity;
@@ -58,34 +100,6 @@ class Image {
         this.stats.histomax = this.stats.histo[bin];
       }
     }
-  }
-
-  @action
-  public initRenderer(canvas) {
-    canvas.getContext("webgl2", { preserveDrawingBuffer: true });
-    this.renderer = GPUKernel(
-      this.metaData.width,
-      this.metaData.height,
-      canvas
-    );
-    this.render();
-  }
-
-  @action
-  public render() {
-    this.renderer(
-      this.imageData,
-      this.metaData.width,
-      this.min,
-      this.max,
-      this.scaleMode
-    );
-  }
-
-  @action
-  public updateScaleMode(scaleMode) {
-    this.scaleMode = scaleFunctions.indexOf(scaleMode);
-    this.render();
   }
 }
 

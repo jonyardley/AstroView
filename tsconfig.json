@@ -5,7 +5,9 @@
     "removeComments": true,
     "experimentalDecorators": true,
     "jsx": "react",
-    "outDir": "dist"
+    "outDir": "dist",
+    "strict": true,
+    "moduleResolution": "node"
   },
   "exclude": ["node_modules", "static"]
 }
