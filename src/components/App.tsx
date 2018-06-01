@@ -1,3 +1,4 @@
+import { css, StyleSheet } from "aphrodite";
 import { inject, observer } from "mobx-react";
 import DevTools from "mobx-react-devtools";
 import * as React from "react";
@@ -16,7 +17,7 @@ class App extends React.Component<{
 }> {
   public render() {
     return (
-      <div>
+      <div className={css(styles.container)}>
         <h1>{this.props.appStore!.name}</h1>
         {this.props.imageStore!.selectedImage === null && (
           <ImageLoader imageStore={this.props.imageStore!} />
@@ -28,5 +29,12 @@ class App extends React.Component<{
     );
   }
 }
+
+const styles = StyleSheet.create({
+  container: {
+    maxWidth: "800px",
+    margin: "0 auto"
+  }
+});
 
 export default App;

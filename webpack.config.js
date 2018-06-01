@@ -22,7 +22,7 @@ module.exports = {
       }
     ]
   },
-  plugins: [new CopyWebpackPlugin(["index.html", "public"], {})],
+  plugins: [new CopyWebpackPlugin(["public"], {})],
   optimization: {
     minimizer: [
       new UglifyJsPlugin({
