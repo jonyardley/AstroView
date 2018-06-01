@@ -5,9 +5,9 @@
   "author": "Jon Yardley <jon.yardley@red-badger.com>",
   "license": "MIT",
   "dependencies": {
+    "aphrodite": "^2.2.1",
     "fitsjs": "^0.6.6",
-    "gpu.js":
-      "https://github.com/gpujs/gpu.js.git#1bb63042a06e29b91262a87160f405616de3301a",
+    "gpu.js": "https://github.com/gpujs/gpu.js.git#1bb63042a06e29b91262a87160f405616de3301a",
     "mobx": "^4.2.1",
     "mobx-react": "^5.1.2",
     "mobx-react-devtools": "^5.0.1",
@@ -16,8 +16,6 @@
     "react-dom": "^16.3.2"
   },
   "devDependencies": {
-    "uglifyjs-webpack-plugin": "^1.2.5",
-    "@types/lodash": "^4.14.109",
     "@types/react": "^16.3.13",
     "@types/react-dom": "^16.0.5",
     "awesome-typescript-loader": "^5.0.0",
@@ -27,12 +25,13 @@
     "tslint-config-prettier": "^1.12.0",
     "typescript": "^2.8.3",
     "uglify-js": "^3.3.28",
+    "uglifyjs-webpack-plugin": "^1.2.5",
     "webpack": "^4.8.1",
     "webpack-cli": "^2.1.3",
     "webpack-dev-server": "^3.1.4"
   },
   "scripts": {
-    "start": "webpack-dev-server -d --inline --hot --colors --open",
+    "start": "webpack-dev-server -d --inline --hot --colors --open --content-base public/",
     "build": "webpack --mode=production",
     "test": "echo 'TODO: Setup tests'",
     "lint": "tslint src/**/*.ts{,x}"
