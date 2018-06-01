@@ -1,4 +1,5 @@
 const path = require("path");
+const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 const production = process.env.NODE_ENV === "production";
@@ -21,5 +22,18 @@ module.exports = {
       }
     ]
   },
-  plugins: [new CopyWebpackPlugin(["index.html", "public"], {})]
+  plugins: [new CopyWebpackPlugin(["index.html", "public"], {})],
+  optimization: {
+    minimizer: [
+      new UglifyJsPlugin({
+        cache: true,
+        parallel: true,
+        uglifyOptions: {
+          compress: false,
+          mangle: false
+        },
+        sourceMap: true
+      })
+    ]
+  }
 };
